@@ -1,141 +1,191 @@
-import { HeroSection } from "@/components/HeroSection";
-import Link from "next/link";
-import { Check, Zap, Target, Clock } from "lucide-react";
+import Link from 'next/link'
 
 export default function Home() {
   return (
-    <>
-      {/* Hero Section */}
-      <HeroSection />
-
-      {/* Features Section */}
-      <section className="bg-gradient-to-b from-transparent via-blue-50 to-transparent py-20 md:py-32">
-        <div className="container-safe">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl md:text-5xl font-bold mb-4">Why matchremote?</h2>
-            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-              We understand what matters for remote workers. Our algorithm considers your unique needs.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {/* Feature 1 */}
-            <div className="text-center">
-              <div className="w-16 h-16 bg-blue-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                <Target className="w-8 h-8 text-blue-600" />
-              </div>
-              <h3 className="text-xl font-semibold mb-2">Smart Matching</h3>
-              <p className="text-gray-600">
-                Our AI analyzes job listings to find roles that truly match your preferences, not just keywords.
-              </p>
-            </div>
-
-            {/* Feature 2 */}
-            <div className="text-center">
-              <div className="w-16 h-16 bg-green-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                <Clock className="w-8 h-8 text-green-600" />
-              </div>
-              <h3 className="text-xl font-semibold mb-2">Async-Aware</h3>
-              <p className="text-gray-600">
-                We score jobs based on how async-friendly they are. Your work-life balance matters.
-              </p>
-            </div>
-
-            {/* Feature 3 */}
-            <div className="text-center">
-              <div className="w-16 h-16 bg-purple-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                <Zap className="w-8 h-8 text-purple-600" />
-              </div>
-              <h3 className="text-xl font-semibold mb-2">Save Time</h3>
-              <p className="text-gray-600">
-                Stop scrolling through hundreds of jobs. Get your top 20 matches in seconds.
-              </p>
-            </div>
-
-            {/* Feature 4 */}
-            <div className="text-center">
-              <div className="w-16 h-16 bg-orange-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                <Check className="w-8 h-8 text-orange-600" />
-              </div>
-              <h3 className="text-xl font-semibold mb-2">Free to Start</h3>
-              <p className="text-gray-600">
-                Take the quiz and see your matches for free. Premium features unlock more features.
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* How It Works Section */}
-      <section className="py-20 md:py-32">
-        <div className="container-safe">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl md:text-5xl font-bold mb-4">How It Works</h2>
-            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-              Three simple steps to find your perfect remote job
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {/* Step 1 */}
-            <div className="card text-center">
-              <div className="w-12 h-12 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold text-xl mx-auto mb-4">
-                1
-              </div>
-              <h3 className="text-xl font-semibold mb-2">Take the Quiz</h3>
-              <p className="text-gray-600 mb-6">
-                Answer 15 thoughtful questions about your work style, timezone, skills, and preferences.
-              </p>
-              <p className="text-sm text-gray-500">Takes 5 minutes</p>
-            </div>
-
-            {/* Step 2 */}
-            <div className="card text-center">
-              <div className="w-12 h-12 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold text-xl mx-auto mb-4">
-                2
-              </div>
-              <h3 className="text-xl font-semibold mb-2">Get Matched</h3>
-              <p className="text-gray-600 mb-6">
-                Our AI algorithm scores thousands of remote jobs against your profile instantly.
-              </p>
-              <p className="text-sm text-gray-500">Real-time matching</p>
-            </div>
-
-            {/* Step 3 */}
-            <div className="card text-center">
-              <div className="w-12 h-12 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold text-xl mx-auto mb-4">
-                3
-              </div>
-              <h3 className="text-xl font-semibold mb-2">Apply</h3>
-              <p className="text-gray-600 mb-6">
-                Browse your personalized matches, read detailed insights, and apply to great jobs.
-              </p>
-              <p className="text-sm text-gray-500">Direct links to jobs</p>
-            </div>
-          </div>
-
-          <div className="text-center mt-12">
-            <Link href="/quiz" className="btn-primary inline-flex items-center gap-2">
-              Start the Quiz
-            </Link>
-          </div>
-        </div>
-      </section>
-
-      {/* CTA Section */}
-      <section className="bg-gradient-to-r from-blue-600 to-blue-700 text-white py-16 md:py-24">
-        <div className="container-safe text-center">
-          <h2 className="text-4xl md:text-5xl font-bold mb-4">
-            Ready to find your perfect remote job?
-          </h2>
-          <p className="text-xl text-blue-100 mb-8 max-w-2xl mx-auto">
-            Join thousands of remote workers who've found their ideal match. Start today for free.
-          </p>
-          <Link href="/quiz" className="bg-white text-blue-600 font-semibold px-8 py-4 rounded-lg hover:bg-blue-50 transition inline-block">
-            Take the Quiz
+    <div style={{ minHeight: '100vh', background: 'var(--bg)' }}>
+      {/* Header */}
+      <header style={{
+        padding: '20px 0',
+        borderBottom: '2px solid var(--border)',
+        background: 'white',
+      }}>
+        <div className="container-wide" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <Link href="/" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <span style={{ fontSize: '32px' }}>🎯</span>
+            <span className="font-display" style={{ fontSize: '24px', fontWeight: 700, color: 'var(--ink)' }}>matchremote</span>
+          </Link>
+          <Link href="/quiz" style={{
+            padding: '12px 24px',
+            background: 'var(--indigo)',
+            color: 'white',
+            borderRadius: '12px',
+            fontWeight: 700,
+            textDecoration: 'none',
+            fontSize: '16px',
+          }}>
+            Start quiz
           </Link>
         </div>
+      </header>
+
+      {/* Hero */}
+      <section style={{ padding: '80px 0 60px' }}>
+        <div className="container" style={{ textAlign: 'center' }}>
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '8px 20px', background: 'var(--bg-warm)', borderRadius: '999px', marginBottom: '32px', fontSize: '15px', fontWeight: 600 }}>
+            <span>⚡</span>
+            <span>Free • Takes 3 minutes</span>
+          </div>
+
+          <h1 className="font-display" style={{
+            fontSize: 'clamp(40px, 7vw, 72px)',
+            fontWeight: 700,
+            lineHeight: 1.05,
+            marginBottom: '24px',
+          }}>
+            Find remote work<br />that <em style={{ color: 'var(--indigo)', fontStyle: 'italic' }}>actually</em> fits<br />your life.
+          </h1>
+
+          <p style={{
+            fontSize: '20px',
+            color: 'var(--ink-soft)',
+            maxWidth: '560px',
+            margin: '0 auto 40px',
+            lineHeight: 1.5,
+          }}>
+            Skip the endless scrolling. Answer 15 quick questions and get jobs matched to your timezone, salary, and how you actually want to work.
+          </p>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', maxWidth: '400px', margin: '0 auto' }}>
+            <Link href="/quiz" className="btn-big">
+              Start matching →
+            </Link>
+            <Link href="/pricing" style={{ color: 'var(--ink-soft)', fontSize: '15px', textDecoration: 'underline' }}>
+              See pricing
+            </Link>
+          </div>
+
+          {/* Trust indicators */}
+          <div style={{ marginTop: '48px', display: 'flex', gap: '32px', justifyContent: 'center', flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '15px', color: 'var(--ink-soft)' }}>
+              <span>✓</span> No signup to start
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '15px', color: 'var(--ink-soft)' }}>
+              <span>✓</span> Fresh jobs daily
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '15px', color: 'var(--ink-soft)' }}>
+              <span>✓</span> Truly remote only
+            </div>
+          </div>
+        </div>
       </section>
-    </>
-  );
+
+      {/* How it works */}
+      <section style={{ padding: '80px 0', background: 'white', borderTop: '2px solid var(--border)', borderBottom: '2px solid var(--border)' }}>
+        <div className="container">
+          <div style={{ textAlign: 'center', marginBottom: '64px' }}>
+            <div className="chip" style={{ marginBottom: '16px' }}>How it works</div>
+            <h2 className="font-display" style={{ fontSize: 'clamp(32px, 5vw, 48px)' }}>
+              Three steps.<br />No BS.
+            </h2>
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+            {[
+              { emoji: '🎯', title: 'Answer 15 questions', text: 'About your skills, work style, timezone, and salary. Takes 3 minutes.' },
+              { emoji: '🤖', title: 'We analyze thousands of jobs', text: 'Our matching engine scores every job against what actually matters to you.' },
+              { emoji: '✨', title: 'Get your top 20 matches', text: 'Only jobs that fit. Ranked by match score. Apply directly, no middleman.' },
+            ].map((step, i) => (
+              <div key={i} className="card" style={{ display: 'flex', gap: '24px', alignItems: 'center' }}>
+                <div style={{
+                  fontSize: '64px',
+                  flexShrink: 0,
+                  width: '96px',
+                  height: '96px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  background: 'var(--bg-warm)',
+                  borderRadius: '20px',
+                }}>{step.emoji}</div>
+                <div>
+                  <div style={{ fontSize: '14px', fontWeight: 700, color: 'var(--indigo)', marginBottom: '4px', letterSpacing: '0.05em' }}>
+                    STEP {i + 1}
+                  </div>
+                  <h3 className="font-display" style={{ fontSize: '24px', marginBottom: '8px' }}>{step.title}</h3>
+                  <p style={{ color: 'var(--ink-soft)', margin: 0 }}>{step.text}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Why us */}
+      <section style={{ padding: '80px 0' }}>
+        <div className="container">
+          <div style={{ textAlign: 'center', marginBottom: '48px' }}>
+            <div className="chip" style={{ marginBottom: '16px' }}>Why matchremote</div>
+            <h2 className="font-display" style={{ fontSize: 'clamp(32px, 5vw, 48px)' }}>
+              Built for humans,<br />not keyword matchers.
+            </h2>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '20px' }}>
+            {[
+              { emoji: '🌍', title: 'Timezone-aware', text: 'We only show jobs that work with your hours. No 3am meetings.' },
+              { emoji: '💰', title: 'Real salaries', text: 'Every job shows real pay ranges. No "competitive salary" nonsense.' },
+              { emoji: '🧘', title: 'Async-first', text: 'Filter for jobs that respect deep work and asynchronous communication.' },
+              { emoji: '🎨', title: 'Beyond keywords', text: 'We match on work style, values, and lifestyle. Not just skills.' },
+            ].map((feat, i) => (
+              <div key={i} style={{ padding: '32px', background: 'white', border: '2px solid var(--border)', borderRadius: '20px' }}>
+                <div style={{ fontSize: '48px', marginBottom: '16px' }}>{feat.emoji}</div>
+                <h3 className="font-display" style={{ fontSize: '22px', marginBottom: '8px' }}>{feat.title}</h3>
+                <p style={{ color: 'var(--ink-soft)', margin: 0, fontSize: '16px' }}>{feat.text}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Final CTA */}
+      <section style={{ padding: '80px 0 120px' }}>
+        <div className="container">
+          <div style={{
+            background: 'var(--indigo)',
+            borderRadius: '32px',
+            padding: '64px 40px',
+            textAlign: 'center',
+            color: 'white',
+            border: '4px solid var(--indigo-dark)',
+          }}>
+            <div style={{ fontSize: '64px', marginBottom: '24px' }}>🚀</div>
+            <h2 className="font-display" style={{ color: 'white', fontSize: 'clamp(32px, 5vw, 48px)', marginBottom: '16px' }}>
+              Ready to find your fit?
+            </h2>
+            <p style={{ fontSize: '20px', opacity: 0.9, marginBottom: '32px', maxWidth: '480px', margin: '0 auto 32px' }}>
+              Free, no signup needed. Just 15 questions between you and better work.
+            </p>
+            <div style={{ maxWidth: '320px', margin: '0 auto' }}>
+              <Link href="/quiz" className="btn-big btn-yellow">
+                Start quiz →
+              </Link>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer style={{ padding: '40px 0', borderTop: '2px solid var(--border)', background: 'white' }}>
+        <div className="container-wide" style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: '20px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <span style={{ fontSize: '24px' }}>🎯</span>
+            <span className="font-display" style={{ fontWeight: 700 }}>matchremote</span>
+          </div>
+          <div style={{ color: 'var(--ink-soft)', fontSize: '14px' }}>
+            © 2026 matchremote. Made for people who want more.
+          </div>
+        </div>
+      </footer>
+    </div>
+  )
 }

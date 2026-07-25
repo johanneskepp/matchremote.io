@@ -1,163 +1,162 @@
 import Link from 'next/link'
-import { Check } from 'lucide-react'
 
 export default function PricingPage() {
   const plans = [
     {
-      name: 'Starter',
-      price: 'Free',
-      description: 'Get started with job matching',
+      emoji: '🎯',
+      name: 'Free',
+      price: '$0',
+      period: 'forever',
+      description: 'Perfect to get started',
       features: [
         'Take the quiz',
-        'See top 20 matches',
-        'Match score breakdown',
-        'Save 5 jobs',
-        'Email alerts (weekly)',
+        'See your top 20 matches',
+        'Basic filters',
+        'Weekly job alerts',
       ],
-      cta: 'Get Started',
-      ctaHref: '/quiz',
+      cta: 'Start free',
+      href: '/quiz',
       featured: false,
     },
     {
-      name: 'Professional',
+      emoji: '⚡',
+      name: 'Pro',
       price: '$29',
-      period: '/month',
-      description: 'Recommended for active job seekers',
+      period: 'per month',
+      description: 'For serious job hunters',
       features: [
-        'Everything in Starter',
-        'Unlimited saved jobs',
-        'Email alerts (daily)',
-        'Advanced filtering',
-        'Salary negotiation guides',
-        'Company research tools',
-        'Priority support',
-        'CV optimization tips',
+        'Everything in Free',
+        'Unlimited matches',
+        'Priority notifications',
+        'Salary insights',
+        'Direct company contacts',
+        'CV/resume review',
       ],
-      cta: 'Start 7-Day Trial',
-      ctaHref: '#',
+      cta: 'Get Pro',
+      href: '/quiz',
       featured: true,
     },
     {
+      emoji: '🏢',
       name: 'Teams',
       price: 'Custom',
-      description: 'For hiring managers and teams',
+      period: 'talk to us',
+      description: 'For companies hiring remote',
       features: [
-        'Post job openings',
-        'Candidate matching',
-        'Bulk email campaigns',
+        'Post unlimited jobs',
+        'Featured placement',
+        'Candidate insights',
         'Analytics dashboard',
-        'Team collaboration',
-        'Priority support',
-        'Custom integrations',
+        'Dedicated support',
       ],
-      cta: 'Contact Sales',
-      ctaHref: '#',
+      cta: 'Contact sales',
+      href: 'mailto:hello@matchremote.io',
       featured: false,
     },
   ]
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white py-12 md:py-24">
-      <div className="container-safe">
-        {/* Header */}
-        <div className="text-center mb-16">
-          <h1 className="text-5xl md:text-6xl font-bold mb-4">Simple, Transparent Pricing</h1>
-          <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-            Choose the plan that works for you. No hidden fees, cancel anytime.
+    <div style={{ minHeight: '100vh', background: 'var(--bg)' }}>
+      {/* Header */}
+      <header style={{ padding: '20px 0', background: 'white', borderBottom: '2px solid var(--border)' }}>
+        <div className="container-wide" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <Link href="/" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <span style={{ fontSize: '32px' }}>🎯</span>
+            <span className="font-display" style={{ fontSize: '24px', fontWeight: 700, color: 'var(--ink)' }}>matchremote</span>
+          </Link>
+          <Link href="/quiz" style={{
+            padding: '12px 24px',
+            background: 'var(--indigo)',
+            color: 'white',
+            borderRadius: '12px',
+            fontWeight: 700,
+            textDecoration: 'none',
+            fontSize: '16px',
+          }}>Start quiz</Link>
+        </div>
+      </header>
+
+      {/* Hero */}
+      <section style={{ padding: '80px 0 40px' }}>
+        <div className="container" style={{ textAlign: 'center' }}>
+          <div className="chip" style={{ marginBottom: '16px' }}>Pricing</div>
+          <h1 className="font-display" style={{ fontSize: 'clamp(40px, 6vw, 64px)', marginBottom: '16px' }}>
+            Simple, honest pricing.
+          </h1>
+          <p style={{ fontSize: '20px', color: 'var(--ink-soft)', maxWidth: '520px', margin: '0 auto' }}>
+            Start free. Upgrade when you're ready.
           </p>
         </div>
+      </section>
 
-        {/* Pricing Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
-          {plans.map((plan, index) => (
-            <div
-              key={index}
-              className={`rounded-2xl p-8 transition-all duration-300 ${
-                plan.featured
-                  ? 'bg-gradient-to-b from-blue-600 to-blue-700 text-white shadow-2xl scale-105'
-                  : 'bg-white border border-gray-200 text-gray-900 shadow-lg hover:shadow-xl'
-              }`}
-            >
-              {/* Badge */}
-              {plan.featured && (
-                <div className="inline-block bg-yellow-300 text-yellow-900 font-semibold px-3 py-1 rounded-full text-sm mb-4">
-                  Most Popular
-                </div>
-              )}
-
-              {/* Name & Price */}
-              <h3 className={`text-2xl font-bold mb-2 ${plan.featured ? 'text-white' : ''}`}>
-                {plan.name}
-              </h3>
-              <p className={`text-sm mb-6 ${plan.featured ? 'text-blue-100' : 'text-gray-600'}`}>
-                {plan.description}
-              </p>
-
-              <div className="mb-6">
-                <span className="text-5xl font-bold">{plan.price}</span>
-                {plan.period && (
-                  <span className={`${plan.featured ? 'text-blue-100' : 'text-gray-600'}`}>
-                    {plan.period}
-                  </span>
+      {/* Plans */}
+      <section style={{ padding: '20px 0 100px' }}>
+        <div className="container-wide">
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '24px' }}>
+            {plans.map((plan) => (
+              <div key={plan.name} style={{
+                padding: '40px 32px',
+                background: plan.featured ? 'var(--indigo)' : 'white',
+                color: plan.featured ? 'white' : 'var(--ink)',
+                borderRadius: '24px',
+                border: plan.featured ? '4px solid var(--indigo-dark)' : '2px solid var(--border)',
+                position: 'relative',
+                transform: plan.featured ? 'scale(1.02)' : 'none',
+              }}>
+                {plan.featured && (
+                  <div style={{
+                    position: 'absolute',
+                    top: '-14px',
+                    left: '50%',
+                    transform: 'translateX(-50%)',
+                    background: 'var(--yellow)',
+                    color: 'var(--ink)',
+                    padding: '6px 16px',
+                    borderRadius: '999px',
+                    fontSize: '13px',
+                    fontWeight: 700,
+                  }}>MOST POPULAR</div>
                 )}
-              </div>
 
-              {/* CTA Button */}
-              <Link
-                href={plan.ctaHref}
-                className={`block text-center font-semibold py-3 rounded-lg mb-8 transition ${
-                  plan.featured
-                    ? 'bg-white text-blue-600 hover:bg-blue-50'
-                    : 'bg-blue-600 text-white hover:bg-blue-700'
-                }`}
-              >
-                {plan.cta}
-              </Link>
+                <div style={{ fontSize: '48px', marginBottom: '16px' }}>{plan.emoji}</div>
+                <h3 className="font-display" style={{ fontSize: '28px', marginBottom: '4px', color: plan.featured ? 'white' : 'var(--ink)' }}>
+                  {plan.name}
+                </h3>
+                <div style={{ opacity: plan.featured ? 0.85 : 1, color: plan.featured ? 'white' : 'var(--ink-soft)', fontSize: '15px', marginBottom: '24px' }}>
+                  {plan.description}
+                </div>
 
-              {/* Features */}
-              <ul className="space-y-4">
-                {plan.features.map((feature, featureIndex) => (
-                  <li key={featureIndex} className="flex items-start gap-3">
-                    <Check className={`w-5 h-5 flex-shrink-0 mt-0.5 ${plan.featured ? 'text-yellow-300' : 'text-green-500'}`} />
-                    <span>{feature}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ))}
-        </div>
+                <div style={{ marginBottom: '32px' }}>
+                  <span className="font-display" style={{ fontSize: '48px', fontWeight: 700, color: plan.featured ? 'white' : 'var(--ink)' }}>
+                    {plan.price}
+                  </span>
+                  <span style={{ fontSize: '16px', opacity: 0.7, marginLeft: '8px' }}>{plan.period}</span>
+                </div>
 
-        {/* FAQ */}
-        <div className="max-w-3xl mx-auto">
-          <h2 className="text-3xl font-bold mb-8 text-center">Frequently Asked Questions</h2>
+                <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 32px 0' }}>
+                  {plan.features.map((f) => (
+                    <li key={f} style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', marginBottom: '12px', fontSize: '16px' }}>
+                      <span style={{ color: plan.featured ? 'var(--yellow)' : 'var(--success)', fontWeight: 700 }}>✓</span>
+                      <span>{f}</span>
+                    </li>
+                  ))}
+                </ul>
 
-          <div className="space-y-6">
-            {[
-              {
-                q: 'Can I try Professional before paying?',
-                a: 'Yes! Get 7 days free to explore all Pro features. No credit card required.',
-              },
-              {
-                q: 'What happens when I cancel?',
-                a: 'You can cancel anytime. You\'ll retain access through the end of your billing period.',
-              },
-              {
-                q: 'Do you offer annual plans?',
-                a: 'Yes! Save 20% with annual billing. Contact our team for details.',
-              },
-              {
-                q: 'Is there a student discount?',
-                a: 'Absolutely. Use code STUDENT30 for 30% off Professional plans.',
-              },
-            ].map((item, index) => (
-              <div key={index} className="card">
-                <h3 className="font-semibold text-lg mb-2">{item.q}</h3>
-                <p className="text-gray-600">{item.a}</p>
+                <Link href={plan.href} className={`btn-big ${plan.featured ? 'btn-yellow' : ''}`}>
+                  {plan.cta}
+                </Link>
               </div>
             ))}
           </div>
+
+          {/* FAQ small */}
+          <div style={{ marginTop: '80px', textAlign: 'center' }}>
+            <p style={{ color: 'var(--ink-soft)', fontSize: '15px' }}>
+              Questions? Email us at <a href="mailto:hello@matchremote.io" style={{ color: 'var(--indigo)', fontWeight: 600 }}>hello@matchremote.io</a>
+            </p>
+          </div>
         </div>
-      </div>
+      </section>
     </div>
   )
 }

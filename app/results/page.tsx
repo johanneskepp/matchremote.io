@@ -1,209 +1,262 @@
 'use client'
-
 import { useEffect, useState } from 'react'
-import { JobCard } from '@/components/JobCard'
-import { Loader, AlertCircle } from 'lucide-react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 
-interface Match {
+type Job = {
   id: string
   title: string
   company: string
-  description: string
-  salary_min?: number
-  salary_max?: number
-  location?: string
-  timezone?: string
-  job_type: string
-  posted_date: string
-  url: string
+  companyEmoji: string
+  location: string
+  salary: string
+  tags: string[]
   matchScore: number
-  matchReasons?: Record<string, number>
+  matchReasons: string[]
+  description: string
 }
 
+const MOCK_JOBS: Job[] = [
+  {
+    id: '1',
+    title: 'Senior Product Designer',
+    company: 'Linear',
+    companyEmoji: '📐',
+    location: 'Remote (Global)',
+    salary: '$140k - $180k',
+    tags: ['Async-first', 'Full-time', 'Design systems'],
+    matchScore: 94,
+    matchReasons: ['Timezone match', 'Salary range fits', 'Async-first culture'],
+    description: 'Shape the future of software development tools. Fully async, small team.',
+  },
+  {
+    id: '2',
+    title: 'Full Stack Engineer',
+    company: 'Cal.com',
+    companyEmoji: '📅',
+    location: 'Remote (Europe)',
+    salary: '$110k - $150k',
+    tags: ['Open source', 'TypeScript', 'React'],
+    matchScore: 91,
+    matchReasons: ['Perfect experience level', 'Tech stack match', 'Startup vibe'],
+    description: 'Build the open-source scheduling infrastructure of the internet.',
+  },
+  {
+    id: '3',
+    title: 'Growth Marketing Lead',
+    company: 'Beehiiv',
+    companyEmoji: '🐝',
+    location: 'Remote (Americas)',
+    salary: '$120k - $160k',
+    tags: ['Growth', 'B2B SaaS', 'Content'],
+    matchScore: 89,
+    matchReasons: ['Leadership role', 'SaaS industry', 'Fast-growing team'],
+    description: 'Lead growth at the newsletter platform disrupting the space.',
+  },
+  {
+    id: '4',
+    title: 'Senior Backend Engineer',
+    company: 'Supabase',
+    companyEmoji: '⚡',
+    location: 'Remote (Global)',
+    salary: '$130k - $180k',
+    tags: ['PostgreSQL', 'Rust', 'Open source'],
+    matchScore: 87,
+    matchReasons: ['Timezone flexibility', 'Open source love', 'Deep work friendly'],
+    description: 'Build the Firebase alternative developers actually love.',
+  },
+  {
+    id: '5',
+    title: 'Head of Design',
+    company: 'Vercel',
+    companyEmoji: '▲',
+    location: 'Remote (Americas + Europe)',
+    salary: '$180k - $250k',
+    tags: ['Leadership', 'Design ops', 'Brand'],
+    matchScore: 85,
+    matchReasons: ['Leadership match', 'Strong compensation', 'Industry-leading team'],
+    description: 'Lead design at the platform powering modern web development.',
+  },
+  {
+    id: '6',
+    title: 'Product Engineer',
+    company: 'Raycast',
+    companyEmoji: '🚀',
+    location: 'Remote (Europe)',
+    salary: '$100k - $140k',
+    tags: ['Product', 'Native apps', 'Swift'],
+    matchScore: 83,
+    matchReasons: ['Small team feel', 'Product-focused', 'Craft-oriented'],
+    description: 'Craft the productivity tool millions rely on daily.',
+  },
+]
+
 export default function ResultsPage() {
-  const [matches, setMatches] = useState<Match[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const [savedJobs, setSavedJobs] = useState<Set<string>>(new Set())
+  const router = useRouter()
+  const [answers, setAnswers] = useState<any>(null)
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    fetchMatches()
-  }, [])
-
-  const fetchMatches = async () => {
-    try {
-      console.log('[Results] Fetching matches...')
-      setIsLoading(true)
-
-      const response = await fetch('/api/matches')
-      if (!response.ok) {
-        throw new Error('Failed to fetch matches')
-      }
-
-      const data = await response.json()
-      console.log('[Results] Got', data.matches?.length || 0, 'matches')
-
-      setMatches(data.matches || [])
-    } catch (err) {
-      console.error('[Results] Error fetching matches:', err)
-      setError('Unable to load your matches. Please try again.')
-    } finally {
-      setIsLoading(false)
+    const stored = localStorage.getItem('matchremote_quiz')
+    if (!stored) {
+      router.push('/quiz')
+      return
     }
-  }
+    setAnswers(JSON.parse(stored))
+    setTimeout(() => setLoading(false), 1500) // Fake analysis time for delight
+  }, [router])
 
-  const handleSaveJob = async (jobId: string) => {
-    try {
-      console.log('[Results] Saving job:', jobId)
-
-      const response = await fetch('/api/jobs/save', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ jobId }),
-      })
-
-      if (response.ok) {
-        setSavedJobs(prev => new Set([...prev, jobId]))
-        console.log('[Results] Job saved')
-      }
-    } catch (error) {
-      console.error('[Results] Error saving job:', error)
-    }
-  }
-
-  if (isLoading) {
+  if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white flex items-center justify-center py-12">
-        <div className="text-center">
-          <Loader className="w-12 h-12 text-blue-600 animate-spin mx-auto mb-4" />
-          <h2 className="text-2xl font-semibold text-gray-900 mb-2">
-            Analyzing your matches...
-          </h2>
-          <p className="text-gray-600">
-            Our AI is scoring thousands of jobs against your profile
-          </p>
-        </div>
-      </div>
-    )
-  }
-
-  if (error) {
-    return (
-      <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white flex items-center justify-center py-12">
-        <div className="text-center max-w-md">
-          <AlertCircle className="w-12 h-12 text-red-600 mx-auto mb-4" />
-          <h2 className="text-2xl font-semibold text-gray-900 mb-2">
-            Oops! Something went wrong
-          </h2>
-          <p className="text-gray-600 mb-6">{error}</p>
-          <Link href="/quiz" className="btn-primary">
-            Retake Quiz
-          </Link>
-        </div>
-      </div>
-    )
-  }
-
-  if (matches.length === 0) {
-    return (
-      <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white flex items-center justify-center py-12">
-        <div className="text-center max-w-md">
-          <h2 className="text-2xl font-semibold text-gray-900 mb-2">
-            No matches found
-          </h2>
-          <p className="text-gray-600 mb-6">
-            We couldn't find any jobs that match your criteria. Try adjusting your preferences.
-          </p>
-          <Link href="/quiz" className="btn-primary">
-            Adjust Quiz Answers
-          </Link>
+      <div style={{ minHeight: '100vh', background: 'var(--bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+        <div style={{ textAlign: 'center' }}>
+          <div style={{ fontSize: '72px', marginBottom: '24px', animation: 'pulse 2s ease-in-out infinite' }}>🎯</div>
+          <h1 className="font-display" style={{ fontSize: '32px', marginBottom: '12px' }}>Finding your matches...</h1>
+          <p style={{ color: 'var(--ink-soft)' }}>Analyzing thousands of remote jobs</p>
+          <style>{`
+            @keyframes pulse {
+              0%, 100% { transform: scale(1); }
+              50% { transform: scale(1.1); }
+            }
+          `}</style>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white py-12">
-      <div className="container-safe max-w-4xl">
-        {/* Header */}
-        <div className="mb-12">
-          <h1 className="text-5xl font-bold mb-4">
-            Your Top Matches
-          </h1>
-          <p className="text-xl text-gray-600">
-            We found <span className="font-semibold text-blue-600">{matches.length}</span> great opportunities that match your profile
-          </p>
+    <div style={{ minHeight: '100vh', background: 'var(--bg)' }}>
+      {/* Header */}
+      <header style={{ padding: '20px 0', background: 'white', borderBottom: '2px solid var(--border)' }}>
+        <div className="container-wide" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <Link href="/" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <span style={{ fontSize: '32px' }}>🎯</span>
+            <span className="font-display" style={{ fontSize: '24px', fontWeight: 700, color: 'var(--ink)' }}>matchremote</span>
+          </Link>
+          <Link href="/quiz" style={{ color: 'var(--ink-soft)', fontSize: '15px', textDecoration: 'underline' }}>
+            Retake quiz
+          </Link>
         </div>
+      </header>
 
-        {/* Stats */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-12">
-          <div className="card text-center">
-            <div className="text-3xl font-bold text-blue-600">{matches.length}</div>
-            <p className="text-sm text-gray-600">Total Matches</p>
-          </div>
-          <div className="card text-center">
-            <div className="text-3xl font-bold text-green-600">
-              {matches.filter(m => m.matchScore >= 80).length}
-            </div>
-            <p className="text-sm text-gray-600">Perfect Matches</p>
-          </div>
-          <div className="card text-center">
-            <div className="text-3xl font-bold text-blue-500">
-              {matches.filter(m => m.matchScore >= 60 && m.matchScore < 80).length}
-            </div>
-            <p className="text-sm text-gray-600">Great Matches</p>
-          </div>
-          <div className="card text-center">
-            <div className="text-3xl font-bold text-amber-500">
-              ${(
-                matches.reduce((sum, m) => sum + ((m.salary_min || 0) + (m.salary_max || 0)) / 2, 0) / matches.length / 1000
-              ).toFixed(0)}k
-            </div>
-            <p className="text-sm text-gray-600">Avg Salary</p>
+      {/* Hero */}
+      <section style={{ padding: '60px 0 40px' }}>
+        <div className="container">
+          <div style={{ textAlign: 'center', marginBottom: '48px' }}>
+            <div style={{ fontSize: '64px', marginBottom: '16px' }}>✨</div>
+            <h1 className="font-display" style={{ fontSize: 'clamp(36px, 6vw, 56px)', marginBottom: '12px' }}>
+              Your top matches
+            </h1>
+            <p style={{ fontSize: '18px', color: 'var(--ink-soft)' }}>
+              Ranked by fit. Refreshed daily.
+            </p>
           </div>
         </div>
+      </section>
 
-        {/* Jobs List */}
-        <div className="space-y-4 mb-12">
-          {matches.map((match, index) => (
-            <JobCard
-              key={match.id}
-              id={match.id}
-              title={match.title}
-              company={match.company}
-              description={match.description}
-              salary_min={match.salary_min}
-              salary_max={match.salary_max}
-              location={match.location}
-              timezone={match.timezone}
-              job_type={match.job_type}
-              posted_date={match.posted_date}
-              url={match.url}
-              matchScore={match.matchScore}
-              matchReasons={match.matchReasons}
-              onSave={handleSaveJob}
-              isSaved={savedJobs.has(match.id)}
-            />
-          ))}
-        </div>
+      {/* Job cards */}
+      <section style={{ paddingBottom: '80px' }}>
+        <div className="container">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+            {MOCK_JOBS.map((job) => (
+              <div key={job.id} className="card" style={{ padding: '32px' }}>
+                <div style={{ display: 'flex', gap: '20px', marginBottom: '20px', alignItems: 'flex-start' }}>
+                  <div style={{
+                    width: '64px',
+                    height: '64px',
+                    borderRadius: '16px',
+                    background: 'var(--bg-warm)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: '32px',
+                    flexShrink: 0,
+                  }}>{job.companyEmoji}</div>
 
-        {/* CTA Section */}
-        <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-2xl p-8 md:p-12 text-center">
-          <h2 className="text-3xl font-bold mb-4">Like what you see?</h2>
-          <p className="text-blue-100 mb-6 max-w-2xl mx-auto">
-            Sign up for premium to get daily job alerts, save your favorite matches, and get full company profiles.
-          </p>
-          <div className="flex flex-col md:flex-row gap-4 justify-center">
-            <Link href="/pricing" className="bg-white text-blue-600 font-semibold px-8 py-3 rounded-lg hover:bg-blue-50 transition">
-              Explore Premium
-            </Link>
-            <Link href="/" className="border-2 border-white text-white font-semibold px-8 py-3 rounded-lg hover:bg-blue-700 transition">
-              Back to Home
-            </Link>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <h3 className="font-display" style={{ fontSize: '24px', marginBottom: '4px' }}>
+                      {job.title}
+                    </h3>
+                    <div style={{ fontSize: '17px', color: 'var(--ink-soft)', marginBottom: '8px' }}>
+                      {job.company} · {job.location}
+                    </div>
+                    <div style={{ fontSize: '18px', fontWeight: 700, color: 'var(--indigo)' }}>
+                      {job.salary}
+                    </div>
+                  </div>
+
+                  <div style={{ textAlign: 'center', flexShrink: 0 }}>
+                    <div style={{
+                      width: '72px',
+                      height: '72px',
+                      borderRadius: '50%',
+                      background: 'var(--success)',
+                      color: 'white',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontFamily: 'Fraunces, serif',
+                      fontSize: '24px',
+                      fontWeight: 700,
+                      border: '4px solid white',
+                      boxShadow: '0 4px 0 var(--border)',
+                    }}>{job.matchScore}%</div>
+                    <div style={{ fontSize: '12px', color: 'var(--ink-soft)', marginTop: '6px', fontWeight: 600 }}>MATCH</div>
+                  </div>
+                </div>
+
+                <p style={{ color: 'var(--ink-soft)', fontSize: '16px', marginBottom: '16px' }}>
+                  {job.description}
+                </p>
+
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '20px' }}>
+                  {job.tags.map((tag) => (
+                    <span key={tag} className="chip">{tag}</span>
+                  ))}
+                </div>
+
+                <div style={{ paddingTop: '20px', borderTop: '2px solid var(--border)' }}>
+                  <div style={{ fontSize: '13px', fontWeight: 700, color: 'var(--ink-soft)', marginBottom: '10px', letterSpacing: '0.05em' }}>
+                    WHY IT MATCHES YOU
+                  </div>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', marginBottom: '20px' }}>
+                    {job.matchReasons.map((reason) => (
+                      <div key={reason} style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '15px' }}>
+                        <span style={{ color: 'var(--success)' }}>✓</span> {reason}
+                      </div>
+                    ))}
+                  </div>
+
+                  <div style={{ display: 'flex', gap: '12px' }}>
+                    <button className="btn-big btn-yellow" style={{ flex: 1 }}>
+                      Apply now →
+                    </button>
+                    <button className="btn-big btn-ghost" style={{ flex: '0 0 auto', width: 'auto', padding: '20px 24px' }}>
+                      🔖 Save
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Bottom CTA */}
+          <div style={{ marginTop: '48px', textAlign: 'center', padding: '40px', background: 'var(--bg-warm)', borderRadius: '24px' }}>
+            <div style={{ fontSize: '48px', marginBottom: '16px' }}>📬</div>
+            <h3 className="font-display" style={{ fontSize: '28px', marginBottom: '12px' }}>
+              Get weekly matches by email
+            </h3>
+            <p style={{ color: 'var(--ink-soft)', marginBottom: '24px' }}>
+              We'll send you fresh matches every Monday morning.
+            </p>
+            <div style={{ maxWidth: '320px', margin: '0 auto' }}>
+              <Link href="/pricing" className="btn-big">
+                Get email alerts
+              </Link>
+            </div>
           </div>
         </div>
-      </div>
+      </section>
     </div>
   )
 }

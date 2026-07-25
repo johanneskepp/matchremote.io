@@ -1,126 +1,223 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700;9..144,800&family=Inter:wght@400;500;600;700&display=swap');
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
-  --background: #ffffff;
-  --foreground: #1f2937;
-  --primary: #1e3a8a;
-  --success: #22c55e;
-  --accent: #3b82f6;
+  --bg: #FAFAF5;
+  --bg-warm: #FFE9E3;
+  --ink: #1A1614;
+  --ink-soft: #5C5854;
+  --indigo: #3D3AE0;
+  --indigo-dark: #2E2CB8;
+  --yellow: #FFB627;
+  --yellow-dark: #E89E15;
+  --success: #22C55E;
+  --border: #E8E4DC;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0f172a;
-    --foreground: #f1f5f9;
-  }
+* {
+  box-sizing: border-box;
 }
 
-@layer base {
-  * {
-    @apply font-sans;
-  }
-
-  html {
-    @apply scroll-smooth;
-    font-family: 'Inter', sans-serif;
-  }
-
-  body {
-    @apply bg-white text-gray-900;
-    font-family: 'Inter', sans-serif;
-  }
-
-  h1,
-  h2,
-  h3,
-  h4,
-  h5,
-  h6 {
-    @apply font-semibold tracking-tight text-gray-900;
-  }
-
-  h1 {
-    @apply text-4xl md:text-5xl lg:text-6xl;
-  }
-
-  h2 {
-    @apply text-3xl md:text-4xl;
-  }
-
-  h3 {
-    @apply text-2xl md:text-3xl;
-  }
-
-  a {
-    @apply text-blue-600 hover:text-blue-700 transition-colors;
-  }
-
-  button {
-    @apply transition-all duration-200;
-  }
+html, body {
+  margin: 0;
+  padding: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: 'Inter', -apple-system, sans-serif;
+  font-size: 18px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
 }
 
-@layer components {
-  .container-safe {
-    @apply max-w-7xl mx-auto px-4 md:px-6 lg:px-8;
-  }
+.font-display {
+  font-family: 'Fraunces', Georgia, serif;
+  font-optical-sizing: auto;
+  letter-spacing: -0.02em;
+}
 
-  .btn-primary {
-    @apply px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white font-semibold rounded-lg hover:shadow-lg hover:from-blue-700 hover:to-blue-800 active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed;
-  }
+h1, h2, h3 {
+  font-family: 'Fraunces', Georgia, serif;
+  font-optical-sizing: auto;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+  margin: 0;
+  font-weight: 600;
+}
 
-  .btn-secondary {
-    @apply px-6 py-3 bg-gray-100 text-gray-900 font-semibold rounded-lg hover:bg-gray-200 active:scale-95 transition-all disabled:opacity-50;
-  }
+button {
+  font-family: inherit;
+  cursor: pointer;
+  border: none;
+  background: none;
+}
 
-  .btn-ghost {
-    @apply px-6 py-3 text-blue-600 font-semibold hover:bg-blue-50 rounded-lg transition-all disabled:opacity-50;
-  }
+/* BIG button - Duolingo style with shadow depth */
+.btn-big {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 20px 32px;
+  min-height: 64px;
+  background: var(--indigo);
+  color: white;
+  font-family: 'Inter', sans-serif;
+  font-weight: 700;
+  font-size: 18px;
+  border-radius: 16px;
+  box-shadow: 0 4px 0 var(--indigo-dark);
+  transition: all 0.1s ease;
+  text-decoration: none;
+  border: none;
+  width: 100%;
+  max-width: 100%;
+}
 
-  .btn-outline {
-    @apply px-6 py-3 border-2 border-blue-600 text-blue-600 font-semibold rounded-lg hover:bg-blue-50 transition-all;
-  }
+.btn-big:hover {
+  background: var(--indigo-dark);
+  transform: translateY(-1px);
+  box-shadow: 0 5px 0 var(--indigo-dark);
+}
 
-  .card {
-    @apply bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow p-6;
-  }
+.btn-big:active {
+  transform: translateY(3px);
+  box-shadow: 0 1px 0 var(--indigo-dark);
+}
 
-  .card-hover {
-    @apply card hover:border-blue-300 hover:shadow-lg cursor-pointer;
-  }
+.btn-big.btn-yellow {
+  background: var(--yellow);
+  color: var(--ink);
+  box-shadow: 0 4px 0 var(--yellow-dark);
+}
 
-  .badge {
-    @apply inline-flex items-center px-3 py-1 rounded-full text-sm font-medium;
-  }
+.btn-big.btn-yellow:hover {
+  background: var(--yellow-dark);
+  box-shadow: 0 5px 0 var(--yellow-dark);
+}
 
-  .badge-primary {
-    @apply badge bg-blue-100 text-blue-700;
-  }
+.btn-big.btn-yellow:active {
+  box-shadow: 0 1px 0 var(--yellow-dark);
+}
 
-  .badge-success {
-    @apply badge bg-green-100 text-green-700;
-  }
+.btn-big.btn-ghost {
+  background: white;
+  color: var(--ink);
+  box-shadow: 0 4px 0 var(--border);
+  border: 2px solid var(--border);
+}
 
-  .badge-warning {
-    @apply badge bg-amber-100 text-amber-700;
-  }
+.btn-big.btn-ghost:hover {
+  background: var(--bg-warm);
+}
 
-  .input-field {
-    @apply w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition font-sans;
-  }
+/* Quiz option card - MASSIVE clickable area */
+.option-card {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 24px;
+  min-height: 80px;
+  background: white;
+  border: 3px solid var(--border);
+  border-radius: 20px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  font-family: 'Inter', sans-serif;
+  font-size: 18px;
+  font-weight: 500;
+  color: var(--ink);
+  text-align: left;
+  width: 100%;
+}
 
-  .input-field:disabled {
-    @apply bg-gray-100 cursor-not-allowed;
-  }
+.option-card:hover {
+  border-color: var(--indigo);
+  background: var(--bg-warm);
+  transform: translateY(-2px);
+}
 
-  .gradient-text {
-    @apply bg-gradient-to-r from-blue-600 to-green-500 bg-clip-text text-transparent font-bold;
-  }
+.option-card.selected {
+  border-color: var(--indigo);
+  background: var(--bg-warm);
+  box-shadow: 0 4px 0 var(--indigo);
+}
 
-  .section-divider {
-    @apply border-t border-gray-200;
-  }
+.option-card .emoji {
+  font-size: 32px;
+  flex-shrink: 0;
+}
+
+/* Container */
+.container {
+  width: 100%;
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+.container-wide {
+  width: 100%;
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+/* Progress bar - like Duolingo */
+.progress-bar {
+  height: 16px;
+  background: var(--border);
+  border-radius: 999px;
+  overflow: hidden;
+  position: relative;
+}
+
+.progress-fill {
+  height: 100%;
+  background: var(--success);
+  border-radius: 999px;
+  transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+}
+
+.progress-fill::after {
+  content: '';
+  position: absolute;
+  top: 3px;
+  left: 8px;
+  right: 8px;
+  height: 4px;
+  background: rgba(255,255,255,0.4);
+  border-radius: 999px;
+}
+
+/* Chip / Tag */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  background: var(--bg-warm);
+  color: var(--ink);
+  border-radius: 999px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+/* Card */
+.card {
+  background: white;
+  border-radius: 24px;
+  padding: 32px;
+  border: 2px solid var(--border);
+}
+
+/* Big number for stats */
+.big-num {
+  font-family: 'Fraunces', serif;
+  font-size: 64px;
+  font-weight: 700;
+  color: var(--indigo);
+  line-height: 1;
 }
