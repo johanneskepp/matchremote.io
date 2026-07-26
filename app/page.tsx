@@ -1,12 +1,12 @@
 import Link from 'next/link'
 
 const RECENT_JOBS = [
-  { title: 'Senior React Developer', company: 'Vercel', pay: '$140k' },
-  { title: 'Product Designer', company: 'Notion', pay: '$110k' },
-  { title: 'Customer Success Manager', company: 'Zapier', pay: '$85k' },
-  { title: 'DevOps Engineer', company: 'GitLab', pay: '$150k' },
-  { title: 'Content Marketer', company: 'Buffer', pay: '$75k' },
-  { title: 'Data Analyst', company: 'Automattic', pay: '$95k' },
+  { emoji: '💻', title: 'Senior React Developer', company: 'Vercel', pay: '$140k', color: '#FFB627' },
+  { emoji: '🎨', title: 'Product Designer', company: 'Notion', pay: '$110k', color: '#FF9E9E' },
+  { emoji: '💬', title: 'Customer Success Manager', company: 'Zapier', pay: '$85k', color: '#5EEAD4' },
+  { emoji: '⚙️', title: 'DevOps Engineer', company: 'GitLab', pay: '$150k', color: '#A5B4FC' },
+  { emoji: '📣', title: 'Content Marketer', company: 'Buffer', pay: '$75k', color: '#FDBA74' },
+  { emoji: '📊', title: 'Data Analyst', company: 'Automattic', pay: '$95k', color: '#86EFAC' },
 ]
 
 export default function Home() {
@@ -44,8 +44,8 @@ export default function Home() {
         <div className="job-ticker-track">
           {tickerItems.map((job, i) => (
             <span className="job-ticker-item" key={i}>
-              <span className="dot" />
-              NEW: {job.title} at {job.company} · {job.pay}
+              <span className="job-badge" style={{ background: job.color }}>{job.emoji} NEW</span>
+              {job.title} <span className="company">at {job.company}</span> <span className="pay">{job.pay}</span>
             </span>
           ))}
         </div>
