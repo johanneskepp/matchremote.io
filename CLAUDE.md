@@ -169,10 +169,11 @@ Keep this section current after every session. This is the single source of trut
 * Custom domain matchremote.io purchased and connected (Vercel + one.com DNS). Apex domain is primary, www redirects to it.
 * Landing page redesigned: compact single or two column layout, no long stacked sections. Scrolling recent jobs ticker (mock data) under the header. Hand drawn underline accent on the hero headline, wavy section divider. Color palette toned down deliberately, restrained to indigo plus neutrals, most emoji driven decoration removed after founder feedback that it looked "AI generic" and unprofessional. Numbered circle icons for "How it works", checkmark circles for "Why matchremote", both with proper semantic h2 headings.
 * Quiz fully redesigned per the Quiz UX Specification: shadowed prev and next question cards peeking beside the maximized current question (clickable to jump), a dot navigation strip to jump to any of the 15 questions directly, progress bar shows percent answered not position, every question is multi select regardless of whether it looks single choice.
-* Results page with 6 mock jobs (uses localStorage from quiz). Not yet built for real: see below.
 * Pricing page (3 tiers).
 * SEO foundations built: app/robots.ts, app/sitemap.ts, root layout metadata (title template, OG, Twitter cards, JSON-LD Organization plus WebSite), per page metadata (home, pricing) and per route layout.tsx metadata for client component pages (quiz, results, auth/login), dynamic OG image generator, noindex on results and auth/login, semantic main and h2 landmarks added to the homepage, FAQ section on the homepage with FAQPage schema for longtail keyword coverage.
 * Google Search Console fully set up (2026-07-26): domain property verified via DNS TXT record at one.com, sitemap.xml submitted and processed (3 pages discovered), manual indexing requested for the homepage and /quiz.
+* Real Supabase backend wired end to end (2026-07-26): schema.sql executed (all 7 tables), RLS enabled on every table including a public "read active jobs" policy on jobs so the anon key can list jobs while writes stay locked to the service role. Found and fixed a real bug: Vercel's production env vars for Supabase were still placeholder example values (`https://aBcDe.supabase.co`), meaning the live site never actually talked to a database before this session. Now corrected and verified live. lib/utils/quizMapping.ts converts the quiz UI's free form multi select answers into the strict quiz_responses columns the matching engine expects. app/api/quiz/submit creates an anonymous guest user (email like guest-<uuid>@guest.matchremote.io, no real auth yet), saves the mapped quiz response, and runs lib/utils/matching.ts against the jobs table. app/api/matches returns a user's top matches joined with job data. app/quiz and app/results call these real endpoints instead of using localStorage/mock data. Verified working against both local dev and production (matchremote.io) by submitting a real quiz answer and confirming it landed correctly in Supabase, then deleting the test row.
+* Results page now shows an honest "No matches yet, we're still building our job database" empty state instead of the old 6 hardcoded mock jobs, since the jobs table is intentionally empty (see below).
 * Deployed on Vercel, auto deploy on push to main.
 
 ### Reminder: revisit Google Search Console when new pages exist
@@ -181,14 +182,14 @@ Search Console is set up for the current 3 static pages only (/, /quiz, /pricing
 
 ### Not yet built
 
-* Real job matching (needs Supabase schema plus seed data). All job data on the site right now (ticker, results) is mock/placeholder.
+* Real job data. The jobs table exists and is fully wired into matching and results, but is deliberately empty, no jobs have been seeded or scraped yet. The only job data anywhere on the site is the landing page ticker, which is explicitly mock/decorative and separate from the real jobs table. As soon as rows exist in jobs (is_active = true), real users will start seeing real matches with no further code changes needed.
+* Job scraping or manual job entry to actually populate the jobs table (Firecrawl dependency added, not implemented). This is the current blocker for everything below it.
 * JobPosting structured data (schema.org) per job, blocked on real job data existing.
 * Programmatic SEO pages ("Remote [role] jobs in [timezone]"), blocked on real job data existing, per the SEO Priority section above. Remember to add these to app/sitemap.ts and revisit Search Console once built, see reminder above.
 * Auth flow (magic link login).
 * Saved jobs.
 * Email alerts (Resend integration exists in package.json but not wired).
 * Paddle payment integration.
-* Job scraping (Firecrawl dependency added, not implemented).
 
 ### Known issues
 
