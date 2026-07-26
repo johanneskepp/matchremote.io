@@ -1,12 +1,12 @@
 import Link from 'next/link'
 
 const RECENT_JOBS = [
-  { emoji: '💻', title: 'Senior React Developer', company: 'Vercel', pay: '$140k', color: '#FFB627' },
-  { emoji: '🎨', title: 'Product Designer', company: 'Notion', pay: '$110k', color: '#FF9E9E' },
-  { emoji: '💬', title: 'Customer Success Manager', company: 'Zapier', pay: '$85k', color: '#5EEAD4' },
-  { emoji: '⚙️', title: 'DevOps Engineer', company: 'GitLab', pay: '$150k', color: '#A5B4FC' },
-  { emoji: '📣', title: 'Content Marketer', company: 'Buffer', pay: '$75k', color: '#FDBA74' },
-  { emoji: '📊', title: 'Data Analyst', company: 'Automattic', pay: '$95k', color: '#86EFAC' },
+  { title: 'Senior React Developer', company: 'Vercel', pay: '$140k' },
+  { title: 'Product Designer', company: 'Notion', pay: '$110k' },
+  { title: 'Customer Success Manager', company: 'Zapier', pay: '$85k' },
+  { title: 'DevOps Engineer', company: 'GitLab', pay: '$150k' },
+  { title: 'Content Marketer', company: 'Buffer', pay: '$75k' },
+  { title: 'Data Analyst', company: 'Automattic', pay: '$95k' },
 ]
 
 export default function Home() {
@@ -44,7 +44,7 @@ export default function Home() {
         <div className="job-ticker-track">
           {tickerItems.map((job, i) => (
             <span className="job-ticker-item" key={i}>
-              <span className="job-badge" style={{ background: job.color }}>{job.emoji} NEW</span>
+              <span className="job-badge">NEW</span>
               {job.title} <span className="company">at {job.company}</span> <span className="pay">{job.pay}</span>
             </span>
           ))}
@@ -54,9 +54,8 @@ export default function Home() {
       {/* Hero */}
       <section style={{ padding: '48px 0 36px' }}>
         <div className="container" style={{ textAlign: 'center' }}>
-          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '6px 18px', background: 'var(--bg-warm)', borderRadius: '999px', marginBottom: '20px', fontSize: '14px', fontWeight: 600 }}>
-            <span>⚡</span>
-            <span>Free • Takes 3 minutes</span>
+          <div style={{ display: 'inline-flex', alignItems: 'center', padding: '6px 18px', background: 'white', border: '1.5px solid var(--border)', borderRadius: '999px', marginBottom: '20px', fontSize: '14px', fontWeight: 600, color: 'var(--ink-soft)' }}>
+            Free · Takes 3 minutes
           </div>
 
           <h1 className="font-display" style={{
@@ -106,14 +105,10 @@ export default function Home() {
           </div>
 
           {/* Trust indicators */}
-          <div style={{ marginTop: '28px', display: 'flex', gap: '10px', justifyContent: 'center', flexWrap: 'wrap' }}>
-            {[
-              { emoji: '🙌', text: 'No signup to start' },
-              { emoji: '🌤️', text: 'Fresh jobs daily' },
-              { emoji: '🏡', text: 'Truly remote only' },
-            ].map((item) => (
-              <span key={item.text} className="chip" style={{ fontSize: '14px' }}>
-                {item.emoji} {item.text}
+          <div style={{ marginTop: '28px', display: 'flex', gap: '24px', justifyContent: 'center', flexWrap: 'wrap' }}>
+            {['No signup to start', 'Fresh jobs daily', 'Truly remote only'].map((text) => (
+              <span key={text} style={{ fontSize: '14px', fontWeight: 600, color: 'var(--ink-soft)' }}>
+                {text}
               </span>
             ))}
           </div>
@@ -139,25 +134,28 @@ export default function Home() {
           <div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
               {[
-                { emoji: '🎯', title: 'Answer 15 questions', text: 'About your skills, work style, timezone, and salary.', tint: 'var(--tint-pink)' },
-                { emoji: '🤖', title: 'We analyze thousands of jobs', text: 'Scored against what actually matters to you.', tint: 'var(--tint-indigo)' },
-                { emoji: '✨', title: 'Get your top matches', text: 'Ranked by fit. Apply directly, no middleman.', tint: 'var(--tint-yellow)' },
+                { title: 'Answer 15 questions', text: 'About your skills, work style, timezone, and salary.' },
+                { title: 'We analyze thousands of jobs', text: 'Scored against what actually matters to you.' },
+                { title: 'Get your top matches', text: 'Ranked by fit. Apply directly, no middleman.' },
               ].map((step, i) => (
-                <div key={i} style={{ display: 'flex', gap: '14px', alignItems: 'center' }}>
+                <div key={i} style={{ display: 'flex', gap: '16px', alignItems: 'flex-start' }}>
                   <div style={{
-                    fontSize: '26px',
+                    fontSize: '15px',
+                    fontWeight: 700,
                     flexShrink: 0,
-                    width: '48px',
-                    height: '48px',
+                    width: '32px',
+                    height: '32px',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    background: step.tint,
+                    background: 'var(--bg)',
+                    border: '1.5px solid var(--border)',
+                    color: 'var(--indigo)',
                     borderRadius: '50%',
-                  }}>{step.emoji}</div>
+                  }}>{i + 1}</div>
                   <div>
                     <h3 className="font-display" style={{ fontSize: '18px', marginBottom: '2px' }}>{step.title}</h3>
-                    <p style={{ color: 'var(--ink-soft)', margin: 0, fontSize: '14px', fontWeight: 500 }}>{step.text}</p>
+                    <p style={{ color: 'var(--ink-soft)', margin: 0, fontSize: '15px', fontWeight: 500 }}>{step.text}</p>
                   </div>
                 </div>
               ))}
@@ -167,26 +165,29 @@ export default function Home() {
           <div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
               {[
-                { emoji: '🌍', title: 'Timezone-aware', text: 'No 3am meetings.', tint: 'var(--tint-indigo)' },
-                { emoji: '💰', title: 'Real salaries', text: 'No "competitive" nonsense.', tint: 'var(--tint-yellow)' },
-                { emoji: '🧘', title: 'Async-first', text: 'Respects deep work.', tint: 'var(--tint-green)' },
-                { emoji: '🎨', title: 'Beyond keywords', text: 'Matched on values, too.', tint: 'var(--tint-pink)' },
+                { title: 'Timezone-aware', text: 'No 3am meetings.' },
+                { title: 'Real salaries', text: 'No "competitive" nonsense.' },
+                { title: 'Async-first', text: 'Respects deep work.' },
+                { title: 'Beyond keywords', text: 'Matched on values, too.' },
               ].map((feat, i) => (
-                <div key={i} style={{ display: 'flex', gap: '14px', alignItems: 'center' }}>
+                <div key={i} style={{ display: 'flex', gap: '16px', alignItems: 'flex-start' }}>
                   <div style={{
-                    fontSize: '26px',
+                    fontSize: '15px',
+                    fontWeight: 700,
                     flexShrink: 0,
-                    width: '48px',
-                    height: '48px',
+                    width: '32px',
+                    height: '32px',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    background: feat.tint,
+                    background: 'var(--bg)',
+                    border: '1.5px solid var(--border)',
+                    color: 'var(--indigo)',
                     borderRadius: '50%',
-                  }}>{feat.emoji}</div>
+                  }}>✓</div>
                   <div>
                     <h3 className="font-display" style={{ fontSize: '18px', marginBottom: '2px' }}>{feat.title}</h3>
-                    <p style={{ color: 'var(--ink-soft)', margin: 0, fontSize: '14px', fontWeight: 500 }}>{feat.text}</p>
+                    <p style={{ color: 'var(--ink-soft)', margin: 0, fontSize: '15px', fontWeight: 500 }}>{feat.text}</p>
                   </div>
                 </div>
               ))}
@@ -207,7 +208,7 @@ export default function Home() {
             border: '4px solid var(--indigo-dark)',
           }}>
             <h2 className="font-display" style={{ color: 'white', fontSize: 'clamp(26px, 4vw, 38px)', marginBottom: '10px' }}>
-              Ready to find your fit? 🚀
+              Ready to find your fit?
             </h2>
             <p style={{ fontSize: '16px', opacity: 0.9, marginBottom: '24px', maxWidth: '440px', margin: '0 auto 24px' }}>
               Free, no signup needed. Just 15 questions between you and better work.
