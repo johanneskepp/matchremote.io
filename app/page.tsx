@@ -106,7 +106,6 @@ export default function Home() {
       <section style={{ padding: '40px 0', background: 'white', borderTop: '2px solid var(--border)', borderBottom: '2px solid var(--border)' }}>
         <div className="container-wide" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '40px' }}>
           <div>
-            <div className="chip" style={{ marginBottom: '14px' }}>How it works</div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
               {[
                 { emoji: '🎯', title: 'Answer 15 questions', text: 'About your skills, work style, timezone, and salary.', tint: 'var(--tint-pink)' },
@@ -135,7 +134,6 @@ export default function Home() {
           </div>
 
           <div>
-            <div className="chip" style={{ marginBottom: '14px' }}>Why matchremote</div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '12px' }}>
               {[
                 { emoji: '🌍', title: 'Timezone-aware', text: 'No 3am meetings.', tint: 'var(--tint-indigo)' },
