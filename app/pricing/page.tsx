@@ -1,4 +1,25 @@
 import Link from 'next/link'
+import type { Metadata } from 'next'
+
+const TITLE = 'Pricing'
+const DESCRIPTION = 'Simple pricing for matchremote. Start free and see your top remote job matches, upgrade for unlimited matches and job alerts.'
+
+export const metadata: Metadata = {
+  title: TITLE,
+  description: DESCRIPTION,
+  alternates: {
+    canonical: 'https://matchremote.io/pricing',
+  },
+  openGraph: {
+    title: `${TITLE} | matchremote`,
+    description: DESCRIPTION,
+    url: 'https://matchremote.io/pricing',
+  },
+  twitter: {
+    title: `${TITLE} | matchremote`,
+    description: DESCRIPTION,
+  },
+}
 
 export default function PricingPage() {
   const plans = [

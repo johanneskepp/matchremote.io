@@ -1,4 +1,26 @@
 import Link from 'next/link'
+import type { Metadata } from 'next'
+
+const TITLE = 'Personalized Remote Job Matches by Timezone, Salary & Work Style'
+const DESCRIPTION =
+  'Free 3 minute quiz matches you to remote jobs based on your timezone, salary target, and how you like to work. No signup, no keyword spam, just real fits.'
+
+export const metadata: Metadata = {
+  title: TITLE,
+  description: DESCRIPTION,
+  alternates: {
+    canonical: 'https://matchremote.io',
+  },
+  openGraph: {
+    title: `matchremote: ${TITLE}`,
+    description: DESCRIPTION,
+    url: 'https://matchremote.io',
+  },
+  twitter: {
+    title: `matchremote: ${TITLE}`,
+    description: DESCRIPTION,
+  },
+}
 
 const RECENT_JOBS = [
   { title: 'Senior React Developer', company: 'Vercel', pay: '$140k' },
@@ -51,6 +73,7 @@ export default function Home() {
         </div>
       </div>
 
+      <main>
       {/* Hero */}
       <section style={{ padding: '48px 0 36px' }}>
         <div className="container" style={{ textAlign: 'center' }}>
@@ -132,6 +155,9 @@ export default function Home() {
       <section style={{ padding: '40px 0', background: 'white', borderBottom: '2px solid var(--border)' }}>
         <div className="container-wide" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '40px' }}>
           <div>
+            <h2 style={{ fontSize: '13px', fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--ink-soft)', margin: '0 0 14px' }}>
+              How it works
+            </h2>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
               {[
                 { title: 'Answer 15 questions', text: 'About your skills, work style, timezone, and salary.' },
@@ -163,6 +189,9 @@ export default function Home() {
           </div>
 
           <div>
+            <h2 style={{ fontSize: '13px', fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--ink-soft)', margin: '0 0 14px' }}>
+              Why matchremote
+            </h2>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
               {[
                 { title: 'Timezone-aware', text: 'No 3am meetings.' },
@@ -221,6 +250,7 @@ export default function Home() {
           </div>
         </div>
       </section>
+      </main>
 
       {/* Footer */}
       <footer style={{ padding: '24px 0', borderTop: '2px solid var(--border)', background: 'white' }}>
