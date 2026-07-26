@@ -431,16 +431,6 @@ button {
   }
 }
 
-/* Sticker-style tilt, breaks the perfect grid feel */
-.tilt-a { transform: rotate(-2.5deg); transition: transform 0.2s ease; }
-.tilt-b { transform: rotate(1.5deg); transition: transform 0.2s ease; }
-.tilt-c { transform: rotate(-1.5deg); transition: transform 0.2s ease; }
-.tilt-d { transform: rotate(2.5deg); transition: transform 0.2s ease; }
-
-.tilt-a:hover, .tilt-b:hover, .tilt-c:hover, .tilt-d:hover {
-  transform: rotate(0deg) scale(1.05);
-}
-
 /* Big number for stats */
 .big-num {
   font-family: 'Fraunces', serif;

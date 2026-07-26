@@ -139,21 +139,21 @@ export default function Home() {
           <div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
               {[
-                { emoji: '🎯', title: 'Answer 15 questions', text: 'About your skills, work style, timezone, and salary.', tint: 'var(--tint-pink)', tilt: 'tilt-a' },
-                { emoji: '🤖', title: 'We analyze thousands of jobs', text: 'Scored against what actually matters to you.', tint: 'var(--tint-indigo)', tilt: 'tilt-c' },
-                { emoji: '✨', title: 'Get your top matches', text: 'Ranked by fit. Apply directly, no middleman.', tint: 'var(--tint-yellow)', tilt: 'tilt-b' },
+                { emoji: '🎯', title: 'Answer 15 questions', text: 'About your skills, work style, timezone, and salary.', tint: 'var(--tint-pink)' },
+                { emoji: '🤖', title: 'We analyze thousands of jobs', text: 'Scored against what actually matters to you.', tint: 'var(--tint-indigo)' },
+                { emoji: '✨', title: 'Get your top matches', text: 'Ranked by fit. Apply directly, no middleman.', tint: 'var(--tint-yellow)' },
               ].map((step, i) => (
                 <div key={i} style={{ display: 'flex', gap: '14px', alignItems: 'center' }}>
-                  <div className={step.tilt} style={{
-                    fontSize: '28px',
+                  <div style={{
+                    fontSize: '26px',
                     flexShrink: 0,
-                    width: '52px',
-                    height: '52px',
+                    width: '48px',
+                    height: '48px',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                     background: step.tint,
-                    borderRadius: '16px 8px 16px 8px',
+                    borderRadius: '50%',
                   }}>{step.emoji}</div>
                   <div>
                     <h3 className="font-display" style={{ fontSize: '18px', marginBottom: '2px' }}>{step.title}</h3>
@@ -165,17 +165,29 @@ export default function Home() {
           </div>
 
           <div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '12px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
               {[
-                { emoji: '🌍', title: 'Timezone-aware', text: 'No 3am meetings.', tint: 'var(--tint-indigo)', tilt: 'tilt-a' },
-                { emoji: '💰', title: 'Real salaries', text: 'No "competitive" nonsense.', tint: 'var(--tint-yellow)', tilt: 'tilt-b' },
-                { emoji: '🧘', title: 'Async-first', text: 'Respects deep work.', tint: 'var(--tint-green)', tilt: 'tilt-c' },
-                { emoji: '🎨', title: 'Beyond keywords', text: 'Matched on values, too.', tint: 'var(--tint-pink)', tilt: 'tilt-d' },
+                { emoji: '🌍', title: 'Timezone-aware', text: 'No 3am meetings.', tint: 'var(--tint-indigo)' },
+                { emoji: '💰', title: 'Real salaries', text: 'No "competitive" nonsense.', tint: 'var(--tint-yellow)' },
+                { emoji: '🧘', title: 'Async-first', text: 'Respects deep work.', tint: 'var(--tint-green)' },
+                { emoji: '🎨', title: 'Beyond keywords', text: 'Matched on values, too.', tint: 'var(--tint-pink)' },
               ].map((feat, i) => (
-                <div key={i} className={feat.tilt} style={{ padding: '16px', background: feat.tint, border: '2px solid var(--border)', borderRadius: '20px 8px 20px 8px' }}>
-                  <div style={{ fontSize: '26px', marginBottom: '6px' }}>{feat.emoji}</div>
-                  <h3 className="font-display" style={{ fontSize: '16px', marginBottom: '2px' }}>{feat.title}</h3>
-                  <p style={{ color: 'var(--ink-soft)', margin: 0, fontSize: '13px', fontWeight: 600 }}>{feat.text}</p>
+                <div key={i} style={{ display: 'flex', gap: '14px', alignItems: 'center' }}>
+                  <div style={{
+                    fontSize: '26px',
+                    flexShrink: 0,
+                    width: '48px',
+                    height: '48px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    background: feat.tint,
+                    borderRadius: '50%',
+                  }}>{feat.emoji}</div>
+                  <div>
+                    <h3 className="font-display" style={{ fontSize: '18px', marginBottom: '2px' }}>{feat.title}</h3>
+                    <p style={{ color: 'var(--ink-soft)', margin: 0, fontSize: '14px', fontWeight: 500 }}>{feat.text}</p>
+                  </div>
                 </div>
               ))}
             </div>
