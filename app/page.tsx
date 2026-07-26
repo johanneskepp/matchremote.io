@@ -88,16 +88,16 @@ export default function Home() {
           </div>
 
           {/* Trust indicators */}
-          <div style={{ marginTop: '28px', display: 'flex', gap: '24px', justifyContent: 'center', flexWrap: 'wrap' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '14px', color: 'var(--ink-soft)' }}>
-              <span>✓</span> No signup to start
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '14px', color: 'var(--ink-soft)' }}>
-              <span>✓</span> Fresh jobs daily
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '14px', color: 'var(--ink-soft)' }}>
-              <span>✓</span> Truly remote only
-            </div>
+          <div style={{ marginTop: '28px', display: 'flex', gap: '10px', justifyContent: 'center', flexWrap: 'wrap' }}>
+            {[
+              { emoji: '🙌', text: 'No signup to start' },
+              { emoji: '🌤️', text: 'Fresh jobs daily' },
+              { emoji: '🏡', text: 'Truly remote only' },
+            ].map((item) => (
+              <span key={item.text} className="chip" style={{ fontSize: '14px' }}>
+                {item.emoji} {item.text}
+              </span>
+            ))}
           </div>
         </div>
       </section>
@@ -109,9 +109,9 @@ export default function Home() {
             <div className="chip" style={{ marginBottom: '14px' }}>How it works</div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
               {[
-                { emoji: '🎯', title: 'Answer 15 questions', text: 'About your skills, work style, timezone, and salary.' },
-                { emoji: '🤖', title: 'We analyze thousands of jobs', text: 'Scored against what actually matters to you.' },
-                { emoji: '✨', title: 'Get your top matches', text: 'Ranked by fit. Apply directly, no middleman.' },
+                { emoji: '🎯', title: 'Answer 15 questions', text: 'About your skills, work style, timezone, and salary.', tint: 'var(--tint-pink)' },
+                { emoji: '🤖', title: 'We analyze thousands of jobs', text: 'Scored against what actually matters to you.', tint: 'var(--tint-indigo)' },
+                { emoji: '✨', title: 'Get your top matches', text: 'Ranked by fit. Apply directly, no middleman.', tint: 'var(--tint-yellow)' },
               ].map((step, i) => (
                 <div key={i} style={{ display: 'flex', gap: '14px', alignItems: 'center' }}>
                   <div style={{
@@ -122,12 +122,12 @@ export default function Home() {
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    background: 'var(--bg-warm)',
+                    background: step.tint,
                     borderRadius: '14px',
                   }}>{step.emoji}</div>
                   <div>
                     <h3 className="font-display" style={{ fontSize: '18px', marginBottom: '2px' }}>{step.title}</h3>
-                    <p style={{ color: 'var(--ink-soft)', margin: 0, fontSize: '14px' }}>{step.text}</p>
+                    <p style={{ color: 'var(--ink-soft)', margin: 0, fontSize: '14px', fontWeight: 500 }}>{step.text}</p>
                   </div>
                 </div>
               ))}
@@ -138,15 +138,15 @@ export default function Home() {
             <div className="chip" style={{ marginBottom: '14px' }}>Why matchremote</div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '12px' }}>
               {[
-                { emoji: '🌍', title: 'Timezone-aware', text: 'No 3am meetings.' },
-                { emoji: '💰', title: 'Real salaries', text: 'No "competitive" nonsense.' },
-                { emoji: '🧘', title: 'Async-first', text: 'Respects deep work.' },
-                { emoji: '🎨', title: 'Beyond keywords', text: 'Matched on values, too.' },
+                { emoji: '🌍', title: 'Timezone-aware', text: 'No 3am meetings.', tint: 'var(--tint-indigo)' },
+                { emoji: '💰', title: 'Real salaries', text: 'No "competitive" nonsense.', tint: 'var(--tint-yellow)' },
+                { emoji: '🧘', title: 'Async-first', text: 'Respects deep work.', tint: 'var(--tint-green)' },
+                { emoji: '🎨', title: 'Beyond keywords', text: 'Matched on values, too.', tint: 'var(--tint-pink)' },
               ].map((feat, i) => (
-                <div key={i} style={{ padding: '16px', background: 'var(--bg)', border: '2px solid var(--border)', borderRadius: '16px' }}>
+                <div key={i} style={{ padding: '16px', background: feat.tint, border: '2px solid var(--border)', borderRadius: '16px' }}>
                   <div style={{ fontSize: '26px', marginBottom: '6px' }}>{feat.emoji}</div>
                   <h3 className="font-display" style={{ fontSize: '16px', marginBottom: '2px' }}>{feat.title}</h3>
-                  <p style={{ color: 'var(--ink-soft)', margin: 0, fontSize: '13px' }}>{feat.text}</p>
+                  <p style={{ color: 'var(--ink-soft)', margin: 0, fontSize: '13px', fontWeight: 600 }}>{feat.text}</p>
                 </div>
               ))}
             </div>
