@@ -229,7 +229,14 @@ export default function QuizPage() {
     } else {
       setSubmitting(true)
       try {
-        localStorage.setItem('matchremote_quiz', JSON.stringify(answers))
+        const res = await fetch('/api/quiz/submit', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ answers }),
+        })
+        const data = await res.json()
+        if (!res.ok || !data.success) throw new Error(data.message || 'Submit failed')
+        localStorage.setItem('matchremote_user_id', data.userId)
         router.push('/results')
       } catch (e) {
         alert('Something went wrong. Try again?')

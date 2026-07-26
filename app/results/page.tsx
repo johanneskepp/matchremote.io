@@ -7,103 +7,41 @@ type Job = {
   id: string
   title: string
   company: string
-  companyEmoji: string
   location: string
   salary: string
   tags: string[]
   matchScore: number
   matchReasons: string[]
   description: string
+  url?: string
 }
-
-const MOCK_JOBS: Job[] = [
-  {
-    id: '1',
-    title: 'Senior Product Designer',
-    company: 'Linear',
-    companyEmoji: '📐',
-    location: 'Remote (Global)',
-    salary: '$140k - $180k',
-    tags: ['Async-first', 'Full-time', 'Design systems'],
-    matchScore: 94,
-    matchReasons: ['Timezone match', 'Salary range fits', 'Async-first culture'],
-    description: 'Shape the future of software development tools. Fully async, small team.',
-  },
-  {
-    id: '2',
-    title: 'Full Stack Engineer',
-    company: 'Cal.com',
-    companyEmoji: '📅',
-    location: 'Remote (Europe)',
-    salary: '$110k - $150k',
-    tags: ['Open source', 'TypeScript', 'React'],
-    matchScore: 91,
-    matchReasons: ['Perfect experience level', 'Tech stack match', 'Startup vibe'],
-    description: 'Build the open-source scheduling infrastructure of the internet.',
-  },
-  {
-    id: '3',
-    title: 'Growth Marketing Lead',
-    company: 'Beehiiv',
-    companyEmoji: '🐝',
-    location: 'Remote (Americas)',
-    salary: '$120k - $160k',
-    tags: ['Growth', 'B2B SaaS', 'Content'],
-    matchScore: 89,
-    matchReasons: ['Leadership role', 'SaaS industry', 'Fast-growing team'],
-    description: 'Lead growth at the newsletter platform disrupting the space.',
-  },
-  {
-    id: '4',
-    title: 'Senior Backend Engineer',
-    company: 'Supabase',
-    companyEmoji: '⚡',
-    location: 'Remote (Global)',
-    salary: '$130k - $180k',
-    tags: ['PostgreSQL', 'Rust', 'Open source'],
-    matchScore: 87,
-    matchReasons: ['Timezone flexibility', 'Open source love', 'Deep work friendly'],
-    description: 'Build the Firebase alternative developers actually love.',
-  },
-  {
-    id: '5',
-    title: 'Head of Design',
-    company: 'Vercel',
-    companyEmoji: '▲',
-    location: 'Remote (Americas + Europe)',
-    salary: '$180k - $250k',
-    tags: ['Leadership', 'Design ops', 'Brand'],
-    matchScore: 85,
-    matchReasons: ['Leadership match', 'Strong compensation', 'Industry-leading team'],
-    description: 'Lead design at the platform powering modern web development.',
-  },
-  {
-    id: '6',
-    title: 'Product Engineer',
-    company: 'Raycast',
-    companyEmoji: '🚀',
-    location: 'Remote (Europe)',
-    salary: '$100k - $140k',
-    tags: ['Product', 'Native apps', 'Swift'],
-    matchScore: 83,
-    matchReasons: ['Small team feel', 'Product-focused', 'Craft-oriented'],
-    description: 'Craft the productivity tool millions rely on daily.',
-  },
-]
 
 export default function ResultsPage() {
   const router = useRouter()
-  const [answers, setAnswers] = useState<any>(null)
+  const [jobs, setJobs] = useState<Job[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    const stored = localStorage.getItem('matchremote_quiz')
-    if (!stored) {
+    const userId = localStorage.getItem('matchremote_user_id')
+    if (!userId) {
       router.push('/quiz')
       return
     }
-    setAnswers(JSON.parse(stored))
-    setTimeout(() => setLoading(false), 1500) // Fake analysis time for delight
+
+    const minDelay = new Promise((resolve) => setTimeout(resolve, 900)) // Keeps the "analyzing" moment feeling real
+
+    Promise.all([
+      fetch(`/api/matches?userId=${userId}`).then((res) => res.json()),
+      minDelay,
+    ])
+      .then(([data]) => {
+        setJobs(data.matches || [])
+        setLoading(false)
+      })
+      .catch(() => {
+        setJobs([])
+        setLoading(false)
+      })
   }, [router])
 
   if (loading) {
@@ -157,8 +95,24 @@ export default function ResultsPage() {
       {/* Job cards */}
       <section style={{ paddingBottom: '80px' }}>
         <div className="container">
+          {jobs.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: '48px 24px', background: 'white', border: '2px solid var(--border)', borderRadius: '24px' }}>
+              <div style={{ fontSize: '48px', marginBottom: '16px' }}>🚧</div>
+              <h2 className="font-display" style={{ fontSize: '24px', marginBottom: '10px' }}>
+                No matches yet
+              </h2>
+              <p style={{ color: 'var(--ink-soft)', maxWidth: '440px', margin: '0 auto 24px' }}>
+                We're still building our job database. Your answers are saved, check back soon or get email alerts for when new jobs land.
+              </p>
+              <div style={{ maxWidth: '280px', margin: '0 auto' }}>
+                <Link href="/pricing" className="btn-big">
+                  Get email alerts
+                </Link>
+              </div>
+            </div>
+          ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-            {MOCK_JOBS.map((job) => (
+            {jobs.map((job) => (
               <div key={job.id} className="card" style={{ padding: '32px' }}>
                 <div style={{ display: 'flex', gap: '20px', marginBottom: '20px', alignItems: 'flex-start' }}>
                   <div style={{
@@ -169,9 +123,11 @@ export default function ResultsPage() {
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    fontSize: '32px',
+                    fontSize: '24px',
+                    fontWeight: 700,
+                    color: 'var(--indigo)',
                     flexShrink: 0,
-                  }}>{job.companyEmoji}</div>
+                  }}>{job.company.charAt(0).toUpperCase()}</div>
 
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <h3 className="font-display" style={{ fontSize: '24px', marginBottom: '4px' }}>
@@ -228,9 +184,15 @@ export default function ResultsPage() {
                   </div>
 
                   <div style={{ display: 'flex', gap: '12px' }}>
-                    <button className="btn-big btn-yellow" style={{ flex: 1 }}>
+                    <a
+                      href={job.url || '#'}
+                      target={job.url ? '_blank' : undefined}
+                      rel={job.url ? 'noopener noreferrer' : undefined}
+                      className="btn-big btn-yellow"
+                      style={{ flex: 1, textDecoration: 'none' }}
+                    >
                       Apply now →
-                    </button>
+                    </a>
                     <button className="btn-big btn-ghost" style={{ flex: '0 0 auto', width: 'auto', padding: '20px 24px' }}>
                       🔖 Save
                     </button>
@@ -239,8 +201,10 @@ export default function ResultsPage() {
               </div>
             ))}
           </div>
+          )}
 
           {/* Bottom CTA */}
+          {jobs.length > 0 && (
           <div style={{ marginTop: '48px', textAlign: 'center', padding: '40px', background: 'var(--bg-warm)', borderRadius: '24px' }}>
             <div style={{ fontSize: '48px', marginBottom: '16px' }}>📬</div>
             <h3 className="font-display" style={{ fontSize: '28px', marginBottom: '12px' }}>
@@ -255,6 +219,7 @@ export default function ResultsPage() {
               </Link>
             </div>
           </div>
+          )}
         </div>
       </section>
     </div>
