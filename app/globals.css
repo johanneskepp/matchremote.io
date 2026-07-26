@@ -359,6 +359,54 @@ button {
   }
 }
 
+/* Job ticker - thin scrolling banner of recently added jobs */
+.job-ticker {
+  background: var(--ink);
+  overflow: hidden;
+  padding: 10px 0;
+  white-space: nowrap;
+}
+
+.job-ticker-track {
+  display: inline-flex;
+  align-items: center;
+  gap: 40px;
+  animation: ticker-scroll 32s linear infinite;
+  will-change: transform;
+}
+
+.job-ticker:hover .job-ticker-track {
+  animation-play-state: paused;
+}
+
+.job-ticker-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: white;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.job-ticker-item .dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--yellow);
+  flex-shrink: 0;
+}
+
+@keyframes ticker-scroll {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .job-ticker-track {
+    animation: none;
+  }
+}
+
 /* Big number for stats */
 .big-num {
   font-family: 'Fraunces', serif;
