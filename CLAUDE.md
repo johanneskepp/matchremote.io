@@ -11,7 +11,7 @@ AI-powered remote job matching platform. Users take a 15 question quiz and get p
 **Vision:** Build a service that generates revenue within 6 months. Heavy focus on SEO from day one. Organic growth is a primary channel, not an afterthought.
 
 **Payment provider:** Paddle (planned)
-**Domain:** matchremote.io (to be purchased)
+**Domain:** matchremote.io (purchased and connected via Vercel, DNS hosted at one.com)
 
 ## Writing Style Rules
 
@@ -26,7 +26,9 @@ Bad: "matchremote is a job board — for remote workers."
 Good: "matchremote is a job board for remote workers."
 
 ## Live URLs
-* Production: https://matchremote-io.vercel.app
+* Production: https://matchremote.io (primary, apex domain, connected 2026-07-26)
+* Also resolves: https://www.matchremote.io (308 redirects to apex)
+* Vercel fallback: https://matchremote-io.vercel.app
 * GitHub: https://github.com/johanneskepp/matchremote.io
 * Local path: C:\Users\johan\Desktop\matchremote-new
 
@@ -160,29 +162,34 @@ lib/
 
 ## Current Status
 
+Keep this section current after every session. This is the single source of truth for what is done versus not done, check it before starting new work.
+
 ### Working
 
-* Landing page (Duolingo style design, but needs to be more compact. Too much vertical scroll currently.)
-* Quiz with 15 questions, big clickable cards (needs redesign per Quiz UX spec)
-* Results page with 6 mock jobs (uses localStorage from quiz)
-* Pricing page (3 tiers)
-* Deployed on Vercel
+* Custom domain matchremote.io purchased and connected (Vercel + one.com DNS). Apex domain is primary, www redirects to it.
+* Landing page redesigned: compact single or two column layout, no long stacked sections. Scrolling recent jobs ticker (mock data) under the header. Hand drawn underline accent on the hero headline, wavy section divider. Color palette toned down deliberately, restrained to indigo plus neutrals, most emoji driven decoration removed after founder feedback that it looked "AI generic" and unprofessional. Numbered circle icons for "How it works", checkmark circles for "Why matchremote", both with proper semantic h2 headings.
+* Quiz fully redesigned per the Quiz UX Specification: shadowed prev and next question cards peeking beside the maximized current question (clickable to jump), a dot navigation strip to jump to any of the 15 questions directly, progress bar shows percent answered not position, every question is multi select regardless of whether it looks single choice.
+* Results page with 6 mock jobs (uses localStorage from quiz). Not yet built for real: see below.
+* Pricing page (3 tiers).
+* SEO foundations built: app/robots.ts, app/sitemap.ts, root layout metadata (title template, OG, Twitter cards, JSON-LD Organization plus WebSite), per page metadata (home, pricing) and per route layout.tsx metadata for client component pages (quiz, results, auth/login), dynamic OG image generator, noindex on results and auth/login, semantic main and h2 landmarks added to the homepage.
+* Deployed on Vercel, auto deploy on push to main.
 
 ### Not yet built
 
-* Real job matching (needs Supabase schema plus seed data)
-* Quiz redesign per new spec (shadowed prev and next questions, multi select everywhere)
-* SEO fundamentals (sitemap, robots.txt, structured data, meta tags per page)
-* Auth flow (magic link login)
-* Saved jobs
-* Email alerts (Resend integration exists in package.json but not wired)
-* Paddle payment integration
-* Job scraping (Firecrawl dependency added, not implemented)
+* Real job matching (needs Supabase schema plus seed data). All job data on the site right now (ticker, results) is mock/placeholder.
+* JobPosting structured data (schema.org) per job, blocked on real job data existing.
+* Programmatic SEO pages ("Remote [role] jobs in [timezone]"), blocked on real job data existing, per the SEO Priority section above.
+* Google Search Console verification and sitemap submission (not yet done, needed to actually get crawled and indexed, having sitemap.xml alone is not enough).
+* FAQ content section with FAQPage schema for additional longtail keyword coverage (in progress, see latest session).
+* Auth flow (magic link login).
+* Saved jobs.
+* Email alerts (Resend integration exists in package.json but not wired).
+* Paddle payment integration.
+* Job scraping (Firecrawl dependency added, not implemented).
 
 ### Known issues
 
 * Framework Preset in Vercel Production Overrides shows "Other". Project Settings correctly say "Next.js" but existing production overrides can't be reset from UI. Doesn't affect builds anymore.
-* Landing page is too long vertically. Needs restructuring per the no long pages principle.
 
 ## Deployment Flow
 
@@ -208,6 +215,8 @@ The user (Johannes) explicitly wants:
 * No em dashes, no en dashes. Avoid regular hyphens in copy.
 
 When making design changes: reach for warmth, personality, and clarity. Bigger is better. Fewer sections stacked vertically is better.
+
+**Update (2026-07):** founder pushed back on the color palette and decoration getting too "fun" and "AI generic" (rainbow tinted cards, sticker style rotated boxes, emoji everywhere). Current direction: keep the Duolingo bones (big buttons, generous radius, playful headline treatment) but restrain color to indigo plus neutrals for most UI chrome, save saturated color for the one primary CTA. Reduce emoji density, prefer numbered circles or checkmarks over decorative emoji icons for lists. When in doubt, favor the more restrained, professional looking option.
 
 ## User Preferences
 

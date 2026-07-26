@@ -22,6 +22,34 @@ export const metadata: Metadata = {
   },
 }
 
+const FAQS = [
+  {
+    question: 'How does matchremote match me to remote jobs?',
+    answer:
+      'You answer 15 quick questions about your skills, timezone, salary target, and how you like to work. We score every open role against your answers and show you the closest fits first.',
+  },
+  {
+    question: 'Is matchremote really free?',
+    answer:
+      'Yes. Taking the quiz and seeing your matches is free, no signup required. Paid plans add unlimited matches and daily email alerts.',
+  },
+  {
+    question: 'What makes a job truly remote on matchremote?',
+    answer:
+      'We only list roles open to fully remote candidates in your region. No "remote three days a week" or surprise return to office policies.',
+  },
+  {
+    question: 'Do I need to create an account to see my matches?',
+    answer:
+      'No. You can take the quiz and view your matches without signing up. An account just lets you save jobs and get alerts later.',
+  },
+  {
+    question: 'How is matchremote different from other remote job boards?',
+    answer:
+      'Most job boards match on keywords alone. We also match on timezone, salary expectations, meeting load, and work style, so you see fewer jobs that look right but feel wrong.',
+  },
+]
+
 const RECENT_JOBS = [
   { title: 'Senior React Developer', company: 'Vercel', pay: '$140k' },
   { title: 'Product Designer', company: 'Notion', pay: '$110k' },
@@ -31,11 +59,28 @@ const RECENT_JOBS = [
   { title: 'Data Analyst', company: 'Automattic', pay: '$95k' },
 ]
 
+const faqJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'FAQPage',
+  mainEntity: FAQS.map((faq) => ({
+    '@type': 'Question',
+    name: faq.question,
+    acceptedAnswer: {
+      '@type': 'Answer',
+      text: faq.answer,
+    },
+  })),
+}
+
 export default function Home() {
   const tickerItems = [...RECENT_JOBS, ...RECENT_JOBS]
 
   return (
     <div style={{ minHeight: '100vh', background: 'var(--bg)' }}>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }}
+      />
       {/* Header */}
       <header style={{
         padding: '16px 0',
@@ -221,6 +266,23 @@ export default function Home() {
                 </div>
               ))}
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* FAQ, targets longtail search queries */}
+      <section style={{ padding: '40px 0', background: 'white', borderBottom: '2px solid var(--border)' }}>
+        <div className="container">
+          <h2 className="font-display" style={{ fontSize: 'clamp(24px, 3vw, 32px)', marginBottom: '20px' }}>
+            Frequently asked questions
+          </h2>
+          <div>
+            {FAQS.map((faq) => (
+              <details key={faq.question} className="faq-item">
+                <summary>{faq.question}</summary>
+                <p>{faq.answer}</p>
+              </details>
+            ))}
           </div>
         </div>
       </section>
