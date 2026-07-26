@@ -171,16 +171,19 @@ Keep this section current after every session. This is the single source of trut
 * Quiz fully redesigned per the Quiz UX Specification: shadowed prev and next question cards peeking beside the maximized current question (clickable to jump), a dot navigation strip to jump to any of the 15 questions directly, progress bar shows percent answered not position, every question is multi select regardless of whether it looks single choice.
 * Results page with 6 mock jobs (uses localStorage from quiz). Not yet built for real: see below.
 * Pricing page (3 tiers).
-* SEO foundations built: app/robots.ts, app/sitemap.ts, root layout metadata (title template, OG, Twitter cards, JSON-LD Organization plus WebSite), per page metadata (home, pricing) and per route layout.tsx metadata for client component pages (quiz, results, auth/login), dynamic OG image generator, noindex on results and auth/login, semantic main and h2 landmarks added to the homepage.
+* SEO foundations built: app/robots.ts, app/sitemap.ts, root layout metadata (title template, OG, Twitter cards, JSON-LD Organization plus WebSite), per page metadata (home, pricing) and per route layout.tsx metadata for client component pages (quiz, results, auth/login), dynamic OG image generator, noindex on results and auth/login, semantic main and h2 landmarks added to the homepage, FAQ section on the homepage with FAQPage schema for longtail keyword coverage.
+* Google Search Console fully set up (2026-07-26): domain property verified via DNS TXT record at one.com, sitemap.xml submitted and processed (3 pages discovered), manual indexing requested for the homepage and /quiz.
 * Deployed on Vercel, auto deploy on push to main.
+
+### Reminder: revisit Google Search Console when new pages exist
+
+Search Console is set up for the current 3 static pages only (/, /quiz, /pricing). Whenever new indexable pages are added, most importantly the programmatic "[role] jobs in [timezone]" pages and any real job detail pages once real job data exists, come back and: confirm they appear in app/sitemap.ts, wait for Search Console to pick up the updated sitemap (or resubmit it), and manually request indexing for at least the first batch so they get crawled quickly instead of waiting for the next natural crawl.
 
 ### Not yet built
 
 * Real job matching (needs Supabase schema plus seed data). All job data on the site right now (ticker, results) is mock/placeholder.
 * JobPosting structured data (schema.org) per job, blocked on real job data existing.
-* Programmatic SEO pages ("Remote [role] jobs in [timezone]"), blocked on real job data existing, per the SEO Priority section above.
-* Google Search Console verification and sitemap submission (not yet done, needed to actually get crawled and indexed, having sitemap.xml alone is not enough).
-* FAQ content section with FAQPage schema for additional longtail keyword coverage (in progress, see latest session).
+* Programmatic SEO pages ("Remote [role] jobs in [timezone]"), blocked on real job data existing, per the SEO Priority section above. Remember to add these to app/sitemap.ts and revisit Search Console once built, see reminder above.
 * Auth flow (magic link login).
 * Saved jobs.
 * Email alerts (Resend integration exists in package.json but not wired).
