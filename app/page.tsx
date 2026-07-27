@@ -4,6 +4,24 @@ import { getAllJobs } from '@/lib/db/queries'
 import { formatSalary } from '@/lib/utils/helpers'
 import type { Job } from '@/lib/db/types'
 
+// Design direction (2026-07-27): dark, restrained fintech-premium — a
+// deliberate departure from the lighter Duolingo-esque shell still used by
+// /quiz, /results, and /pricing, scoped to just this landing page per an
+// explicit ask for a more serious first impression: darker, less on-page
+// content, one dominant push toward the quiz, no emoji-driven decoration.
+// Near-black surface, a single restrained indigo glow (not a rainbow of
+// accents), lighter Fraunces weights for an editorial rather than playful
+// feel. Colors are local consts rather than the shared --bg/--ink tokens so
+// the rest of the site is untouched.
+const BG = '#0A0C11'
+const SURFACE = '#12151D'
+const BORDER = 'rgba(255,255,255,0.08)'
+const TEXT = '#F1F2F4'
+const TEXT_MUTED = 'rgba(241,242,244,0.56)'
+const ACCENT = '#6C67F5'
+const ACCENT_SOFT = 'rgba(108,103,245,0.14)'
+const SUCCESS = '#3FDDA0'
+
 const TITLE = 'Personalized Remote Job Matches by Timezone, Salary & Work Style'
 const DESCRIPTION =
   'Free 3 minute quiz matches you to remote jobs based on your timezone, salary target, and how you like to work. No signup, no keyword spam, just real fits.'
@@ -50,6 +68,24 @@ const FAQS = [
     question: 'How is matchremote different from other remote job boards?',
     answer:
       'Most job boards match on keywords alone. We also match on timezone, salary expectations, meeting load, and work style, so you see fewer jobs that look right but feel wrong.',
+  },
+]
+
+const VALUE_ROWS = [
+  {
+    n: '01',
+    title: 'Real fit, not keywords',
+    text: 'Scored on salary target, timezone, and how you actually like to work.',
+  },
+  {
+    n: '02',
+    title: 'Fresh jobs, every day',
+    text: 'Pulled continuously from the sources that actually post remote roles.',
+  },
+  {
+    n: '03',
+    title: 'Yours in minutes',
+    text: 'Fifteen questions, then real matches. No account required to start.',
   },
 ]
 
@@ -106,298 +142,237 @@ export default async function Home() {
   const tickerItems = [...recentJobs, ...recentJobs]
 
   return (
-    <div style={{ minHeight: '100vh', background: 'var(--bg)' }}>
+    <div style={{ minHeight: '100vh', background: BG, color: TEXT, position: 'relative', overflow: 'hidden' }}>
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }}
       />
+
+      {/* Restrained glow, not a rainbow gradient mesh, just depth behind the hero */}
+      <div
+        aria-hidden="true"
+        style={{
+          position: 'absolute',
+          top: '-280px',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          width: '1100px',
+          height: '620px',
+          background: `radial-gradient(closest-side, ${ACCENT_SOFT}, transparent)`,
+          pointerEvents: 'none',
+        }}
+      />
+
       {/* Header */}
-      <header style={{
-        padding: '16px 0',
-        borderBottom: '2px solid var(--border)',
-        background: 'white',
-      }}>
+      <header style={{ position: 'relative', padding: '24px 0', borderBottom: `1px solid ${BORDER}` }}>
         <div className="container-wide" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <Link href="/" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <span style={{ fontSize: '28px' }}>🎯</span>
-            <span className="font-display" style={{ fontSize: '22px', fontWeight: 700, color: 'var(--ink)' }}>matchremote</span>
+          <Link href="/" style={{ textDecoration: 'none' }}>
+            <span className="font-display" style={{ fontSize: '20px', fontWeight: 500, color: TEXT, letterSpacing: '-0.01em' }}>
+              matchremote
+            </span>
           </Link>
-          <Link href="/quiz" style={{
-            padding: '12px 24px',
-            background: 'var(--indigo)',
-            color: 'white',
-            borderRadius: '12px',
-            fontWeight: 700,
-            textDecoration: 'none',
-            fontSize: '16px',
-          }}>
-            Start quiz
+          <Link
+            href="/quiz"
+            style={{
+              padding: '10px 20px',
+              background: 'transparent',
+              border: `1px solid ${BORDER}`,
+              color: TEXT,
+              borderRadius: '8px',
+              fontWeight: 500,
+              textDecoration: 'none',
+              fontSize: '14px',
+            }}
+          >
+            Take the quiz
           </Link>
         </div>
       </header>
 
       {/* Recently added jobs ticker */}
-      <div className="job-ticker" aria-label="Recently added jobs">
+      <div
+        aria-label="Recently added jobs"
+        style={{ position: 'relative', overflow: 'hidden', padding: '10px 0', background: SURFACE, borderBottom: `1px solid ${BORDER}`, whiteSpace: 'nowrap' }}
+      >
         <div className="job-ticker-track">
           {tickerItems.map((job, i) => (
-            <span className="job-ticker-item" key={i}>
-              <span className="job-badge">NEW</span>
-              {job.title} <span className="company">at {job.company}</span> <span className="pay">{job.pay}</span>
+            <span key={i} style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', fontSize: '13px', color: TEXT_MUTED }}>
+              <span style={{
+                fontFamily: 'ui-monospace, monospace',
+                fontSize: '10px',
+                letterSpacing: '0.06em',
+                color: ACCENT,
+                border: `1px solid ${ACCENT}`,
+                borderRadius: '4px',
+                padding: '2px 6px',
+                flexShrink: 0,
+              }}>NEW</span>
+              <span style={{ color: TEXT }}>{job.title}</span>
+              <span>at {job.company}</span>
+              <span style={{ color: SUCCESS, fontWeight: 600 }}>{job.pay}</span>
             </span>
           ))}
         </div>
       </div>
 
-      <main>
-      {/* Hero */}
-      <section style={{ padding: '48px 0 36px' }}>
-        <div className="container" style={{ textAlign: 'center' }}>
-          <div style={{ display: 'inline-flex', alignItems: 'center', padding: '6px 18px', background: 'white', border: '1.5px solid var(--border)', borderRadius: '999px', marginBottom: '20px', fontSize: '14px', fontWeight: 600, color: 'var(--ink-soft)' }}>
-            Free · Takes 3 minutes
-          </div>
+      <main style={{ position: 'relative' }}>
+        {/* Hero */}
+        <section style={{ padding: '96px 0 72px' }}>
+          <div className="container" style={{ textAlign: 'center' }}>
+            <div
+              className="premium-fade-up"
+              style={{
+                fontSize: '12px',
+                fontWeight: 600,
+                letterSpacing: '0.14em',
+                textTransform: 'uppercase',
+                color: TEXT_MUTED,
+                marginBottom: '24px',
+                animation: 'premium-fade-up 0.7s ease both',
+              }}
+            >
+              Remote job matching, refined
+            </div>
 
-          <h1 className="font-display" style={{
-            fontSize: 'clamp(34px, 6vw, 58px)',
-            fontWeight: 700,
-            lineHeight: 1.08,
-            marginBottom: '16px',
-          }}>
-            Find remote work that{' '}
-            <span style={{ position: 'relative', display: 'inline-block' }}>
-              <em style={{ color: 'var(--indigo)', fontStyle: 'italic' }}>actually</em>
-              <svg
-                viewBox="0 0 100 12"
-                preserveAspectRatio="none"
-                style={{ position: 'absolute', left: 0, bottom: '-8px', width: '100%', height: '12px' }}
-                aria-hidden="true"
+            <h1
+              className="font-display premium-fade-up"
+              style={{
+                fontSize: 'clamp(38px, 6vw, 64px)',
+                fontWeight: 300,
+                lineHeight: 1.1,
+                letterSpacing: '-0.02em',
+                marginBottom: '20px',
+                color: TEXT,
+                animation: 'premium-fade-up 0.7s ease 0.08s both',
+              }}
+            >
+              Work matched to how<br />
+              you <span style={{ color: ACCENT }}>actually</span> want to live.
+            </h1>
+
+            <p
+              className="premium-fade-up"
+              style={{
+                fontSize: '18px',
+                fontWeight: 300,
+                color: TEXT_MUTED,
+                maxWidth: '480px',
+                margin: '0 auto 36px',
+                lineHeight: 1.6,
+                animation: 'premium-fade-up 0.7s ease 0.16s both',
+              }}
+            >
+              Fifteen questions on salary, timezone, and work style. Real remote roles ranked by fit, not keywords.
+            </p>
+
+            <div
+              className="premium-fade-up"
+              style={{ animation: 'premium-fade-up 0.7s ease 0.24s both' }}
+            >
+              <Link
+                href="/quiz"
+                className="premium-cta"
+                style={{
+                  background: ACCENT,
+                  color: '#fff',
+                  boxShadow: `0 0 0 1px rgba(108,103,245,0.4), 0 12px 32px -8px ${ACCENT_SOFT}`,
+                }}
               >
-                <path
-                  d="M1,7 Q15,1 27,7 T53,7 T79,7 T99,6"
-                  fill="none"
-                  stroke="var(--yellow)"
-                  strokeWidth="4"
-                  strokeLinecap="round"
-                />
-              </svg>
-            </span>{' '}
-            fits your life.
-          </h1>
+                Start matching →
+              </Link>
 
-          <p style={{
-            fontSize: '18px',
-            color: 'var(--ink-soft)',
-            maxWidth: '540px',
-            margin: '0 auto 28px',
-            lineHeight: 1.5,
-          }}>
-            Skip the endless scrolling. Answer 15 quick questions and get jobs matched to your timezone, salary, and how you actually want to work.
-          </p>
-
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', maxWidth: '360px', margin: '0 auto' }}>
-            <Link href="/quiz" className="btn-big">
-              Start matching →
-            </Link>
-            <Link href="/pricing" style={{ color: 'var(--ink-soft)', fontSize: '14px', textDecoration: 'underline' }}>
-              See pricing
-            </Link>
+              <p style={{ marginTop: '16px', fontSize: '13px', color: TEXT_MUTED }}>
+                Top 3 matches free. Unlock every match for $9/mo.
+              </p>
+              <p style={{ marginTop: '8px', fontSize: '12px', color: 'rgba(241,242,244,0.36)' }}>
+                No signup to start · Fresh jobs daily · Fully remote only
+              </p>
+            </div>
           </div>
+        </section>
 
-          {/* Trust indicators */}
-          <div style={{ marginTop: '28px', display: 'flex', gap: '24px', justifyContent: 'center', flexWrap: 'wrap' }}>
-            {['No signup to start', 'Fresh jobs daily', 'Truly remote only'].map((text) => (
-              <span key={text} style={{ fontSize: '14px', fontWeight: 600, color: 'var(--ink-soft)' }}>
-                {text}
-              </span>
+        {/* Value row, condensed to three lines instead of two detailed columns */}
+        <section style={{ padding: '56px 0', borderTop: `1px solid ${BORDER}` }}>
+          <div className="container-wide" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '40px' }}>
+            {VALUE_ROWS.map((row) => (
+              <div key={row.n}>
+                <div style={{ fontFamily: 'ui-monospace, monospace', fontSize: '13px', color: ACCENT, marginBottom: '10px' }}>
+                  {row.n}
+                </div>
+                <h2 className="font-display" style={{ fontSize: '19px', fontWeight: 500, color: TEXT, marginBottom: '6px' }}>
+                  {row.title}
+                </h2>
+                <p style={{ fontSize: '14px', color: TEXT_MUTED, margin: 0, lineHeight: 1.6 }}>
+                  {row.text}
+                </p>
+              </div>
             ))}
           </div>
-        </div>
-      </section>
+        </section>
 
-      {/* Wavy divider instead of a straight line */}
-      <svg
-        viewBox="0 0 1440 40"
-        preserveAspectRatio="none"
-        style={{ display: 'block', width: '100%', height: '32px', marginBottom: '-1px' }}
-        aria-hidden="true"
-      >
-        <path
-          d="M0,20 Q60,38 120,20 T240,20 T360,20 T480,20 T600,20 T720,20 T840,20 T960,20 T1080,20 T1200,20 T1320,20 T1440,20 L1440,40 L0,40 Z"
-          fill="white"
-        />
-      </svg>
-
-      {/* How it works + Why us, side by side to stay compact */}
-      <section style={{ padding: '40px 0', background: 'white', borderBottom: '2px solid var(--border)' }}>
-        <div className="container-wide" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '40px' }}>
-          <div>
-            <h2 style={{ fontSize: '13px', fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--ink-soft)', margin: '0 0 14px' }}>
-              How it works
+        {/* FAQ, targets longtail search queries */}
+        <section style={{ padding: '56px 0', borderTop: `1px solid ${BORDER}` }}>
+          <div className="container">
+            <h2 className="font-display" style={{ fontSize: '22px', fontWeight: 500, color: TEXT, marginBottom: '8px' }}>
+              Frequently asked questions
             </h2>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-              {[
-                { title: 'Answer 15 questions', text: 'About your skills, work style, timezone, and salary.' },
-                { title: 'We analyze thousands of jobs', text: 'Scored against what actually matters to you.' },
-                { title: 'Get your top matches', text: 'Your top 3 are free. Unlock every match for $9/mo.' },
-              ].map((step, i) => (
-                <div key={i} style={{ display: 'flex', gap: '16px', alignItems: 'flex-start' }}>
-                  <div style={{
-                    fontSize: '15px',
-                    fontWeight: 700,
-                    flexShrink: 0,
-                    width: '32px',
-                    height: '32px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    background: 'var(--bg)',
-                    border: '1.5px solid var(--border)',
-                    color: 'var(--indigo)',
-                    borderRadius: '50%',
-                  }}>{i + 1}</div>
-                  <div>
-                    <h3 className="font-display" style={{ fontSize: '18px', marginBottom: '2px' }}>{step.title}</h3>
-                    <p style={{ color: 'var(--ink-soft)', margin: 0, fontSize: '15px', fontWeight: 500 }}>{step.text}</p>
-                  </div>
-                </div>
+            <div>
+              {FAQS.map((faq) => (
+                <details key={faq.question} style={{ borderBottom: `1px solid ${BORDER}` }}>
+                  <summary
+                    style={{
+                      cursor: 'pointer',
+                      listStyle: 'none',
+                      padding: '18px 0',
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      gap: '16px',
+                      fontFamily: 'Inter, sans-serif',
+                      fontWeight: 500,
+                      fontSize: '15px',
+                      color: TEXT,
+                    }}
+                  >
+                    {faq.question}
+                  </summary>
+                  <p style={{ margin: '0 0 18px', color: TEXT_MUTED, fontSize: '14px', lineHeight: 1.65, maxWidth: '640px' }}>
+                    {faq.answer}
+                  </p>
+                </details>
               ))}
             </div>
           </div>
+        </section>
 
-          <div>
-            <h2 style={{ fontSize: '13px', fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--ink-soft)', margin: '0 0 14px' }}>
-              Why matchremote
+        {/* Final CTA */}
+        <section style={{ padding: '64px 0 80px', borderTop: `1px solid ${BORDER}` }}>
+          <div className="container" style={{ textAlign: 'center' }}>
+            <h2 className="font-display" style={{ fontSize: 'clamp(26px, 4vw, 36px)', fontWeight: 300, color: TEXT, marginBottom: '28px' }}>
+              Ready to see your matches?
             </h2>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-              {[
-                { title: 'Timezone-aware', text: 'No 3am meetings.' },
-                { title: 'Real salaries', text: 'No "competitive" nonsense.' },
-                { title: 'Async-first', text: 'Respects deep work.' },
-                { title: 'Beyond keywords', text: 'Matched on values, too.' },
-              ].map((feat, i) => (
-                <div key={i} style={{ display: 'flex', gap: '16px', alignItems: 'flex-start' }}>
-                  <div style={{
-                    fontSize: '15px',
-                    fontWeight: 700,
-                    flexShrink: 0,
-                    width: '32px',
-                    height: '32px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    background: 'var(--bg)',
-                    border: '1.5px solid var(--border)',
-                    color: 'var(--indigo)',
-                    borderRadius: '50%',
-                  }}>✓</div>
-                  <div>
-                    <h3 className="font-display" style={{ fontSize: '18px', marginBottom: '2px' }}>{feat.title}</h3>
-                    <p style={{ color: 'var(--ink-soft)', margin: 0, fontSize: '15px', fontWeight: 500 }}>{feat.text}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
+            <Link
+              href="/quiz"
+              className="premium-cta"
+              style={{
+                background: ACCENT,
+                color: '#fff',
+                boxShadow: `0 0 0 1px rgba(108,103,245,0.4), 0 12px 32px -8px ${ACCENT_SOFT}`,
+              }}
+            >
+              Start quiz →
+            </Link>
           </div>
-        </div>
-      </section>
-
-      {/* Free vs Pro teaser, sets expectations before the quiz so the paywall on /results isn't a surprise */}
-      <section style={{ padding: '48px 0', background: 'var(--bg)' }}>
-        <div className="container">
-          <div style={{ textAlign: 'center', marginBottom: '32px' }}>
-            <h2 className="font-display" style={{ fontSize: 'clamp(26px, 4vw, 36px)', marginBottom: '10px' }}>
-              Free to try. More when you&apos;re ready.
-            </h2>
-            <p style={{ color: 'var(--ink-soft)', fontSize: '16px', maxWidth: '480px', margin: '0 auto' }}>
-              The quiz and your top 3 matches cost nothing. Everything below unlocks for $9/mo.
-            </p>
-          </div>
-
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '20px', maxWidth: '720px', margin: '0 auto' }}>
-            <div className="card">
-              <div style={{ fontSize: '32px', marginBottom: '12px' }}>🎯</div>
-              <h3 className="font-display" style={{ fontSize: '20px', marginBottom: '4px' }}>Free</h3>
-              <p style={{ color: 'var(--ink-soft)', fontSize: '15px', marginBottom: '16px' }}>Take the quiz, see what fits</p>
-              <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                {['Your top 3 matches, full detail', 'Match score & why it fits', 'Retake the quiz anytime'].map((f) => (
-                  <li key={f} style={{ display: 'flex', gap: '8px', fontSize: '14px', color: 'var(--ink-soft)' }}>
-                    <span style={{ color: 'var(--success)', fontWeight: 700 }}>✓</span> {f}
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            <div className="card" style={{ borderColor: 'var(--indigo)', borderWidth: '3px' }}>
-              <div style={{ fontSize: '32px', marginBottom: '12px' }}>⚡</div>
-              <h3 className="font-display" style={{ fontSize: '20px', marginBottom: '4px' }}>Pro · $9/mo</h3>
-              <p style={{ color: 'var(--ink-soft)', fontSize: '15px', marginBottom: '16px' }}>For when you&apos;re serious about moving</p>
-              <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 20px' }}>
-                {['Unlock all your matches', 'Save jobs to revisit later', 'Email alerts for new matches'].map((f) => (
-                  <li key={f} style={{ display: 'flex', gap: '8px', fontSize: '14px', marginBottom: '8px' }}>
-                    <span style={{ color: 'var(--success)', fontWeight: 700 }}>✓</span> {f}
-                  </li>
-                ))}
-              </ul>
-              <Link href="/pricing" style={{ fontSize: '14px', fontWeight: 700, color: 'var(--indigo)', textDecoration: 'underline' }}>
-                See full pricing →
-              </Link>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* FAQ, targets longtail search queries */}
-      <section style={{ padding: '40px 0', background: 'white', borderBottom: '2px solid var(--border)' }}>
-        <div className="container">
-          <h2 className="font-display" style={{ fontSize: 'clamp(24px, 3vw, 32px)', marginBottom: '20px' }}>
-            Frequently asked questions
-          </h2>
-          <div>
-            {FAQS.map((faq) => (
-              <details key={faq.question} className="faq-item">
-                <summary>{faq.question}</summary>
-                <p>{faq.answer}</p>
-              </details>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Final CTA */}
-      <section style={{ padding: '40px 0 56px' }}>
-        <div className="container">
-          <div style={{
-            background: 'var(--indigo)',
-            borderRadius: '28px',
-            padding: '40px 32px',
-            textAlign: 'center',
-            color: 'white',
-            border: '4px solid var(--indigo-dark)',
-          }}>
-            <h2 className="font-display" style={{ color: 'white', fontSize: 'clamp(26px, 4vw, 38px)', marginBottom: '10px' }}>
-              Ready to find your fit?
-            </h2>
-            <p style={{ fontSize: '16px', opacity: 0.9, marginBottom: '24px', maxWidth: '440px', margin: '0 auto 24px' }}>
-              Free, no signup needed. Just 15 questions between you and better work.
-            </p>
-            <div style={{ maxWidth: '300px', margin: '0 auto' }}>
-              <Link href="/quiz" className="btn-big btn-yellow">
-                Start quiz →
-              </Link>
-            </div>
-          </div>
-        </div>
-      </section>
+        </section>
       </main>
 
       {/* Footer */}
-      <footer style={{ padding: '24px 0', borderTop: '2px solid var(--border)', background: 'white' }}>
+      <footer style={{ position: 'relative', padding: '28px 0', borderTop: `1px solid ${BORDER}` }}>
         <div className="container-wide" style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: '16px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <span style={{ fontSize: '22px' }}>🎯</span>
-            <span className="font-display" style={{ fontWeight: 700 }}>matchremote</span>
-          </div>
-          <div style={{ color: 'var(--ink-soft)', fontSize: '13px' }}>
-            © 2026 matchremote. Made for people who want more.
+          <span className="font-display" style={{ fontSize: '15px', fontWeight: 500, color: TEXT }}>matchremote</span>
+          <div style={{ display: 'flex', gap: '20px', alignItems: 'center' }}>
+            <Link href="/pricing" style={{ color: TEXT_MUTED, fontSize: '13px', textDecoration: 'none' }}>Pricing</Link>
+            <span style={{ color: TEXT_MUTED, fontSize: '13px' }}>© 2026 matchremote</span>
           </div>
         </div>
       </footer>
