@@ -34,7 +34,7 @@ const FAQS = [
   {
     question: 'Is matchremote really free?',
     answer:
-      'Yes. Taking the quiz and seeing your matches is free, no signup required. Paid plans add unlimited matches and daily email alerts.',
+      'Yes. Taking the quiz and seeing your top 3 matches is free, no signup required. Pro ($9/mo) unlocks every match, saved jobs, and email alerts.',
   },
   {
     question: 'What makes a job truly remote on matchremote?',
@@ -237,7 +237,7 @@ export default async function Home() {
               {[
                 { title: 'Answer 15 questions', text: 'About your skills, work style, timezone, and salary.' },
                 { title: 'We analyze thousands of jobs', text: 'Scored against what actually matters to you.' },
-                { title: 'Get your top matches', text: 'Ranked by fit. Apply directly, no middleman.' },
+                { title: 'Get your top matches', text: 'Your top 3 are free. Unlock every match for $9/mo.' },
               ].map((step, i) => (
                 <div key={i} style={{ display: 'flex', gap: '16px', alignItems: 'flex-start' }}>
                   <div style={{
@@ -295,6 +295,51 @@ export default async function Home() {
                   </div>
                 </div>
               ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Free vs Pro teaser, sets expectations before the quiz so the paywall on /results isn't a surprise */}
+      <section style={{ padding: '48px 0', background: 'var(--bg)' }}>
+        <div className="container">
+          <div style={{ textAlign: 'center', marginBottom: '32px' }}>
+            <h2 className="font-display" style={{ fontSize: 'clamp(26px, 4vw, 36px)', marginBottom: '10px' }}>
+              Free to try. More when you&apos;re ready.
+            </h2>
+            <p style={{ color: 'var(--ink-soft)', fontSize: '16px', maxWidth: '480px', margin: '0 auto' }}>
+              The quiz and your top 3 matches cost nothing. Everything below unlocks for $9/mo.
+            </p>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '20px', maxWidth: '720px', margin: '0 auto' }}>
+            <div className="card">
+              <div style={{ fontSize: '32px', marginBottom: '12px' }}>🎯</div>
+              <h3 className="font-display" style={{ fontSize: '20px', marginBottom: '4px' }}>Free</h3>
+              <p style={{ color: 'var(--ink-soft)', fontSize: '15px', marginBottom: '16px' }}>Take the quiz, see what fits</p>
+              <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                {['Your top 3 matches, full detail', 'Match score & why it fits', 'Retake the quiz anytime'].map((f) => (
+                  <li key={f} style={{ display: 'flex', gap: '8px', fontSize: '14px', color: 'var(--ink-soft)' }}>
+                    <span style={{ color: 'var(--success)', fontWeight: 700 }}>✓</span> {f}
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            <div className="card" style={{ borderColor: 'var(--indigo)', borderWidth: '3px' }}>
+              <div style={{ fontSize: '32px', marginBottom: '12px' }}>⚡</div>
+              <h3 className="font-display" style={{ fontSize: '20px', marginBottom: '4px' }}>Pro · $9/mo</h3>
+              <p style={{ color: 'var(--ink-soft)', fontSize: '15px', marginBottom: '16px' }}>For when you&apos;re serious about moving</p>
+              <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 20px' }}>
+                {['Unlock all your matches', 'Save jobs to revisit later', 'Email alerts for new matches'].map((f) => (
+                  <li key={f} style={{ display: 'flex', gap: '8px', fontSize: '14px', marginBottom: '8px' }}>
+                    <span style={{ color: 'var(--success)', fontWeight: 700 }}>✓</span> {f}
+                  </li>
+                ))}
+              </ul>
+              <Link href="/pricing" style={{ fontSize: '14px', fontWeight: 700, color: 'var(--indigo)', textDecoration: 'underline' }}>
+                See full pricing →
+              </Link>
             </div>
           </div>
         </div>
