@@ -1,11 +1,14 @@
 import type { MetadataRoute } from 'next'
+import { getAllJobs } from '@/lib/db/queries'
+import { JOB_CATEGORIES } from '@/lib/utils/job-categories'
+import { buildJobSlug } from '@/lib/utils/job-slug'
 
 const BASE_URL = 'https://matchremote.io'
 
-export default function sitemap(): MetadataRoute.Sitemap {
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const now = new Date()
 
-  return [
+  const staticPages: MetadataRoute.Sitemap = [
     {
       url: BASE_URL,
       lastModified: now,
@@ -24,5 +27,28 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: 'monthly',
       priority: 0.6,
     },
+    {
+      url: `${BASE_URL}/remote-jobs`,
+      lastModified: now,
+      changeFrequency: 'weekly',
+      priority: 0.7,
+    },
   ]
+
+  const categoryPages: MetadataRoute.Sitemap = JOB_CATEGORIES.map((category) => ({
+    url: `${BASE_URL}/remote-jobs/${category.slug}`,
+    lastModified: now,
+    changeFrequency: 'daily',
+    priority: 0.7,
+  }))
+
+  const jobs = await getAllJobs(300)
+  const jobPages: MetadataRoute.Sitemap = jobs.map((job) => ({
+    url: `${BASE_URL}/jobs/${buildJobSlug(job)}`,
+    lastModified: job.scraped_at ? new Date(job.scraped_at) : now,
+    changeFrequency: 'weekly',
+    priority: 0.5,
+  }))
+
+  return [...staticPages, ...categoryPages, ...jobPages]
 }
