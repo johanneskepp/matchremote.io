@@ -13,6 +13,24 @@ export interface MatchResult {
   }
 }
 
+// Max points per dimension if it can be evaluated at all. A job missing
+// salary/timezone/industry data no longer gets a flat "partial credit" score
+// that permanently caps its ceiling below 100, that structurally punished
+// jobs for missing optional metadata rather than for being a poor fit.
+// Instead, dimensions we can't evaluate are excluded from BOTH the earned
+// points and the max-possible denominator, so the final percentage reflects
+// only what we actually know, letting any job reach 100% on the dimensions
+// that are knowable for it.
+const WEIGHTS = {
+  asyncAlignment: 20,
+  salaryMatch: 20,
+  experienceMatch: 15,
+  skillsMatch: 15,
+  timezoneFit: 10,
+  scheduleFit: 10,
+  industryPreference: 10,
+} as const
+
 /**
  * Calculate match score between a user's preferences and a job
  * Returns a score 0-100 with detailed reasons
@@ -33,14 +51,24 @@ export function calculateMatchScore(
     industryPreference: 0,
   }
 
+  const applicable: Record<keyof typeof WEIGHTS, boolean> = {
+    asyncAlignment: true,
+    salaryMatch: true,
+    experienceMatch: true,
+    skillsMatch: true,
+    timezoneFit: true,
+    scheduleFit: true,
+    industryPreference: true,
+  }
+
   // 1. ASYNC ALIGNMENT (20 points)
-  // If job has async_score, compare with user's async_need
+  // job.async_score is inferred from the description at ingest time
+  // (lib/utils/async-score.ts) for every job, so this is always evaluable.
   if (job.async_score) {
     const asyncDiff = Math.abs(job.async_score - userPreferences.async_need)
     reasons.asyncAlignment = Math.max(0, 20 - asyncDiff * 2)
   } else {
-    // Default to 10 points if async_score not available
-    reasons.asyncAlignment = 10
+    applicable.asyncAlignment = false
   }
 
   // 2. SALARY MATCH (20 points)
@@ -57,7 +85,7 @@ export function calculateMatchScore(
       reasons.salaryMatch = 5
     }
   } else {
-    reasons.salaryMatch = 5 // Partial credit if salary not specified
+    applicable.salaryMatch = false
   }
 
   // 3. EXPERIENCE LEVEL MATCH (15 points)
@@ -68,6 +96,8 @@ export function calculateMatchScore(
     const matches = experienceKeywords.filter(kw => descLower.includes(kw)).length
 
     reasons.experienceMatch = Math.min(15, matches * 3)
+  } else {
+    applicable.experienceMatch = false
   }
 
   // 4. SKILLS MATCH (15 points)
@@ -79,6 +109,8 @@ export function calculateMatchScore(
 
     const skillScore = (skillMatches / userPreferences.skills.length) * 15
     reasons.skillsMatch = Math.min(15, skillScore)
+  } else {
+    applicable.skillsMatch = false
   }
 
   // 5. TIMEZONE FIT (10 points)
@@ -91,7 +123,7 @@ export function calculateMatchScore(
       reasons.timezoneFit = 2
     }
   } else {
-    reasons.timezoneFit = 5 // Partial credit
+    applicable.timezoneFit = false
   }
 
   // 6. SCHEDULE FIT (10 points)
@@ -107,24 +139,43 @@ export function calculateMatchScore(
   }
 
   // 7. INDUSTRY PREFERENCE (10 points)
-  if (userPreferences.industry_pref && userPreferences.industry_pref.length > 0) {
-    const jobIndustries = job.industries || []
+  // Only evaluable if the user actually cares about industry AND the job has
+  // at least one inferred industry tag, an empty jobIndustries list means we
+  // don't know, not that it doesn't match, so it's excluded rather than
+  // scored 0.
+  if (userPreferences.industry_pref && userPreferences.industry_pref.length > 0 && job.industries && job.industries.length > 0) {
     const industryMatches = userPreferences.industry_pref.filter(pref =>
-      jobIndustries.some(ind => ind.toLowerCase().includes(pref.toLowerCase()))
+      job.industries.some(ind => ind.toLowerCase().includes(pref.toLowerCase()))
     ).length
 
     reasons.industryPreference = industryMatches > 0 ? 10 : 0
+  } else {
+    applicable.industryPreference = false
   }
 
-  // Calculate total
-  const score = Math.round(
-    Object.values(reasons).reduce((a, b) => a + b, 0)
-  )
+  // Percentage of only the dimensions we could actually evaluate, so a job
+  // missing one field isn't punished as hard as one missing several.
+  const totalWeight = Object.values(WEIGHTS).reduce((a, b) => a + b, 0)
+  const applicableDims = (Object.keys(WEIGHTS) as (keyof typeof WEIGHTS)[]).filter((dim) => applicable[dim])
+  const earned = applicableDims.reduce((sum, dim) => sum + reasons[dim], 0)
+  const maxPossible = applicableDims.reduce((sum, dim) => sum + WEIGHTS[dim], 0)
+  const rawPercent = maxPossible > 0 ? (earned / maxPossible) * 100 : 0
+
+  // But a job we barely have data on still shouldn't be able to claim a
+  // "perfect" match, that would be a false promise (e.g. a job with unknown
+  // salary "perfectly" matching someone's salary target makes no sense).
+  // Confidence factor scales the ceiling down with how much of the job we
+  // actually know: 0.5 + 0.5 * (known weight / total weight). Missing only
+  // salary (20/100 of the weight) caps the ceiling around 90%, missing
+  // salary + timezone + industry caps it around 80%, full data keeps 100%
+  // reachable.
+  const confidence = 0.5 + 0.5 * (maxPossible / totalWeight)
+  const score = Math.round(rawPercent * confidence)
 
   console.log('[Matching] Score calculated:', score, 'Breakdown:', reasons)
 
   return {
-    score: Math.min(100, score),
+    score: Math.min(100, Math.max(0, score)),
     reasons,
   }
 }
@@ -144,29 +195,21 @@ function getExperienceKeywords(level: number): string[] {
 }
 
 /**
- * Check if two timezones are compatible (within 4 hours)
+ * Check if two timezone regions have workable overlap. Both the quiz
+ * (app/quiz/page.tsx "timezone" question) and job ingestion
+ * (lib/utils/timezone-region.ts) use the same three broad buckets, not
+ * specific offsets, so compatibility is just adjacency between them:
+ * americas/europe overlap in the morning/afternoon, europe/asia overlap
+ * similarly, but americas/asia barely overlap at all.
  */
-function isCompatibleTimezone(tz1: string, tz2: string): boolean {
-  // Simplified timezone compatibility check
-  const tzMap: Record<string, number> = {
-    // UTC offsets for common timezones
-    'UTC': 0,
-    'PST': -8, 'PDT': -7,
-    'MST': -7, 'MDT': -6,
-    'CST': -6, 'CDT': -5,
-    'EST': -5, 'EDT': -4,
-    'GMT': 0,
-    'CET': 1, 'CEST': 2,
-    'IST': 5.5,
-    'SGT': 8,
-    'AEST': 10,
-    'JST': 9,
-  }
+const ADJACENT_REGIONS: Record<string, string[]> = {
+  americas: ['europe'],
+  europe: ['americas', 'asia'],
+  asia: ['europe'],
+}
 
-  const offset1 = tzMap[tz1.toUpperCase()] ?? 0
-  const offset2 = tzMap[tz2.toUpperCase()] ?? 0
-
-  return Math.abs(offset1 - offset2) <= 4
+function isCompatibleTimezone(region1: string, region2: string): boolean {
+  return ADJACENT_REGIONS[region1.toLowerCase()]?.includes(region2.toLowerCase()) ?? false
 }
 
 /**

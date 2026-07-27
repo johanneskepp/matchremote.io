@@ -7,6 +7,9 @@
  */
 import { supabaseAdmin } from '../lib/db/supabase'
 import type { Database } from '../lib/db/types'
+import { deriveTimezoneRegion } from '../lib/utils/timezone-region'
+import { inferAsyncScore } from '../lib/utils/async-score'
+import { inferIndustries } from '../lib/utils/job-industries'
 
 type JobInsert = Database['public']['Tables']['jobs']['Insert']
 type JobType = JobInsert['job_type']
@@ -107,16 +110,19 @@ async function fetchRemoteOk(): Promise<JobInsert[]> {
     .map((job) => {
       const jobUrl = job.apply_url || job.url!
       const tags = (job.tags || []).map((t) => t.toLowerCase())
+      const location = fixMojibake(job.location || 'Worldwide')
+      const title = fixMojibake(job.position!)
+      const description = fixMojibake(stripHtml(job.description || ''))
       return {
-        title: fixMojibake(job.position!),
+        title,
         company: fixMojibake(job.company || 'Unknown'),
-        description: fixMojibake(stripHtml(job.description || '')),
+        description,
         salary_min: sanitizeSalary(job.salary_min),
         salary_max: sanitizeSalary(job.salary_max),
-        timezone: null,
-        async_score: null,
+        timezone: deriveTimezoneRegion(location),
+        async_score: inferAsyncScore(description),
         job_type: normalizeJobType(tags.join(' ')),
-        location: fixMojibake(job.location || 'Worldwide'),
+        location,
         source: 'remoteok',
         url: jobUrl,
         posted_date: job.date || new Date().toISOString(),
@@ -124,7 +130,7 @@ async function fetchRemoteOk(): Promise<JobInsert[]> {
         is_active: true,
         tags,
         company_size: null,
-        industries: [],
+        industries: inferIndustries(title, description),
       } satisfies JobInsert
     })
 }
@@ -156,16 +162,19 @@ async function fetchRemotive(): Promise<JobInsert[]> {
     .filter((job) => job.url && job.title)
     .map((job) => {
       const { min, max } = parseSalaryRange(job.salary)
+      const location = fixMojibake(job.candidate_required_location || 'Worldwide')
+      const title = fixMojibake(job.title)
+      const description = fixMojibake(stripHtml(job.description || ''))
       return {
-        title: fixMojibake(job.title),
+        title,
         company: fixMojibake(job.company_name || 'Unknown'),
-        description: fixMojibake(stripHtml(job.description || '')),
+        description,
         salary_min: sanitizeSalary(min),
         salary_max: sanitizeSalary(max),
-        timezone: null,
-        async_score: null,
+        timezone: deriveTimezoneRegion(location),
+        async_score: inferAsyncScore(description),
         job_type: normalizeJobType(job.job_type),
-        location: fixMojibake(job.candidate_required_location || 'Worldwide'),
+        location,
         source: 'remotive',
         url: job.url,
         posted_date: job.publication_date || new Date().toISOString(),
@@ -173,7 +182,7 @@ async function fetchRemotive(): Promise<JobInsert[]> {
         is_active: true,
         tags: (job.tags || []).map((t) => t.toLowerCase()),
         company_size: null,
-        industries: job.category ? [job.category] : [],
+        industries: inferIndustries(title, description),
       } satisfies JobInsert
     })
 }
@@ -202,16 +211,20 @@ async function fetchArbeitnow(): Promise<JobInsert[]> {
 
   return data.data
     .filter((job) => job.remote && job.url && job.title)
-    .map((job) => ({
-      title: fixMojibake(job.title),
+    .map((job) => {
+      const location = fixMojibake(job.location || 'Worldwide')
+      const title = fixMojibake(job.title)
+      const description = fixMojibake(stripHtml(job.description || ''))
+      return {
+      title,
       company: fixMojibake(job.company_name || 'Unknown'),
-      description: fixMojibake(stripHtml(job.description || '')),
+      description,
       salary_min: null,
       salary_max: null,
-      timezone: null,
-      async_score: null,
+      timezone: deriveTimezoneRegion(location),
+      async_score: inferAsyncScore(description),
       job_type: normalizeJobType(job.job_types?.[0]),
-      location: fixMojibake(job.location || 'Worldwide'),
+      location,
       source: 'arbeitnow',
       url: job.url,
       posted_date: new Date(job.created_at * 1000).toISOString(),
@@ -219,8 +232,9 @@ async function fetchArbeitnow(): Promise<JobInsert[]> {
       is_active: true,
       tags: (job.tags || []).map((t) => t.toLowerCase()),
       company_size: null,
-      industries: [],
-    } satisfies JobInsert))
+      industries: inferIndustries(title, description),
+      } satisfies JobInsert
+    })
 }
 
 // --- Runner -----------------------------------------------------------------
