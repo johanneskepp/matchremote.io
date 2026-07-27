@@ -1,5 +1,8 @@
 import Link from 'next/link'
 import type { Metadata } from 'next'
+import { getAllJobs } from '@/lib/db/queries'
+import { formatSalary } from '@/lib/utils/helpers'
+import type { Job } from '@/lib/db/types'
 
 const TITLE = 'Personalized Remote Job Matches by Timezone, Salary & Work Style'
 const DESCRIPTION =
@@ -50,7 +53,9 @@ const FAQS = [
   },
 ]
 
-const RECENT_JOBS = [
+// Fallback only, used if the jobs table has too few salaried listings to fill
+// the ticker (e.g. right after a DB reset). Not shown once real data exists.
+const FALLBACK_RECENT_JOBS = [
   { title: 'Senior React Developer', company: 'Vercel', pay: '$140k' },
   { title: 'Product Designer', company: 'Notion', pay: '$110k' },
   { title: 'Customer Success Manager', company: 'Zapier', pay: '$85k' },
@@ -58,6 +63,30 @@ const RECENT_JOBS = [
   { title: 'Content Marketer', company: 'Buffer', pay: '$75k' },
   { title: 'Data Analyst', company: 'Automattic', pay: '$95k' },
 ]
+
+async function getRecentTickerJobs() {
+  const jobs: Job[] = await getAllJobs(300)
+  const seenCompanies = new Set<string>()
+
+  const recent = jobs
+    .filter((job) => job.salary_min)
+    .sort((a, b) => new Date(b.posted_date).getTime() - new Date(a.posted_date).getTime())
+    .filter((job) => {
+      // One listing per company keeps the ticker varied instead of repeating
+      // the same employer (some sources post the same role across cities).
+      if (seenCompanies.has(job.company)) return false
+      seenCompanies.add(job.company)
+      return true
+    })
+    .slice(0, 6)
+    .map((job) => ({
+      title: job.title,
+      company: job.company,
+      pay: formatSalary(job.salary_min ?? undefined, job.salary_max ?? undefined),
+    }))
+
+  return recent.length >= 3 ? recent : FALLBACK_RECENT_JOBS
+}
 
 const faqJsonLd = {
   '@context': 'https://schema.org',
@@ -72,8 +101,9 @@ const faqJsonLd = {
   })),
 }
 
-export default function Home() {
-  const tickerItems = [...RECENT_JOBS, ...RECENT_JOBS]
+export default async function Home() {
+  const recentJobs = await getRecentTickerJobs()
+  const tickerItems = [...recentJobs, ...recentJobs]
 
   return (
     <div style={{ minHeight: '100vh', background: 'var(--bg)' }}>

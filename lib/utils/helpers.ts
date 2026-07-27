@@ -2,6 +2,7 @@ export function formatSalary(min?: number, max?: number): string {
   if (!min && !max) return 'Salary not specified'
   if (min && !max) return `$${(min / 1000).toFixed(0)}k+`
   if (!min && max) return `Up to $${(max / 1000).toFixed(0)}k`
+  if (min === max) return `$${(min! / 1000).toFixed(0)}k`
   return `$${(min! / 1000).toFixed(0)}k - $${(max! / 1000).toFixed(0)}k`
 }
 
