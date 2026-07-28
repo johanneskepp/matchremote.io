@@ -185,6 +185,15 @@ The quiz is a core experience and needs special design treatment.
 * Like a card deck or carousel that the user navigates
 * Never feels like being trapped on one question. Always see context.
 
+### Entry from the landing page
+
+Arriving from the hero search box, the quiz opens with the role and salary
+questions already answered, read from `?role=` and `?salary=` via
+`useSearchParams` (hence the `Suspense` wrapper). A value that does not map
+onto a known option is ignored silently and that question simply opens
+unanswered, never an error. No login is required to take the quiz or to see
+the two free matches at the end.
+
 ## Project Structure
 
 ```
@@ -193,24 +202,47 @@ app/
   HeroSearch.tsx     Client component: hero search box plus animated demo
   faq/page.tsx       FAQ, carries the FAQPage JSON-LD
   quiz/page.tsx      15 question quiz, reads role/salary prefill from the URL
-  results/page.tsx   Match results
-  pricing/page.tsx   Pricing
-  auth/login/page.tsx
+  results/page.tsx   Match results, two open then locked, see paywall below
+  pricing/page.tsx   Pricing, one plan only
+  dashboard/page.tsx        Signed in match list, server component, builds the view models
+  dashboard/DashboardMatches.tsx  Client component: score filter, in memory, no refetch
+  account/page.tsx          Subscription state, cancel, alert threshold
+  account/AccountControls.tsx
+  auth/login/page.tsx       Two step email then six digit code
   api/
-    matches/route.ts        Returns a user's matches joined with job data
+    matches/route.ts        Returns a user's matches, locked ones stripped server side
     quiz/submit/route.ts    Creates guest user, saves response, ranks jobs
+    auth/request-code/route.ts   Generates, hashes and emails the code
+    auth/verify-code/route.ts    Verifies, merges guest account, starts session
+    auth/logout/route.ts
+    auth/me/route.ts
+    account/alert-settings/route.ts   Reads and saves the email threshold
+    account/cancel/route.ts           Cancels the Paddle subscription
+    webhooks/paddle/route.ts          Mirrors Paddle state into subscriptions
   layout.tsx         Root layout. Fonts (next/font), metadata, Organization JSON-LD.
   globals.css        Design system
+components/
+  MatchCard.tsx      Shared match card, used by both /results and /dashboard
 lib/
   quiz-options.ts    Shared role and salary options, used by hero and quiz
+  plan.ts            FREE_MATCH_LIMIT, price, score thresholds, default alert threshold
+  auth/session.ts    Session cookie, hashing, lookup
+  billing/paddle.ts        Paddle API client
+  billing/subscription.ts  isActive plus getAccessState, the single access check
+  email/client.ts          Resend init, returns null when the key is missing
+  email/otp.ts             Sign in code email
+  email/match-notification.ts  Daily new match email
   db/
     queries.ts       Supabase CRUD. All typed as `any` for build compatibility.
-    schema.sql       Full DB schema. 8 tables, RLS policies.
+    schema.sql       Original schema. 7 tables, RLS policies.
+    migrations/      001_auth, 002_match_notifications, 003_subscriptions
     supabase.ts      Client init
     types.ts         TypeScript types
   utils/
     helpers.ts       formatSalary, formatDate, etc plus constants
-    matching.ts      Scoring algorithm. 7 factors, 0 to 100.
+    matching.ts      Scoring algorithm. 7 factors, 0 to 100. Also teaser and timezone badge.
+    salary-insight.ts  Median based salary badge, silent when data is too thin
+    match-stats.ts     Match count summary, shared by dashboard and email
     job-quality.ts   Filters non-job listings (isLikelyRealJob) out of ingestion
     job-country.ts   Derives an honest applicantLocationRequirements country from free text location, or null
     combo-pages.ts   Which "[role] jobs in [region]" pages currently have enough real data to exist
@@ -234,12 +266,51 @@ secrets/
 * `GOOGLE_SERVICE_ACCOUNT_KEY_PATH` (local only, points at the gitignored file in `secrets/`)
 * `GOOGLE_SEARCH_CONSOLE_SITE` (`sc-domain:matchremote.io`)
 
+Declared in `.env.example` and required by shipped code, but **not set anywhere yet**
+as of 2026-07-28, which is what blocks sign in and the notification email from
+working in production:
+
+* `RESEND_API_KEY` (sign in codes and the daily match email both fail cleanly without it)
+* `NEXT_PUBLIC_PADDLE_CLIENT_TOKEN`, `PADDLE_API_KEY`, `PADDLE_WEBHOOK_SECRET` (checkout and cancel)
+
 ## Current Status
 
 Keep this section current after every session. This is the single source of truth for what is done versus not done, check it before starting new work.
 
+### BLOCKED, needs Johannes, do this first
+
+Two manual steps stand between the code on main and a working paid product.
+Everything below in "Working" that mentions auth, subscriptions or the daily
+email is **written, built and pushed but inert** until these are done. Nothing
+crashes meanwhile: every query swallows its error, so a missing table just
+means "logged out" and "no subscribers", which fails closed, not open.
+
+1. **Run the three migrations in the Supabase SQL editor**, in order:
+   `lib/db/migrations/001_auth.sql`, `002_match_notifications.sql`,
+   `003_subscriptions.sql`. Each one is guarded (`IF NOT EXISTS`) and safe to
+   re-run. Verified 2026-07-28 that none of them have been applied yet: no
+   `otp_codes`, `sessions` or `subscriptions` table exists, and `matches` has
+   neither `notified_at` nor `seen_at`. This cannot be done from code, the
+   service role key talks to PostgREST, which does not execute DDL.
+2. **Set `RESEND_API_KEY`** in `.env.local` and in Vercel. Confirmed live in
+   this session: requesting a sign in code returns a clean "Could not send the
+   code" to the user and logs `RESEND_API_KEY is not configured` server side.
+
+Paddle keys are a third blocker, but only for checkout and cancel, and
+Johannes asked to be consulted before those get wired for real.
+
 ### Working
 
+* **Paid product built end to end (2026-07-28): passwordless auth, a real paywall, one weekly plan, a dashboard, and the daily new match email.** This replaced the old magic link scaffolding, the $9/mo three tier pricing, and the frontend only soft paywall, all three of which are gone. Details:
+  * **Auth, six digit code, no password ever.** `POST /api/auth/request-code` generates a six digit code, stores only a sha256 hash with a ten minute expiry, and rate limits to one code per email per sixty seconds. `verify-code` allows five wrong attempts before the code must be requested again, then starts a session: 32 random bytes, hashed before storage, in an `httpOnly` `SameSite=Lax` cookie called `mr_session`, thirty day expiry. Signing in merges the anonymous guest account (`guest-<uuid>@guest.matchremote.io`) into the real one via `mergeGuestIntoUser`, which reassigns quiz responses and matches and drops duplicates first, since `matches` has a `UNIQUE(user_id, job_id)`. No login is needed to take the quiz or see the two free matches, only to unlock more or set an email filter.
+  * **The paywall is server side, not CSS.** `/api/matches` and `/dashboard` both strip company, title, salary and apply link from locked matches before the payload leaves the server, so opening dev tools or calling the endpoint directly reveals nothing. `FREE_MATCH_LIMIT` is 2. Each locked card still shows its real score plus a teaser built from the same scored dimensions (`getMatchTeaser`), so the lock is concrete rather than a blank tease.
+  * **One plan, six dollars a week, recurring automatically.** No upgrade tier exists. `lib/billing/subscription.ts` holds the single access check, `isActive`, which deliberately still grants access to a `canceled` subscription until `current_period_end`, because they paid for that time. Cancelling is a visible button on `/account`, no support contact.
+  * **Dashboard** (`/dashboard`, session gated, redirects to `/auth/login?next=/dashboard`): all matches, filter by score (all, 60, 75, 90) done in memory in `DashboardMatches.tsx` so switching never refetches, plus a summary line from `lib/utils/match-stats.ts`.
+  * **Daily match email** (`npm run notify:matches`, `--dry-run` supported): for each user with access, sends the matches that clear their own threshold (default 60) and have never been emailed or already seen. Capped at ten per email, the rest lead the next send. `notified_at` is set only after a successful send, so a failure requeues rather than silently burning the matches. The closing summary line comes from the same `matchSummaryLine` the dashboard uses, so the two can never quote different numbers. **The scheduled task for this is deliberately NOT set up yet**, it sends real email to real people and Johannes should approve the cadence first.
+  * **"Never the same job twice" is enforced by two columns, not by hoping.** `matches.seen_at` is set the moment a match is shown in full on `/results` or `/dashboard`, `matches.notified_at` the moment it is emailed. The notification query requires both to be null. So a match shown free is never emailed, and an emailed match never comes back around.
+  * **Honest badges (del 9).** `getTimezoneBadge` returns null unless both the job and the user have a known region, and never claims a number of overlapping hours, because the data is three coarse buckets (`americas`/`europe`/`asia`) and around half of jobs have none. `lib/utils/salary-insight.ts` compares a job against the **median** of the user's other matches in the same role category, not the mean: caught during verification that a single 200k listing made four ordinary jobs read "20 percent below average", which is arithmetically true and useless. Needs at least three comparable peers with real salary and a gap of at least five percent, otherwise no badge at all. The badge says "typical", not "average", because a median is what it actually computes.
+  * `components/MatchCard.tsx` is the one match card, shared by `/results` and `/dashboard`, extracted so the two pages cannot drift.
+  * Verified this session: build clean, unit checks on the timezone badge, salary insight and summary line all pass, `/dashboard` correctly 307s to login when signed out, and the sign in form fails with a clean user facing message rather than a crash while `RESEND_API_KEY` is missing. **Not yet verified end to end with a real signed in user, because that needs the migrations above.**
 * Custom domain matchremote.io purchased and connected (Vercel + one.com DNS). Apex domain is primary, www redirects to it.
 * Landing page redesigned: compact single or two column layout, no long stacked sections. Scrolling recent jobs ticker (mock data) under the header. Hand drawn underline accent on the hero headline, wavy section divider. Color palette toned down deliberately, restrained to indigo plus neutrals, most emoji driven decoration removed after founder feedback that it looked "AI generic" and unprofessional. Numbered circle icons for "How it works", checkmark circles for "Why matchremote", both with proper semantic h2 headings.
 * Quiz fully redesigned per the Quiz UX Specification: shadowed prev and next question cards peeking beside the maximized current question (clickable to jump), a dot navigation strip to jump to any of the 15 questions directly, progress bar shows percent answered not position, every question is multi select regardless of whether it looks single choice.
@@ -269,15 +340,11 @@ Search Console is set up for the current 3 static pages only (/, /quiz, /pricing
   * Two more bugs caught during verification, both fixed in `scripts/ingest-jobs.ts`: (1) some listings had tiny non-zero salary values (looked like a mislabeled hourly rate) that rendered as "$0k - $0k", now floored via `sanitizeSalary` (anything under $1,000/year is treated as unknown); (2) some Arbeitnow listings (seen on Brazilian/Portuguese postings, e.g. "TOTVS") arrived as classic UTF-8-decoded-as-Latin-1 mojibake ("SoluÃ§Ãµes" instead of "Soluções"), now repaired by `fixMojibake` with a safety check that bails out if the repair would introduce U+FFFD replacement characters.
 * Manual follow-up needed from Johannes: resubmit the sitemap in Google Search Console and request indexing for a few of the new `/remote-jobs/*` and `/jobs/*` URLs. This has to happen from the GSC dashboard, no API access is configured for it in this session.
 * **Matching engine overhauled to remove structural score caps (2026-07-27).** Found via user question: 46 of 158 jobs were missing salary, timezone, AND industries simultaneously, and every single job had `async_score = null` (no source provides one), which meant literally no job could ever score 100%, the ceiling was a hard 90 max, and jobs missing multiple fields capped around 60-70%. Fixed with two changes:
-  1. Two new inference helpers run at ingest time: `lib/utils/async-score.ts` (keyword-based 1-10 async-friendliness score from the description, e.g. "async"/"core hours" vs "daily standup"/"real-time collaboration") and `lib/utils/job-industries.ts` (infers the quiz's own 8 industry codes — saas/fintech/health/edu/ecommerce/ai/climate/gaming — from title+description). This also fixed a silent bug: Remotive's raw `category` field ("Artificial Intelligence") never actually matched the quiz's short codes ("ai") in `matching.ts`'s substring check, so industry matching was broken for anyone who used it.
+  1. Two new inference helpers run at ingest time: `lib/utils/async-score.ts` (keyword-based 1-10 async-friendliness score from the description, e.g. "async"/"core hours" vs "daily standup"/"real-time collaboration") and `lib/utils/job-industries.ts` (infers the quiz's own 8 industry codes, saas/fintech/health/edu/ecommerce/ai/climate/gaming, from title plus description). This also fixed a silent bug: Remotive's raw `category` field ("Artificial Intelligence") never actually matched the quiz's short codes ("ai") in `matching.ts`'s substring check, so industry matching was broken for anyone who used it.
   2. `lib/utils/matching.ts`'s `calculateMatchScore` no longer divides by a fixed 100. Each dimension (async/salary/experience/skills/timezone/schedule/industry) is now tracked as applicable or not; missing data (no salary, no timezone, no industry signal) excludes that dimension from BOTH the earned points and the max-possible denominator, instead of previously giving a flat "partial credit" that permanently capped the ceiling. The `reasons` object returned to callers is unchanged (still raw points on the original 20/20/15/15/10/10/10 scale), so `getMatchExplanation`'s thresholds didn't need touching.
   Verified end to end: re-ran `npm run ingest:jobs` (156 of 158 jobs now have a real `async_score`, 85 now have `industries`, still 46 missing all three of salary/timezone/industries but their score is no longer capped for it), submitted a real quiz answer, and confirmed the math by hand against the raw `matches.match_reasons` row (a job with no salary scored 89% as 71 earned / 80 applicable points, not the old fixed-100 denominator).
   **Follow-up same session:** Johannes correctly pushed back that a job with completely unknown salary shouldn't be able to claim a 100% "perfect" match either, that's a false promise. Added a confidence factor on top of the renormalized percentage: `confidence = 0.5 + 0.5 * (applicable weight / total weight)`, final `score = round(rawPercent * confidence)`. Missing only salary (20/100 of the weight) now caps the ceiling around 90%, missing salary + timezone + industry together caps it around 80%, full data still reaches 100%. Re-verified with the same test job: the no-salary listing that scored 89% under the uncapped version now scores 80%.
-* Homepage now sets expectations before the quiz (2026-07-27): a new "Free to try. More when you're ready." section (`app/page.tsx`, between "How it works/Why matchremote" and the FAQ) shows the Free vs Pro split side by side, the "Get your top matches" step copy now says "Your top 3 are free. Unlock every match for $9/mo.", and the "Is matchremote really free?" FAQ answer was tightened to match. So the paywall on `/results` isn't a surprise by the time someone gets there.
-* Pricing dropped from $29/mo "Pro" to **$9/mo**, and the results page got a real soft paywall to match (2026-07-27): `app/results/page.tsx` now shows only the top 3 matches in full (`FREE_MATCH_LIMIT`), the rest render blurred behind a "N more matches waiting, unlock for $9/mo" CTA linking to `/pricing`. The "Save" button (previously a dead button with no `onClick`) now links to `/pricing` as a `🔒 Save` affordance instead of doing nothing. `app/pricing/page.tsx` features list rewritten to match what the app can actually gate: unlock all matches, save jobs, email alerts, refreshed matches on retake. This is a **frontend-only soft paywall**, nothing is actually enforced or billed yet, anyone can still open dev tools or hit `/api/matches` directly to see all matches. Real enforcement needs the two items below.
-* Auth flow (magic link login). `app/auth/login/page.tsx` exists but is pure scaffolding, `console.log`s instead of calling Supabase, and still uses old Tailwind utility classes (`bg-gradient-to-b`, `text-gray-600`) that violate the project's no-Tailwind-utility-classes design rule. Quiz submissions still create anonymous guest users (`guest-<uuid>@guest.matchremote.io`), not real accounts.
 * Saved jobs (the `saved_jobs` table exists, nothing writes to it yet).
-* Email alerts (Resend integration exists in package.json but not wired).
 * Paddle payment integration. **Correction (2026-07-27):** an earlier pass through this file (same session) wrongly concluded Stripe was the real provider because unused `stripe`, `@stripe/stripe-js`, `@stripe/react-stripe-js` packages were sitting in `package.json` even though the docs already said Paddle. Those packages were leftover cruft, never actually used anywhere in the app (`grep` for stripe usage only turned up the `users.stripe_customer_id` column name). Removed via `npm uninstall`, and `.env.example` updated to Paddle env var names (`NEXT_PUBLIC_PADDLE_CLIENT_TOKEN`, `PADDLE_API_KEY`, `PADDLE_WEBHOOK_SECRET`). Paddle is the confirmed, correct provider going forward. One remaining loose end: the `users.stripe_customer_id` column in `schema.sql`/`lib/db/types.ts` is still named after Stripe, rename it to `paddle_customer_id` via a migration whenever Paddle actually gets wired up, not touched now since it's a live production column and this was a docs/dependency cleanup pass, not a schema change.
 
 * **First real SEO pass done manually with Johannes (2026-07-28), before the autonomous agent's first scheduled run.** Found and fixed a real data quality problem while looking at the first Search Console report: 28 of 158 active jobs (18%) were not real job postings at all, RemoteOK's feed occasionally scrapes non-job content (recruiting page boilerplate, blog posts, even three companies, "World Veterans", "DevTube", "AdConversion", whose "jobs" turned out to be nav menu or glossary text). These were publishing JobPosting structured data on non-job content, a real risk for a Google structured data spam penalty. Fixed with `lib/utils/job-quality.ts` (`isLikelyRealJob`, a title/description heuristic) wired into `scripts/ingest-jobs.ts` going forward, plus a small explicit blocklist for the three confirmed-bad sources, and a one time `scripts/cleanup-non-job-listings.ts` that soft deactivated (`is_active=false`, reversible) the 28 existing bad rows. 130 real jobs remain active. Also: deleted 3 stray sitemap submissions in Search Console that were individual page URLs mistakenly submitted as sitemaps (`/remote-jobs`, `/pricing`, `/`, all erroring), confirmed via URL inspection that the homepage is actually indexed despite the sitemap report's lagging "0 indexed" stat, added a "Finance & Accounting" category (`lib/utils/job-categories.ts`, 8 real jobs, mostly German bookkeeping/accounting roles that had nowhere to go before) and widened the Operations & Support category's keywords to catch support/success/admin roles across languages, dropping uncategorized real jobs from 66 to 45 of 130. Added breadcrumb navigation plus BreadcrumbList JSON-LD on `/jobs/[slug]` and `/remote-jobs/[category]`, and a "browse more X jobs" link from job pages back to their category, closing an internal linking gap (job pages previously only linked to home and the quiz). Pushed 20 job pages through the Indexing API. Added `public/llms.txt` describing the site for AI assistants/LLM crawlers, per Johannes's goal of ranking in LLM-surfaced answers, not just classic search. Known residual gap: a handful of low quality titles ("Terri Jago", "Dubai UAE", "URBAN") are borderline enough that the quality filter deliberately leaves them alone to avoid false-positiving real short job titles (e.g. "Caretaker", "Team Member" are real), worth another look if it becomes noticeable.

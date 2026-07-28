@@ -69,6 +69,38 @@ export async function getAllUserMatches(userId: string): Promise<any[]> {
   return data || []
 }
 
+// Every score the user has ever been matched on, which is what the dashboard
+// summary and the closing line of each notification email are counted from.
+// Deliberately the full history, not just what is currently unseen.
+export async function getUserMatchScores(userId: string): Promise<number[]> {
+  const { data } = await sbAdmin.from('matches').select('match_score').eq('user_id', userId)
+  return (data || []).map((row: any) => row.match_score as number)
+}
+
+// Matches that qualify for a notification email: never emailed, never already
+// shown to the user, and at or above the threshold they chose. Ordered best
+// first so a capped email leads with the strongest fits.
+export async function getUnnotifiedMatches(userId: string, threshold: number): Promise<any[]> {
+  const { data } = await sbAdmin
+    .from('matches')
+    .select('*, jobs(*)')
+    .eq('user_id', userId)
+    .gte('match_score', threshold)
+    .is('notified_at', null)
+    .is('seen_at', null)
+    .order('match_score', { ascending: false })
+  return data || []
+}
+
+export async function markMatchesNotified(matchIds: string[]): Promise<void> {
+  if (matchIds.length === 0) return
+  await sbAdmin
+    .from('matches')
+    .update({ notified_at: new Date().toISOString() })
+    .in('id', matchIds)
+    .is('notified_at', null)
+}
+
 export async function markMatchesSeen(matchIds: string[]): Promise<void> {
   if (matchIds.length === 0) return
   await sbAdmin
@@ -131,11 +163,14 @@ export async function getSubscriptionByPaddleId(paddleSubscriptionId: string): P
   return data || null
 }
 
+// Everyone who might still have access. 'canceled' is included on purpose:
+// they keep what they paid for until current_period_end, so the caller decides
+// with isActive() rather than this query guessing from status alone.
 export async function getPayingUsers(): Promise<any[]> {
   const { data } = await sbAdmin
     .from('subscriptions')
     .select('*, users(*)')
-    .in('status', ['active', 'trialing'])
+    .in('status', ['active', 'trialing', 'canceled'])
   return data || []
 }
 

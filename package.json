@@ -10,7 +10,8 @@
     "ingest:jobs": "tsx --env-file=.env.local scripts/ingest-jobs.ts",
     "seo:report": "tsx --env-file=.env.local scripts/seo-report.ts",
     "seo:combo-pages": "tsx --env-file=.env.local scripts/analyze-combo-pages.ts",
-    "check:vitals": "tsx scripts/check-web-vitals.ts"
+    "check:vitals": "tsx scripts/check-web-vitals.ts",
+    "notify:matches": "tsx --env-file=.env.local scripts/send-match-notifications.ts"
   },
   "dependencies": {
     "@supabase/auth-helpers-nextjs": "^0.15.0",

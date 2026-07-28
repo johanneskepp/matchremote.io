@@ -213,6 +213,27 @@ export function isCompatibleTimezone(region1: string, region2: string): boolean 
 }
 
 /**
+ * Short timezone badge for a single match, or null when we cannot say
+ * anything truthful.
+ *
+ * Around half of ingested jobs have timezone null because their location text
+ * was "Worldwide" or unparseable, and the regions we do have are three coarse
+ * buckets rather than real offsets. So this returns null unless both sides are
+ * known, and the wording stays at the level the data actually supports: same
+ * broad region, or a neighbouring one with usable overlap. It never claims a
+ * specific number of overlapping hours.
+ */
+export function getTimezoneBadge(
+  jobTimezone: string | null | undefined,
+  userTimezone: string | null | undefined
+): string | null {
+  if (!jobTimezone || !userTimezone) return null
+  if (jobTimezone.toLowerCase() === userTimezone.toLowerCase()) return 'Matches your timezone'
+  if (isCompatibleTimezone(jobTimezone, userTimezone)) return 'Overlaps your hours'
+  return null
+}
+
+/**
  * One short line naming the two strongest reasons a job scored well, shown
  * above the lock on paid matches so the lock is concrete rather than a blank
  * tease.
