@@ -53,7 +53,9 @@ const MIN_PLAUSIBLE_ANNUAL_SALARY = 1000
 
 function sanitizeSalary(value: number | null | undefined): number | null {
   if (!value || value < MIN_PLAUSIBLE_ANNUAL_SALARY) return null
-  return value
+  // The jobs table's salary columns are integers, some sources (seen on
+  // Himalayas) supply a decimal figure.
+  return Math.round(value)
 }
 
 function normalizeJobType(raw: string | undefined | null): JobType {
@@ -238,6 +240,141 @@ async function fetchArbeitnow(): Promise<JobInsert[]> {
     })
 }
 
+// --- Jobicy -----------------------------------------------------------------
+// Public API, no key required. Its own response includes a "friendlyNotice"
+// explicitly inviting third party use, conditioned only on crediting Jobicy
+// with a link to the source and linking apply buttons to the original job
+// URL, both of which the /jobs/[slug] page already does (job.source, job.url).
+
+interface JobicyJob {
+  id: number
+  url: string
+  jobTitle: string
+  companyName: string
+  jobIndustry?: string[]
+  jobType?: string[]
+  jobGeo?: string
+  jobDescription?: string
+  pubDate?: string
+  salaryMin?: number | null
+  salaryMax?: number | null
+  salaryCurrency?: string | null
+  salaryPeriod?: string | null
+}
+
+async function fetchJobicy(): Promise<JobInsert[]> {
+  const res = await fetch('https://jobicy.com/api/v2/remote-jobs?count=200', {
+    headers: { 'User-Agent': USER_AGENT },
+  })
+  if (!res.ok) throw new Error(`Jobicy API failed: ${res.status}`)
+  const data: { jobs: JobicyJob[] } = await res.json()
+
+  // Only trust salary figures Jobicy tags as an annual USD amount, converting
+  // other currencies or pay periods would mean guessing an exchange rate or
+  // hours worked, better to leave salary unknown than fabricate a number.
+  const isAnnualUsd = (job: JobicyJob) =>
+    job.salaryCurrency === 'USD' && /year|annual/i.test(job.salaryPeriod || '')
+
+  return data.jobs
+    .filter((job) => job.id && job.jobTitle && job.url)
+    .map((job) => {
+      const location = fixMojibake(job.jobGeo || 'Worldwide')
+      const title = fixMojibake(job.jobTitle)
+      const description = fixMojibake(stripHtml(job.jobDescription || ''))
+      return {
+        title,
+        company: fixMojibake(job.companyName || 'Unknown'),
+        description,
+        salary_min: isAnnualUsd(job) ? sanitizeSalary(job.salaryMin) : null,
+        salary_max: isAnnualUsd(job) ? sanitizeSalary(job.salaryMax) : null,
+        timezone: deriveTimezoneRegion(location),
+        async_score: inferAsyncScore(description),
+        job_type: normalizeJobType(job.jobType?.join(' ')),
+        location,
+        source: 'jobicy',
+        url: job.url,
+        posted_date: job.pubDate || new Date().toISOString(),
+        scraped_at: new Date().toISOString(),
+        is_active: true,
+        tags: (job.jobIndustry || []).map((t) => t.toLowerCase()),
+        company_size: null,
+        industries: inferIndustries(title, description),
+      } satisfies JobInsert
+    })
+}
+
+// --- Himalayas ----------------------------------------------------------
+// Public API, no key required. Himalayas's own docs (himalayas.app/api)
+// explicitly permit using it to "backfill other remote job boards", our
+// exact use case, conditioned on attribution and not redistributing to
+// Jooble/Neuvoo/Google Jobs/LinkedIn Jobs, which we don't do.
+
+interface HimalayasJob {
+  title: string
+  companyName: string
+  description?: string
+  employmentType?: string
+  minSalary?: number | null
+  maxSalary?: number | null
+  salaryPeriod?: string | null
+  currency?: string | null
+  locationRestrictions?: string[]
+  categories?: string[]
+  pubDate?: number
+  expiryDate?: number
+  applicationLink?: string
+  guid?: string
+}
+
+async function fetchHimalayas(): Promise<JobInsert[]> {
+  // The browse endpoint caps at 20 jobs per request (their limit, not ours),
+  // paginate via offset. Capped at 5 pages/100 jobs here to stay in the same
+  // rough order of magnitude as the other sources and avoid hammering a free
+  // public API we don't have a key or rate limit agreement with.
+  const rawJobs: HimalayasJob[] = []
+  for (let offset = 0; offset < 100; offset += 20) {
+    const res = await fetch(`https://himalayas.app/jobs/api?limit=20&offset=${offset}`, {
+      headers: { 'User-Agent': USER_AGENT },
+    })
+    if (!res.ok) throw new Error(`Himalayas API failed: ${res.status}`)
+    const page: { jobs: HimalayasJob[] } = await res.json()
+    if (!page.jobs || page.jobs.length === 0) break
+    rawJobs.push(...page.jobs)
+  }
+
+  const now = Date.now() / 1000
+  const isAnnualUsd = (job: HimalayasJob) =>
+    job.currency === 'USD' && /year|annual/i.test(job.salaryPeriod || '')
+
+  return rawJobs
+    .filter((job) => job.title && (job.applicationLink || job.guid) && (!job.expiryDate || job.expiryDate > now))
+    .map((job) => {
+      const url = job.applicationLink || job.guid!
+      const location = fixMojibake(job.locationRestrictions?.join(', ') || 'Worldwide')
+      const title = fixMojibake(job.title)
+      const description = fixMojibake(stripHtml(job.description || ''))
+      return {
+        title,
+        company: fixMojibake(job.companyName || 'Unknown'),
+        description,
+        salary_min: isAnnualUsd(job) ? sanitizeSalary(job.minSalary) : null,
+        salary_max: isAnnualUsd(job) ? sanitizeSalary(job.maxSalary) : null,
+        timezone: deriveTimezoneRegion(location),
+        async_score: inferAsyncScore(description),
+        job_type: normalizeJobType(job.employmentType),
+        location,
+        source: 'himalayas',
+        url,
+        posted_date: job.pubDate ? new Date(job.pubDate * 1000).toISOString() : new Date().toISOString(),
+        scraped_at: new Date().toISOString(),
+        is_active: true,
+        tags: (job.categories || []).slice(0, 12).map((t) => t.toLowerCase()),
+        company_size: null,
+        industries: inferIndustries(title, description),
+      } satisfies JobInsert
+    })
+}
+
 // --- Runner -----------------------------------------------------------------
 
 async function main() {
@@ -245,6 +382,8 @@ async function main() {
     { name: 'RemoteOK', fetcher: fetchRemoteOk },
     { name: 'Remotive', fetcher: fetchRemotive },
     { name: 'Arbeitnow', fetcher: fetchArbeitnow },
+    { name: 'Jobicy', fetcher: fetchJobicy },
+    { name: 'Himalayas', fetcher: fetchHimalayas },
   ]
 
   let allJobs: JobInsert[] = []
