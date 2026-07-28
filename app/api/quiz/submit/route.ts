@@ -26,7 +26,11 @@ export async function POST(request: NextRequest) {
     const quizResponse = mapQuizAnswersToResponse(answers)
     await saveQuizResponse(user.id, quizResponse)
 
-    const jobs = await getAllJobs(200)
+    // Every active job, not an arbitrary slice of them. The old limit of 200
+    // silently ignored a growing share of the database as ingestion added
+    // sources, so a European listing could lose to a worse American one purely
+    // by not being in the window.
+    const jobs = await getAllJobs(2000)
     if (jobs.length > 0) {
       const ranked = rankJobs(jobs, quizResponse as any)
       await Promise.all(

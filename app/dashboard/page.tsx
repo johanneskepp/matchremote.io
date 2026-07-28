@@ -4,7 +4,7 @@ import type { Metadata } from 'next'
 import { getSessionUser } from '@/lib/auth/session'
 import { getAccessState } from '@/lib/billing/subscription'
 import { getAllUserMatches, getLatestQuizResponse, getUserMatchScores, markMatchesSeen } from '@/lib/db/queries'
-import { getMatchExplanation, getMatchTeaser, getTimezoneBadge } from '@/lib/utils/matching'
+import { diversifyTop, getMatchExplanation, getMatchTeaser, getTimezoneBadge } from '@/lib/utils/matching'
 import { buildSalaryInsights } from '@/lib/utils/salary-insight'
 import { matchSummaryLine, summarizeMatchStats } from '@/lib/utils/match-stats'
 import { formatSalary } from '@/lib/utils/helpers'
@@ -30,8 +30,15 @@ export default async function DashboardPage() {
     getUserMatchScores(user.id),
   ])
 
-  const withJob = rows.filter((row: any) => row.jobs)
   const unlocked = access.active
+
+  // Same diversification as /api/matches so the free pair a signed in visitor
+  // sees here matches what they saw on /results.
+  const withJob = diversifyTop(
+    rows.filter((row: any) => row.jobs),
+    FREE_MATCH_LIMIT,
+    (row: any) => ({ score: row.match_score, company: row.jobs?.company })
+  )
 
   // Salary insight compares each job against the user's other matches in the
   // same role category, so it is built from the whole set before any locking.
@@ -60,10 +67,13 @@ export default async function DashboardPage() {
       location: job.location || (job.timezone ? `Remote (${job.timezone})` : 'Remote'),
       salary: formatSalary(job.salary_min ?? undefined, job.salary_max ?? undefined),
       tags: job.tags || [],
-      matchReasons: getMatchExplanation(row.match_reasons || {}, row.match_score),
+      matchReasons: getMatchExplanation(row.match_reasons || {}, row.match_score, {
+        job,
+        user: { timezone: userTimezone, industry_pref: quiz?.industry_pref },
+      }),
       description: job.description,
       url: job.url,
-      timezoneBadge: getTimezoneBadge(job.timezone, userTimezone),
+      timezoneBadge: getTimezoneBadge(job.timezone, userTimezone, job.location),
       salaryInsight: insights[job.id]?.label ?? null,
     }
   })

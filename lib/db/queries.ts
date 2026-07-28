@@ -66,7 +66,19 @@ export async function getAllUserMatches(userId: string): Promise<any[]> {
     .select('*, jobs(*)')
     .eq('user_id', userId)
     .order('match_score', { ascending: false })
-  return data || []
+
+  // Postgres breaks equal scores in whatever order it likes, which made the
+  // shown order wobble between requests and threw away the freshness tiebreak
+  // rankJobs applies when the matches are first created. Re-apply it here, on
+  // the joined job, so what the user sees is stable and the fresher posting
+  // wins a tie.
+  return (data || []).sort((a: any, b: any) => {
+    if (b.match_score !== a.match_score) return b.match_score - a.match_score
+    const aDate = a.jobs?.posted_date ? new Date(a.jobs.posted_date).getTime() : 0
+    const bDate = b.jobs?.posted_date ? new Date(b.jobs.posted_date).getTime() : 0
+    if (bDate !== aDate) return bDate - aDate
+    return (b.jobs?.salary_min ? 1 : 0) - (a.jobs?.salary_min ? 1 : 0)
+  })
 }
 
 // Every score the user has ever been matched on, which is what the dashboard
