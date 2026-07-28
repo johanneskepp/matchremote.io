@@ -11,6 +11,12 @@ import { deriveTimezoneRegion } from '../lib/utils/timezone-region'
 import { inferAsyncScore } from '../lib/utils/async-score'
 import { inferIndustries } from '../lib/utils/job-industries'
 import { isLikelyRealJob } from '../lib/utils/job-quality'
+import {
+  LINK_CHECKABLE_SOURCES,
+  MAX_JOB_AGE_DAYS,
+  isExpiredByAge,
+  looksGone,
+} from '../lib/utils/job-freshness'
 
 type JobInsert = Database['public']['Tables']['jobs']['Insert']
 type JobType = JobInsert['job_type']
@@ -438,6 +444,83 @@ async function main() {
   }
 
   console.log(`Done. Upserted ~${upserted} jobs.`)
+
+  await retireStaleJobs(new Set(allJobs.map((job) => job.url)))
+}
+
+/**
+ * Turns off listings a visitor can no longer apply to.
+ *
+ * Runs after the upsert so anything the feeds just confirmed is already marked
+ * fresh. See lib/utils/job-freshness.ts for why feed absence on its own is not
+ * treated as proof that a job is gone.
+ *
+ * Deactivation is reversible: is_active goes false, the row stays, so a
+ * mistake can be undone and nothing is lost.
+ */
+async function retireStaleJobs(seenUrls: Set<string>) {
+  const { data: active, error } = await jobsTable
+    .from('jobs')
+    .select('id, title, url, source, posted_date')
+    .eq('is_active', true)
+
+  if (error) {
+    console.error('Freshness pass: could not read active jobs:', error.message)
+    return
+  }
+
+  const rows = active ?? []
+  const expired = rows.filter((job: any) => isExpiredByAge(job.posted_date))
+
+  // Only worth a request when the source answers honestly and the feed no
+  // longer lists it. Everything else is left to the age rule above.
+  const toCheck = rows.filter(
+    (job: any) =>
+      !expired.includes(job) &&
+      !seenUrls.has(job.url) &&
+      LINK_CHECKABLE_SOURCES.has(job.source)
+  )
+
+  const gone: any[] = []
+  for (const job of toCheck) {
+    try {
+      const res = await fetch(job.url, {
+        headers: { 'User-Agent': USER_AGENT },
+        redirect: 'follow',
+        signal: AbortSignal.timeout(15000),
+      })
+      const body = res.status === 200 ? await res.text() : ''
+      if (looksGone(res.status, body)) gone.push(job)
+    } catch {
+      // A timeout or network blip is not evidence the listing is gone, so the
+      // job keeps its place and gets another chance tomorrow.
+    }
+    // These are free APIs run by other people, so we go one at a time.
+    await new Promise((resolve) => setTimeout(resolve, 400))
+  }
+
+  const retire = [...new Set([...expired, ...gone])]
+
+  if (retire.length === 0) {
+    console.log(
+      `Freshness: nothing to retire. ${rows.length} active, ${toCheck.length} link checked, max age ${MAX_JOB_AGE_DAYS} days.`
+    )
+    return
+  }
+
+  const { error: updateError } = await jobsTable
+    .from('jobs')
+    .update({ is_active: false })
+    .in('id', retire.map((job) => job.id))
+
+  if (updateError) {
+    console.error('Freshness: could not deactivate:', updateError.message)
+    return
+  }
+
+  console.log(
+    `Freshness: retired ${retire.length} (${expired.length} older than ${MAX_JOB_AGE_DAYS} days, ${gone.length} confirmed gone by link check of ${toCheck.length}). ${rows.length - retire.length} still active.`
+  )
 }
 
 main().catch((err) => {

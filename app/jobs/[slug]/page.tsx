@@ -6,6 +6,7 @@ import { buildJobSlug, extractJobIdFromSlug } from '@/lib/utils/job-slug'
 import { formatSalary, formatDate } from '@/lib/utils/helpers'
 import { JOB_CATEGORIES, jobMatchesCategory } from '@/lib/utils/job-categories'
 import { deriveApplicantCountries } from '@/lib/utils/job-country'
+import { validThroughFor } from '@/lib/utils/job-freshness'
 import type { Job } from '@/lib/db/types'
 
 export const revalidate = 3600
@@ -78,6 +79,7 @@ export default async function JobDetailPage({ params }: { params: Promise<{ slug
   // vague or worldwide locations omit jobLocationType entirely rather than
   // claim TELECOMMUTE without backing it up.
   const applicantCountries = deriveApplicantCountries(job.location)
+  const validThrough = validThroughFor(job.posted_date)
 
   const jobPostingJsonLd = {
     '@context': 'https://schema.org',
@@ -90,6 +92,11 @@ export default async function JobDetailPage({ params }: { params: Promise<{ slug
       value: job.id,
     },
     datePosted: job.posted_date,
+    // Tells Google when we stop treating this as open, which is the same
+    // MAX_JOB_AGE_DAYS the daily ingestion deactivates on. Without it there is
+    // nothing stopping a filled role from sitting in the index as live
+    // JobPosting markup, which is what Google penalizes.
+    ...(validThrough ? { validThrough } : {}),
     employmentType: EMPLOYMENT_TYPE_MAP[job.job_type],
     hiringOrganization: {
       '@type': 'Organization',
