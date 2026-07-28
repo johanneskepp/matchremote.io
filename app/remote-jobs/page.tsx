@@ -4,7 +4,7 @@ import { JOB_CATEGORIES } from '@/lib/utils/job-categories'
 
 const SITE_URL = 'https://matchremote.io'
 const TITLE = 'Remote Jobs by Category'
-const DESCRIPTION = 'Browse remote jobs by role: engineering, design, product, marketing, sales, and operations. Matched to your timezone and salary with a free quiz.'
+const DESCRIPTION = 'Browse remote jobs by role: engineering, design, product, marketing, sales, operations, and finance. Matched to your timezone and salary with a free quiz.'
 
 export const metadata: Metadata = {
   title: TITLE,

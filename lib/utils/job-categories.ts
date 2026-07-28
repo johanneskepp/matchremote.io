@@ -51,7 +51,22 @@ export const JOB_CATEGORIES: JobCategory[] = [
     label: 'Operations & Support',
     emoji: '⚙️',
     description: 'Remote operations, customer support, and admin roles.',
-    keywords: ['operations', 'customer support', 'customer success', 'support specialist', 'admin', 'office manager', 'people ops', 'hr'],
+    keywords: [
+      'operations', 'customer support', 'customer success', 'support specialist', 'admin', 'office manager', 'people ops', 'hr',
+      'support analyst', 'support agent', 'support representative', 'help desk', 'onboarding', 'client success',
+      'patient care', 'patient experience', 'community representative', 'executive assistant', 'administrative assistant',
+      'supply chain', 'logistics', 'atencion al cliente', 'atención al cliente', 'suporte',
+    ],
+  },
+  {
+    slug: 'finance',
+    label: 'Finance & Accounting',
+    emoji: '💵',
+    description: 'Remote finance, accounting, and bookkeeping roles.',
+    keywords: [
+      'accountant', 'accounting', 'bookkeeping', 'bookkeeper', 'finance', 'financial', 'buchhalter', 'buchhaltung',
+      'account payable', 'accounts payable', 'controller', 'auditor',
+    ],
   },
 ]
 

@@ -4,6 +4,8 @@ import type { Metadata } from 'next'
 import { getAllJobs, getJobById } from '@/lib/db/queries'
 import { buildJobSlug, extractJobIdFromSlug } from '@/lib/utils/job-slug'
 import { formatSalary, formatDate } from '@/lib/utils/helpers'
+import { JOB_CATEGORIES, jobMatchesCategory } from '@/lib/utils/job-categories'
+import { deriveApplicantCountries } from '@/lib/utils/job-country'
 import type { Job } from '@/lib/db/types'
 
 export const revalidate = 3600
@@ -53,11 +55,30 @@ export default async function JobDetailPage({ params }: { params: Promise<{ slug
   if (!job) notFound()
 
   const url = `${SITE_URL}/jobs/${slug}`
+  const category = JOB_CATEGORIES.find((c) => jobMatchesCategory(job, c))
 
-  // Note: schema.org's applicantLocationRequirements expects a specific Country.
-  // None of our ingest sources (RemoteOK, Remotive, Arbeitnow) reliably supply a
-  // clean country, so this is deliberately left out rather than guessed. See the
-  // "timezone" gap noted in CLAUDE.md.
+  const breadcrumbJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Home', item: SITE_URL },
+      { '@type': 'ListItem', position: 2, name: 'Remote Jobs', item: `${SITE_URL}/remote-jobs` },
+      ...(category
+        ? [{ '@type': 'ListItem', position: 3, name: category.label, item: `${SITE_URL}/remote-jobs/${category.slug}` }]
+        : []),
+      { '@type': 'ListItem', position: category ? 4 : 3, name: job.title, item: url },
+    ],
+  }
+
+  // Google requires applicantLocationRequirements whenever jobLocationType is
+  // TELECOMMUTE, otherwise it flags a Search Console warning. None of our
+  // ingest sources give a clean country field, only free text location, so
+  // jobLocationType is only set when deriveApplicantCountries can honestly
+  // name a country from that text (see lib/utils/job-country.ts), jobs with
+  // vague or worldwide locations omit jobLocationType entirely rather than
+  // claim TELECOMMUTE without backing it up.
+  const applicantCountries = deriveApplicantCountries(job.location)
+
   const jobPostingJsonLd = {
     '@context': 'https://schema.org',
     '@type': 'JobPosting',
@@ -74,9 +95,17 @@ export default async function JobDetailPage({ params }: { params: Promise<{ slug
       '@type': 'Organization',
       name: job.company,
     },
-    jobLocationType: 'TELECOMMUTE',
     url,
     directApply: false,
+    ...(applicantCountries
+      ? {
+          jobLocationType: 'TELECOMMUTE',
+          applicantLocationRequirements: applicantCountries.map((name) => ({
+            '@type': 'Country',
+            name,
+          })),
+        }
+      : {}),
     ...(job.salary_min && job.salary_max
       ? {
           baseSalary: {
@@ -98,6 +127,10 @@ export default async function JobDetailPage({ params }: { params: Promise<{ slug
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jobPostingJsonLd) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
       />
 
       <header style={{ padding: '20px 0', background: 'white', borderBottom: '2px solid var(--border)' }}>
@@ -123,6 +156,19 @@ export default async function JobDetailPage({ params }: { params: Promise<{ slug
       <main>
         <section style={{ padding: '48px 0' }}>
           <div className="container">
+            <nav aria-label="Breadcrumb" style={{ marginBottom: '16px', fontSize: '14px', color: 'var(--ink-soft)' }}>
+              <Link href="/remote-jobs" style={{ color: 'var(--ink-soft)', textDecoration: 'underline' }}>
+                Remote Jobs
+              </Link>
+              {category && (
+                <>
+                  {' / '}
+                  <Link href={`/remote-jobs/${category.slug}`} style={{ color: 'var(--ink-soft)', textDecoration: 'underline' }}>
+                    {category.label}
+                  </Link>
+                </>
+              )}
+            </nav>
             <div className="card">
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '16px' }}>
                 <span className="chip chip-sm">{job.job_type}</span>
@@ -172,6 +218,14 @@ export default async function JobDetailPage({ params }: { params: Promise<{ slug
                 Want jobs matched to your timezone and salary target? Take the 3 minute quiz →
               </Link>
             </div>
+
+            {category && (
+              <div style={{ marginTop: '12px', textAlign: 'center' }}>
+                <Link href={`/remote-jobs/${category.slug}`} style={{ color: 'var(--ink-soft)', fontWeight: 600, textDecoration: 'underline' }}>
+                  Browse more remote {category.label.toLowerCase()} jobs →
+                </Link>
+              </div>
+            )}
           </div>
         </section>
       </main>

@@ -2,6 +2,7 @@ import type { MetadataRoute } from 'next'
 import { getAllJobs } from '@/lib/db/queries'
 import { JOB_CATEGORIES } from '@/lib/utils/job-categories'
 import { buildJobSlug } from '@/lib/utils/job-slug'
+import { getQualifyingComboPages } from '@/lib/utils/combo-pages'
 
 const BASE_URL = 'https://matchremote.io'
 
@@ -50,5 +51,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.5,
   }))
 
-  return [...staticPages, ...categoryPages, ...jobPages]
+  const combos = await getQualifyingComboPages()
+  const comboPages: MetadataRoute.Sitemap = combos.map((combo) => ({
+    url: `${BASE_URL}/remote-jobs/${combo.category.slug}/${combo.region}`,
+    lastModified: now,
+    changeFrequency: 'weekly',
+    priority: 0.65,
+  }))
+
+  return [...staticPages, ...categoryPages, ...comboPages, ...jobPages]
 }

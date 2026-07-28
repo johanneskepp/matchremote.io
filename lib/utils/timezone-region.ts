@@ -35,6 +35,12 @@ const REGION_KEYWORDS: Record<TimezoneRegion, string[]> = {
   ],
 }
 
+export const TIMEZONE_REGION_LABELS: Record<TimezoneRegion, string> = {
+  americas: 'the Americas',
+  europe: 'Europe',
+  asia: 'Asia Pacific',
+}
+
 export function deriveTimezoneRegion(location: string | null | undefined): TimezoneRegion | null {
   if (!location) return null
   const text = location.toLowerCase()

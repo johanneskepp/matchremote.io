@@ -66,6 +66,12 @@ export async function submitSitemap(sitemapUrl: string) {
   await sc.sitemaps.submit({ siteUrl: getSiteUrl(), feedpath: sitemapUrl });
 }
 
+export async function deleteSitemap(sitemapUrl: string) {
+  const authClient = await getAuthClient(["https://www.googleapis.com/auth/webmasters"]);
+  const sc = google.searchconsole({ version: "v1", auth: authClient as any });
+  await sc.sitemaps.delete({ siteUrl: getSiteUrl(), feedpath: sitemapUrl });
+}
+
 export async function inspectUrl(inspectionUrl: string) {
   const authClient = await getAuthClient(["https://www.googleapis.com/auth/webmasters.readonly"]);
   const sc = google.searchconsole({ version: "v1", auth: authClient as any });

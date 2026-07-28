@@ -10,6 +10,7 @@ import type { Database } from '../lib/db/types'
 import { deriveTimezoneRegion } from '../lib/utils/timezone-region'
 import { inferAsyncScore } from '../lib/utils/async-score'
 import { inferIndustries } from '../lib/utils/job-industries'
+import { isLikelyRealJob } from '../lib/utils/job-quality'
 
 type JobInsert = Database['public']['Tables']['jobs']['Insert']
 type JobType = JobInsert['job_type']
@@ -246,16 +247,32 @@ async function main() {
     { name: 'Arbeitnow', fetcher: fetchArbeitnow },
   ]
 
-  const allJobs: JobInsert[] = []
+  let allJobs: JobInsert[] = []
 
   for (const { name, fetcher } of sources) {
     try {
       const jobs = await fetcher()
-      console.log(`[${name}] fetched ${jobs.length} jobs`)
-      allJobs.push(...jobs)
+      const real = jobs.filter((j) => isLikelyRealJob(j.title, j.description ?? '', j.company))
+      const dropped = jobs.length - real.length
+      console.log(`[${name}] fetched ${jobs.length} jobs, ${dropped} filtered as non-job content, ${real.length} kept`)
+      allJobs.push(...real)
     } catch (err) {
       console.error(`[${name}] failed:`, err instanceof Error ? err.message : err)
     }
+  }
+
+  // A handful of sources turned out, on manual inspection, to not be real job
+  // listings at all: their "description" is scraped nav menu or glossary
+  // page content, not a job posting (e.g. "World Veterans" lists brand names
+  // like "Walgreens"/"Starbucks" as job titles with identical nav menu text
+  // as the description). Confirmed by reading the actual content, not a
+  // generic heuristic, so it's a narrow, explicit blocklist rather than
+  // something that risks catching real postings.
+  const KNOWN_NON_JOB_SOURCES = new Set(['world veterans', 'devtube', 'adconversion'])
+  const beforeBlocklist = allJobs.length
+  allJobs = allJobs.filter((job) => !KNOWN_NON_JOB_SOURCES.has(job.company.trim().toLowerCase()))
+  if (allJobs.length !== beforeBlocklist) {
+    console.log(`Dropped ${beforeBlocklist - allJobs.length} entries from known non-job sources (${[...KNOWN_NON_JOB_SOURCES].join(', ')}).`)
   }
 
   if (allJobs.length === 0) {

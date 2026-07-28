@@ -4,6 +4,7 @@ import type { Metadata } from 'next'
 import { getAllJobs } from '@/lib/db/queries'
 import { JOB_CATEGORIES, getCategoryBySlug, jobMatchesCategory } from '@/lib/utils/job-categories'
 import { buildJobSlug } from '@/lib/utils/job-slug'
+import { getQualifyingComboPages } from '@/lib/utils/combo-pages'
 import { formatSalary, formatDate } from '@/lib/utils/helpers'
 import type { Job } from '@/lib/db/types'
 
@@ -40,6 +41,7 @@ export default async function RemoteJobsCategoryPage({ params }: { params: Promi
 
   const allJobs: Job[] = await getAllJobs(300)
   const jobs = allJobs.filter((job) => jobMatchesCategory(job, category))
+  const regionLinks = (await getQualifyingComboPages()).filter((c) => c.category.slug === slug)
 
   const itemListJsonLd = {
     '@context': 'https://schema.org',
@@ -56,11 +58,25 @@ export default async function RemoteJobsCategoryPage({ params }: { params: Promi
     },
   }
 
+  const breadcrumbJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Home', item: SITE_URL },
+      { '@type': 'ListItem', position: 2, name: 'Remote Jobs', item: `${SITE_URL}/remote-jobs` },
+      { '@type': 'ListItem', position: 3, name: category.label, item: `${SITE_URL}/remote-jobs/${slug}` },
+    ],
+  }
+
   return (
     <div style={{ minHeight: '100vh', background: 'var(--bg)' }}>
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(itemListJsonLd) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
       />
 
       <header style={{ padding: '20px 0', background: 'white', borderBottom: '2px solid var(--border)' }}>
@@ -85,6 +101,15 @@ export default async function RemoteJobsCategoryPage({ params }: { params: Promi
 
       <main>
         <section style={{ padding: '48px 0 24px' }}>
+          <div className="container-wide">
+            <nav aria-label="Breadcrumb" style={{ marginBottom: '16px', fontSize: '14px', color: 'var(--ink-soft)', textAlign: 'center' }}>
+              <Link href="/remote-jobs" style={{ color: 'var(--ink-soft)', textDecoration: 'underline' }}>
+                Remote Jobs
+              </Link>
+              {' / '}
+              {category.label}
+            </nav>
+          </div>
           <div className="container-wide" style={{ textAlign: 'center' }}>
             <div className="chip" style={{ marginBottom: '16px' }}>
               {category.emoji} {category.label}
@@ -95,6 +120,20 @@ export default async function RemoteJobsCategoryPage({ params }: { params: Promi
             <p style={{ fontSize: '17px', color: 'var(--ink-soft)', maxWidth: '560px', margin: '0 auto' }}>
               {category.description} Take the free quiz to see which ones fit your timezone and salary target.
             </p>
+            {regionLinks.length > 0 && (
+              <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', flexWrap: 'wrap', marginTop: '16px' }}>
+                {regionLinks.map((combo) => (
+                  <Link
+                    key={combo.region}
+                    href={`/remote-jobs/${slug}/${combo.region}`}
+                    className="chip chip-sm"
+                    style={{ textDecoration: 'none' }}
+                  >
+                    In {combo.regionLabel} ({combo.jobs.length})
+                  </Link>
+                ))}
+              </div>
+            )}
           </div>
         </section>
 
