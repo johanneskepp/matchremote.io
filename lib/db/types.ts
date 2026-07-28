@@ -285,6 +285,36 @@ export type Database = {
           updated_at?: string
         }
       }
+      subscriptions: {
+        Row: {
+          id: string
+          user_id: string
+          paddle_subscription_id: string | null
+          paddle_customer_id: string | null
+          status: 'active' | 'paused' | 'canceled' | 'past_due' | 'trialing'
+          current_period_end: string | null
+          cancel_at: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          paddle_subscription_id?: string | null
+          paddle_customer_id?: string | null
+          status?: 'active' | 'paused' | 'canceled' | 'past_due' | 'trialing'
+          current_period_end?: string | null
+          cancel_at?: string | null
+        }
+        Update: {
+          paddle_subscription_id?: string | null
+          paddle_customer_id?: string | null
+          status?: 'active' | 'paused' | 'canceled' | 'past_due' | 'trialing'
+          current_period_end?: string | null
+          cancel_at?: string | null
+          updated_at?: string
+        }
+      }
       otp_codes: {
         Row: {
           id: string
@@ -342,3 +372,4 @@ export type Job = Database['public']['Tables']['jobs']['Row']
 export type Match = Database['public']['Tables']['matches']['Row']
 export type SavedJob = Database['public']['Tables']['saved_jobs']['Row']
 export type EmailAlert = Database['public']['Tables']['email_alerts']['Row']
+export type Subscription = Database['public']['Tables']['subscriptions']['Row']

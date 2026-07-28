@@ -111,6 +111,45 @@ export async function getActiveAlerts(frequency?: string): Promise<any[]> {
   return data || []
 }
 
+export async function getSubscription(userId: string): Promise<any | null> {
+  const { data } = await sbAdmin.from('subscriptions').select('*').eq('user_id', userId).maybeSingle()
+  return data || null
+}
+
+export async function upsertSubscription(userId: string, fields: any): Promise<void> {
+  await sbAdmin
+    .from('subscriptions')
+    .upsert({ user_id: userId, ...fields, updated_at: new Date().toISOString() }, { onConflict: 'user_id' })
+}
+
+export async function getSubscriptionByPaddleId(paddleSubscriptionId: string): Promise<any | null> {
+  const { data } = await sbAdmin
+    .from('subscriptions')
+    .select('*')
+    .eq('paddle_subscription_id', paddleSubscriptionId)
+    .maybeSingle()
+  return data || null
+}
+
+export async function getPayingUsers(): Promise<any[]> {
+  const { data } = await sbAdmin
+    .from('subscriptions')
+    .select('*, users(*)')
+    .in('status', ['active', 'trialing'])
+  return data || []
+}
+
+export async function getAlertSettings(userId: string): Promise<any | null> {
+  const { data } = await sbAdmin.from('email_alerts').select('*').eq('user_id', userId).maybeSingle()
+  return data || null
+}
+
+export async function saveAlertSettings(userId: string, email: string, threshold: number, active: boolean): Promise<void> {
+  await sbAdmin
+    .from('email_alerts')
+    .upsert({ user_id: userId, email, threshold, active, updated_at: new Date().toISOString() }, { onConflict: 'user_id' })
+}
+
 export async function getUserByEmail(email: string): Promise<any | null> {
   const { data } = await sbAdmin.from('users').select('*').eq('email', email).maybeSingle()
   return data || null

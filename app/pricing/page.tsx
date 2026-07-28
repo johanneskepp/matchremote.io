@@ -1,8 +1,10 @@
 import Link from 'next/link'
 import type { Metadata } from 'next'
+import { PRICE_PER_WEEK_USD, FREE_MATCH_LIMIT } from '@/lib/plan'
 
 const TITLE = 'Pricing'
-const DESCRIPTION = 'Simple pricing for matchremote. Start free and see your top remote job matches, upgrade for unlimited matches and job alerts.'
+const DESCRIPTION =
+  'Six dollars a week for every remote job match we score for you, with new ones as soon as they exist. Cancel yourself, any time, from your account page.'
 
 export const metadata: Metadata = {
   title: TITLE,
@@ -21,68 +23,21 @@ export const metadata: Metadata = {
   },
 }
 
-export default function PricingPage() {
-  const plans = [
-    {
-      emoji: '🎯',
-      name: 'Free',
-      price: '$0',
-      period: 'forever',
-      description: 'Perfect to get started',
-      features: [
-        'Take the quiz',
-        'See your top 3 matches',
-        'Full match score & reasons',
-        'Retake the quiz anytime',
-      ],
-      cta: 'Start free',
-      href: '/quiz',
-      featured: false,
-    },
-    {
-      emoji: '⚡',
-      name: 'Pro',
-      price: '$9',
-      period: 'per month',
-      description: 'For serious job hunters',
-      features: [
-        'Everything in Free',
-        'Unlock all your matches',
-        'Save jobs to revisit later',
-        'Email alerts for new matches',
-        'Refreshed matches every time you retake the quiz',
-      ],
-      cta: 'Get Pro',
-      href: '/quiz',
-      featured: true,
-    },
-    {
-      emoji: '🏢',
-      name: 'Teams',
-      price: 'Custom',
-      period: 'talk to us',
-      description: 'For companies hiring remote',
-      features: [
-        'Post unlimited jobs',
-        'Featured placement',
-        'Candidate insights',
-        'Analytics dashboard',
-        'Dedicated support',
-      ],
-      cta: 'Contact sales',
-      href: 'mailto:hello@matchremote.io',
-      featured: false,
-    },
-  ]
+const INCLUDED = [
+  'Every match unlocked, not just the free two',
+  'New matches as soon as they show up, never the same job twice',
+  'You set the score threshold, so you only hear about matches worth your time',
+  'Email alerts at your threshold, nothing below it',
+  'Fresh matches every time you retake the quiz',
+]
 
+export default function PricingPage() {
   return (
-    <div style={{ minHeight: '100vh', background: 'var(--bg)' }}>
-      {/* Header */}
+    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
       <header style={{ padding: '20px 0', background: 'var(--surface)', borderBottom: '2px solid var(--border)' }}>
         <div className="container-wide" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <Link href="/" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <span style={{ fontSize: '32px' }}>🎯</span>
-            <span className="font-display" style={{ fontSize: '24px', fontWeight: 700, color: 'var(--ink)' }}>matchremote</span>
+          <Link href="/" style={{ textDecoration: 'none' }}>
+            <span className="font-display" style={{ fontSize: '22px', fontWeight: 700, color: 'var(--ink)' }}>matchremote</span>
           </Link>
           <Link href="/quiz" style={{
             padding: '12px 24px',
@@ -96,87 +51,61 @@ export default function PricingPage() {
         </div>
       </header>
 
-      {/* Hero */}
-      <section style={{ padding: '80px 0 40px' }}>
-        <div className="container" style={{ textAlign: 'center' }}>
-          <div className="chip" style={{ marginBottom: '16px' }}>Pricing</div>
-          <h1 className="font-display" style={{ fontSize: 'clamp(40px, 6vw, 64px)', marginBottom: '16px' }}>
-            Simple, honest pricing.
-          </h1>
-          <p style={{ fontSize: '20px', color: 'var(--ink-soft)', maxWidth: '520px', margin: '0 auto' }}>
-            Start free. Upgrade when you're ready.
-          </p>
-        </div>
-      </section>
-
-      {/* Plans */}
-      <section style={{ padding: '20px 0 100px' }}>
-        <div className="container-wide">
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '24px' }}>
-            {plans.map((plan) => (
-              <div key={plan.name} style={{
-                padding: '40px 32px',
-                background: plan.featured ? 'var(--accent)' : 'var(--surface)',
-                color: plan.featured ? 'white' : 'var(--ink)',
-                borderRadius: '24px',
-                border: plan.featured ? '4px solid var(--accent-dark)' : '2px solid var(--border)',
-                position: 'relative',
-                transform: plan.featured ? 'scale(1.02)' : 'none',
-              }}>
-                {plan.featured && (
-                  <div style={{
-                    position: 'absolute',
-                    top: '-14px',
-                    left: '50%',
-                    transform: 'translateX(-50%)',
-                    background: 'var(--teal)',
-                    color: 'white',
-                    padding: '6px 16px',
-                    borderRadius: '999px',
-                    fontSize: '13px',
-                    fontWeight: 700,
-                  }}>MOST POPULAR</div>
-                )}
-
-                <div style={{ fontSize: '48px', marginBottom: '16px' }}>{plan.emoji}</div>
-                <h3 className="font-display" style={{ fontSize: '28px', marginBottom: '4px', color: plan.featured ? 'white' : 'var(--ink)' }}>
-                  {plan.name}
-                </h3>
-                <div style={{ opacity: plan.featured ? 0.85 : 1, color: plan.featured ? 'white' : 'var(--ink-soft)', fontSize: '15px', marginBottom: '24px' }}>
-                  {plan.description}
-                </div>
-
-                <div style={{ marginBottom: '32px' }}>
-                  <span className="font-display" style={{ fontSize: '48px', fontWeight: 700, color: plan.featured ? 'white' : 'var(--ink)' }}>
-                    {plan.price}
-                  </span>
-                  <span style={{ fontSize: '16px', opacity: 0.7, marginLeft: '8px' }}>{plan.period}</span>
-                </div>
-
-                <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 32px 0' }}>
-                  {plan.features.map((f) => (
-                    <li key={f} style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', marginBottom: '12px', fontSize: '16px' }}>
-                      <span style={{ color: plan.featured ? 'white' : 'var(--success)', fontWeight: 700 }}>✓</span>
-                      <span>{f}</span>
-                    </li>
-                  ))}
-                </ul>
-
-                <Link href={plan.href} className={`btn-big ${plan.featured ? 'btn-ghost' : ''}`}>
-                  {plan.cta}
-                </Link>
-              </div>
-            ))}
-          </div>
-
-          {/* FAQ small */}
-          <div style={{ marginTop: '80px', textAlign: 'center' }}>
-            <p style={{ color: 'var(--ink-soft)', fontSize: '15px' }}>
-              Questions? Email us at <a href="mailto:hello@matchremote.io" style={{ color: 'var(--accent)', fontWeight: 600 }}>hello@matchremote.io</a>
+      <main style={{ flex: '1 1 auto', padding: '56px 0 72px' }}>
+        <div className="container" style={{ maxWidth: '560px' }}>
+          <div style={{ textAlign: 'center', marginBottom: '32px' }}>
+            <h1 className="font-display" style={{ fontSize: 'clamp(32px, 5vw, 46px)', marginBottom: '10px' }}>
+              One plan. Six dollars a week.
+            </h1>
+            <p style={{ fontSize: '17px', color: 'var(--ink-soft)', margin: 0 }}>
+              Your first {FREE_MATCH_LIMIT} matches are free and always will be. This is for the rest.
             </p>
           </div>
+
+          <div className="card" style={{ padding: '36px 32px' }}>
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: '10px', marginBottom: '8px' }}>
+              <span className="font-display" style={{ fontSize: '52px', fontWeight: 700, lineHeight: 1 }}>
+                ${PRICE_PER_WEEK_USD}
+              </span>
+              <span style={{ fontSize: '17px', color: 'var(--ink-soft)' }}>per week</span>
+            </div>
+            <p style={{ margin: '0 0 26px', fontSize: '15px', color: 'var(--ink-soft)' }}>
+              Renews automatically every week until you cancel it yourself. There is no bigger tier to upgrade to,
+              this is the whole product.
+            </p>
+
+            <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 30px' }}>
+              {INCLUDED.map((item) => (
+                <li key={item} style={{ display: 'flex', gap: '10px', marginBottom: '12px', fontSize: '16px', lineHeight: 1.45 }}>
+                  <span style={{ color: 'var(--success)', fontWeight: 700, flexShrink: 0 }}>✓</span>
+                  <span>{item}</span>
+                </li>
+              ))}
+            </ul>
+
+            <Link href="/account" className="btn-big">Subscribe</Link>
+
+            <p style={{ margin: '18px 0 0', fontSize: '14px', color: 'var(--ink-soft)', textAlign: 'center' }}>
+              Cancel from your account page in two clicks. No email, no support ticket.
+            </p>
+          </div>
+
+          <p style={{ textAlign: 'center', fontSize: '15px', color: 'var(--ink-soft)', marginTop: '28px' }}>
+            Not sure yet? <Link href="/quiz" style={{ color: 'var(--teal)', fontWeight: 600 }}>Take the quiz free</Link> and see your first {FREE_MATCH_LIMIT} matches.
+          </p>
         </div>
-      </section>
+      </main>
+
+      <footer style={{ padding: '24px 0', borderTop: '2px solid var(--border)', background: 'var(--surface)' }}>
+        <div className="container-wide" style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: '16px' }}>
+          <span className="font-display" style={{ fontSize: '15px', fontWeight: 600 }}>matchremote</span>
+          <div style={{ display: 'flex', gap: '20px', alignItems: 'center' }}>
+            <Link href="/remote-jobs" style={{ color: 'var(--ink-soft)', fontSize: '13px', textDecoration: 'none' }}>Browse jobs</Link>
+            <Link href="/faq" style={{ color: 'var(--ink-soft)', fontSize: '13px', textDecoration: 'none' }}>FAQ</Link>
+            <span style={{ color: 'var(--ink-soft)', fontSize: '13px' }}>© 2026 matchremote</span>
+          </div>
+        </div>
+      </footer>
     </div>
   )
 }
