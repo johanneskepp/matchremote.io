@@ -1,101 +1,240 @@
 'use client'
 
+import { Suspense, useEffect, useState } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
-import { useState } from 'react'
-import { Mail, ArrowRight } from 'lucide-react'
+
+const RESEND_COOLDOWN_S = 60
 
 export default function LoginPage() {
+  return (
+    <Suspense fallback={<main style={{ minHeight: '100vh' }} />}>
+      <Login />
+    </Suspense>
+  )
+}
+
+function Login() {
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  const next = searchParams.get('next') || '/dashboard'
+
+  const [step, setStep] = useState<'email' | 'code'>('email')
   const [email, setEmail] = useState('')
-  const [isLoading, setIsLoading] = useState(false)
-  const [sent, setSent] = useState(false)
+  const [code, setCode] = useState('')
+  const [error, setError] = useState('')
+  const [busy, setBusy] = useState(false)
+  const [cooldown, setCooldown] = useState(0)
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsLoading(true)
+  useEffect(() => {
+    if (cooldown <= 0) return
+    const id = setTimeout(() => setCooldown((c) => c - 1), 1000)
+    return () => clearTimeout(id)
+  }, [cooldown])
 
+  const requestCode = async () => {
+    setError('')
+    setBusy(true)
     try {
-      // In production, call your auth API
-      console.log('[Auth] Sending magic link to:', email)
-      await new Promise(resolve => setTimeout(resolve, 1000))
-      setSent(true)
+      const res = await fetch('/api/auth/request-code', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      })
+      const data = await res.json()
+      if (!res.ok) {
+        setError(data.message || 'Could not send the code.')
+        if (typeof data.retryIn === 'number') setCooldown(data.retryIn)
+        return
+      }
+      setStep('code')
+      setCooldown(RESEND_COOLDOWN_S)
+    } catch {
+      setError('Could not reach the server. Try again.')
     } finally {
-      setIsLoading(false)
+      setBusy(false)
+    }
+  }
+
+  const verifyCode = async () => {
+    setError('')
+    setBusy(true)
+    try {
+      // Carries over anything the visitor already did as an anonymous quiz
+      // taker, so signing in never loses their existing matches.
+      const guestUserId = localStorage.getItem('matchremote_user_id')
+      const res = await fetch('/api/auth/verify-code', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, code, guestUserId }),
+      })
+      const data = await res.json()
+      if (!res.ok) {
+        setError(data.message || 'That code did not work.')
+        return
+      }
+      localStorage.setItem('matchremote_user_id', data.userId)
+      router.push(next)
+    } catch {
+      setError('Could not reach the server. Try again.')
+    } finally {
+      setBusy(false)
     }
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white flex items-center justify-center py-12">
-      <div className="w-full max-w-md">
-        {/* Card */}
-        <div className="card">
-          <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold mb-2">Welcome Back</h1>
-            <p className="text-gray-600">Sign in with your email to access your matches and saved jobs.</p>
-          </div>
+    <main style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+      <header style={{ padding: '20px 0', background: 'var(--surface)', borderBottom: '2px solid var(--border)' }}>
+        <div className="container-wide">
+          <Link href="/" style={{ textDecoration: 'none' }}>
+            <span className="font-display" style={{ fontSize: '22px', fontWeight: 700, color: 'var(--ink)' }}>matchremote</span>
+          </Link>
+        </div>
+      </header>
 
-          {sent ? (
-            <div className="bg-green-50 border border-green-200 rounded-lg p-6 text-center">
-              <Mail className="w-8 h-8 text-green-600 mx-auto mb-3" />
-              <h2 className="font-semibold text-gray-900 mb-2">Check your email</h2>
-              <p className="text-gray-600 mb-4">
-                We've sent a magic link to <span className="font-semibold">{email}</span>
-              </p>
-              <p className="text-sm text-gray-500">
-                Didn't receive it? Check your spam folder or try signing in again.
-              </p>
-              <button
-                onClick={() => setSent(false)}
-                className="mt-6 btn-ghost"
+      <div style={{ flex: '1 1 auto', display: 'flex', alignItems: 'center', padding: '40px 0' }}>
+        <div className="container" style={{ maxWidth: '440px' }}>
+          <div className="card">
+            {step === 'email' ? (
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault()
+                  if (!busy) requestCode()
+                }}
               >
-                Try Different Email
-              </button>
-            </div>
-          ) : (
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <div>
-                <label htmlFor="email" className="block text-sm font-semibold text-gray-900 mb-2">
-                  Email Address
-                </label>
+                <h1 className="font-display" style={{ fontSize: '28px', marginBottom: '8px' }}>Sign in</h1>
+                <p style={{ color: 'var(--ink-soft)', fontSize: '15px', marginTop: 0, marginBottom: '24px' }}>
+                  We send you a six digit code. No password, ever.
+                </p>
+
+                <label htmlFor="email" style={labelStyle}>Email</label>
                 <input
                   id="email"
                   type="email"
-                  value={email}
-                  onChange={e => setEmail(e.target.value)}
-                  placeholder="your@email.com"
                   required
-                  className="input-field"
+                  autoComplete="email"
+                  autoFocus
+                  placeholder="you@example.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  style={inputStyle}
                 />
-              </div>
 
-              <button
-                type="submit"
-                disabled={isLoading || !email}
-                className="btn-primary w-full flex items-center justify-center gap-2"
+                {error && <p style={errorStyle}>{error}</p>}
+
+                <button type="submit" className="btn-big" disabled={busy} style={{ marginTop: '20px', opacity: busy ? 0.6 : 1 }}>
+                  {busy ? 'Sending...' : 'Send me a code'}
+                </button>
+              </form>
+            ) : (
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault()
+                  if (!busy) verifyCode()
+                }}
               >
-                {isLoading ? 'Sending...' : 'Send Magic Link'}
-                {!isLoading && <ArrowRight className="w-4 h-4" />}
-              </button>
+                <h1 className="font-display" style={{ fontSize: '28px', marginBottom: '8px' }}>Check your email</h1>
+                <p style={{ color: 'var(--ink-soft)', fontSize: '15px', marginTop: 0, marginBottom: '24px' }}>
+                  We sent a six digit code to {email}. It expires in 10 minutes.
+                </p>
 
-              <div className="text-center text-sm text-gray-600">
-                No account yet?{' '}
-                <Link href="/auth/signup" className="font-semibold text-blue-600 hover:text-blue-700 no-underline">
-                  Sign up
-                </Link>
-              </div>
-            </form>
-          )}
-        </div>
+                <label htmlFor="code" style={labelStyle}>Code</label>
+                <input
+                  id="code"
+                  type="text"
+                  inputMode="numeric"
+                  autoComplete="one-time-code"
+                  required
+                  autoFocus
+                  maxLength={6}
+                  placeholder="000000"
+                  value={code}
+                  onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))}
+                  style={{ ...inputStyle, fontSize: '26px', letterSpacing: '0.3em', textAlign: 'center', fontWeight: 700 }}
+                />
 
-        {/* Help */}
-        <div className="text-center mt-8">
-          <p className="text-sm text-gray-600">
-            Having trouble?{' '}
-            <a href="mailto:support@matchremote.io" className="text-blue-600 font-semibold hover:text-blue-700">
-              Contact support
-            </a>
+                {error && <p style={errorStyle}>{error}</p>}
+
+                <button
+                  type="submit"
+                  className="btn-big"
+                  disabled={busy || code.length !== 6}
+                  style={{ marginTop: '20px', opacity: busy || code.length !== 6 ? 0.6 : 1 }}
+                >
+                  {busy ? 'Checking...' : 'Sign in'}
+                </button>
+
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '18px', fontSize: '14px' }}>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setStep('email')
+                      setCode('')
+                      setError('')
+                    }}
+                    style={linkButtonStyle}
+                  >
+                    Use another email
+                  </button>
+                  <button
+                    type="button"
+                    onClick={requestCode}
+                    disabled={cooldown > 0 || busy}
+                    style={{ ...linkButtonStyle, opacity: cooldown > 0 ? 0.5 : 1 }}
+                  >
+                    {cooldown > 0 ? `Resend in ${cooldown}s` : 'Resend code'}
+                  </button>
+                </div>
+              </form>
+            )}
+          </div>
+
+          <p style={{ textAlign: 'center', fontSize: '14px', color: 'var(--ink-soft)', marginTop: '20px' }}>
+            No account needed to take the quiz.{' '}
+            <Link href="/quiz" style={{ color: 'var(--teal)', fontWeight: 600 }}>Start there instead</Link>
           </p>
         </div>
       </div>
-    </div>
+    </main>
   )
+}
+
+const labelStyle: React.CSSProperties = {
+  display: 'block',
+  fontSize: '12px',
+  fontWeight: 700,
+  letterSpacing: '0.08em',
+  textTransform: 'uppercase',
+  color: 'var(--ink-soft)',
+  marginBottom: '6px',
+}
+
+const inputStyle: React.CSSProperties = {
+  width: '100%',
+  minHeight: '56px',
+  padding: '14px 16px',
+  fontSize: '17px',
+  fontFamily: 'var(--font-body), sans-serif',
+  color: 'var(--ink)',
+  background: 'var(--bg)',
+  border: '2px solid var(--border)',
+  borderRadius: '14px',
+  outline: 'none',
+}
+
+const errorStyle: React.CSSProperties = {
+  margin: '14px 0 0',
+  fontSize: '14px',
+  color: 'var(--accent-dark)',
+  fontWeight: 600,
+}
+
+const linkButtonStyle: React.CSSProperties = {
+  background: 'none',
+  border: 'none',
+  padding: 0,
+  color: 'var(--teal)',
+  fontWeight: 600,
+  fontSize: '14px',
+  cursor: 'pointer',
 }

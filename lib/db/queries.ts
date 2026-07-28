@@ -92,3 +92,80 @@ export async function getActiveAlerts(frequency?: string): Promise<any[]> {
   const { data } = await query
   return data || []
 }
+
+export async function getUserByEmail(email: string): Promise<any | null> {
+  const { data } = await sbAdmin.from('users').select('*').eq('email', email).maybeSingle()
+  return data || null
+}
+
+export async function getLatestOtpCode(email: string): Promise<any | null> {
+  const { data } = await sbAdmin
+    .from('otp_codes')
+    .select('*')
+    .eq('email', email)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle()
+  return data || null
+}
+
+export async function createOtpCode(email: string, codeHash: string, expiresAt: Date): Promise<any> {
+  const { data } = await sbAdmin
+    .from('otp_codes')
+    .insert({ email, code_hash: codeHash, expires_at: expiresAt.toISOString() })
+    .select()
+    .single()
+  return data
+}
+
+export async function recordOtpAttempt(id: string, attempts: number): Promise<void> {
+  await sbAdmin.from('otp_codes').update({ attempts }).eq('id', id)
+}
+
+export async function consumeOtpCode(id: string): Promise<void> {
+  await sbAdmin.from('otp_codes').update({ consumed_at: new Date().toISOString() }).eq('id', id)
+}
+
+export async function createSession(userId: string, tokenHash: string, expiresAt: Date): Promise<any> {
+  const { data } = await sbAdmin
+    .from('sessions')
+    .insert({ user_id: userId, token_hash: tokenHash, expires_at: expiresAt.toISOString() })
+    .select()
+    .single()
+  return data
+}
+
+export async function getSessionByTokenHash(tokenHash: string): Promise<any | null> {
+  const { data } = await sbAdmin
+    .from('sessions')
+    .select('*, users(*)')
+    .eq('token_hash', tokenHash)
+    .maybeSingle()
+  return data || null
+}
+
+export async function deleteSession(tokenHash: string): Promise<void> {
+  await sbAdmin.from('sessions').delete().eq('token_hash', tokenHash)
+}
+
+// Moves everything an anonymous quiz taker produced onto the account they just
+// verified, so signing in never loses the matches they already saw.
+export async function mergeGuestIntoUser(guestId: string, userId: string): Promise<void> {
+  if (guestId === userId) return
+
+  const guest = await getUserById(guestId)
+  if (!guest || !guest.is_guest) return
+
+  await sbAdmin.from('quiz_responses').update({ user_id: userId }).eq('user_id', guestId)
+
+  // matches has a UNIQUE(user_id, job_id), so a job the real account already
+  // matched would collide. Drop those duplicates before reassigning the rest.
+  const { data: existing } = await sbAdmin.from('matches').select('job_id').eq('user_id', userId)
+  const alreadyMatched: string[] = (existing || []).map((row: any) => row.job_id)
+  if (alreadyMatched.length > 0) {
+    await sbAdmin.from('matches').delete().eq('user_id', guestId).in('job_id', alreadyMatched)
+  }
+  await sbAdmin.from('matches').update({ user_id: userId }).eq('user_id', guestId)
+
+  await sbAdmin.from('users').delete().eq('id', guestId)
+}

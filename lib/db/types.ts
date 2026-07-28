@@ -10,6 +10,7 @@ export type Database = {
           stripe_customer_id: string | null
           last_login: string | null
           preferences: Record<string, any>
+          is_guest: boolean
         }
         Insert: {
           id?: string
@@ -19,6 +20,7 @@ export type Database = {
           stripe_customer_id?: string | null
           last_login?: string | null
           preferences?: Record<string, any>
+          is_guest?: boolean
         }
         Update: {
           id?: string
@@ -28,6 +30,7 @@ export type Database = {
           stripe_customer_id?: string | null
           last_login?: string | null
           preferences?: Record<string, any>
+          is_guest?: boolean
         }
       }
       quiz_responses: {
@@ -274,6 +277,49 @@ export type Database = {
           active?: boolean
           created_at?: string
           updated_at?: string
+        }
+      }
+      otp_codes: {
+        Row: {
+          id: string
+          email: string
+          code_hash: string
+          expires_at: string
+          attempts: number
+          consumed_at: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          email: string
+          code_hash: string
+          expires_at: string
+          attempts?: number
+          consumed_at?: string | null
+          created_at?: string
+        }
+        Update: {
+          attempts?: number
+          consumed_at?: string | null
+        }
+      }
+      sessions: {
+        Row: {
+          id: string
+          user_id: string
+          token_hash: string
+          expires_at: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          token_hash: string
+          expires_at: string
+          created_at?: string
+        }
+        Update: {
+          expires_at?: string
         }
       }
     }
