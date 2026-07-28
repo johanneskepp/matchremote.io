@@ -36,6 +36,9 @@ yarn-error.log*
 # vercel
 .vercel
 
+# secrets (service account keys etc, never commit)
+/secrets
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts

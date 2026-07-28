@@ -152,6 +152,13 @@ lib/
   utils/
     helpers.ts       formatSalary, formatDate, etc plus constants
     matching.ts      Scoring algorithm. 7 factors, 0 to 100.
+  seo/
+    search-console.ts   Google Search Console plus Indexing API client (service account auth)
+scripts/
+  ingest-jobs.ts     Job ingestion (see status below)
+  seo-report.ts       Pulls GSC search analytics plus sitemap status, run with npm run seo:report
+secrets/
+  <service-account>.json   Google service account key, gitignored, never committed
 ```
 
 ## Environment Variables (in Vercel)
@@ -159,6 +166,8 @@ lib/
 * `NEXT_PUBLIC_SUPABASE_URL`
 * `NEXT_PUBLIC_SUPABASE_ANON_KEY`
 * `SUPABASE_SERVICE_ROLE_KEY`
+* `GOOGLE_SERVICE_ACCOUNT_KEY_PATH` (local only, points at the gitignored file in `secrets/`)
+* `GOOGLE_SEARCH_CONSOLE_SITE` (`sc-domain:matchremote.io`)
 
 ## Current Status
 
@@ -203,6 +212,8 @@ Search Console is set up for the current 3 static pages only (/, /quiz, /pricing
 * Saved jobs (the `saved_jobs` table exists, nothing writes to it yet).
 * Email alerts (Resend integration exists in package.json but not wired).
 * Paddle payment integration. **Correction (2026-07-27):** an earlier pass through this file (same session) wrongly concluded Stripe was the real provider because unused `stripe`, `@stripe/stripe-js`, `@stripe/react-stripe-js` packages were sitting in `package.json` even though the docs already said Paddle. Those packages were leftover cruft, never actually used anywhere in the app (`grep` for stripe usage only turned up the `users.stripe_customer_id` column name). Removed via `npm uninstall`, and `.env.example` updated to Paddle env var names (`NEXT_PUBLIC_PADDLE_CLIENT_TOKEN`, `PADDLE_API_KEY`, `PADDLE_WEBHOOK_SECRET`). Paddle is the confirmed, correct provider going forward. One remaining loose end: the `users.stripe_customer_id` column in `schema.sql`/`lib/db/types.ts` is still named after Stripe, rename it to `paddle_customer_id` via a migration whenever Paddle actually gets wired up, not touched now since it's a live production column and this was a docs/dependency cleanup pass, not a schema change.
+
+* **Autonomous SEO agent set up (2026-07-28).** A Google Cloud service account (`seo-automation@matchremote-seo.iam.gserviceaccount.com`, project `matchremote-seo`) has `siteOwner` access to matchremote.io in Search Console, key stored locally at `secrets/` (gitignored, never in the repo). `lib/seo/search-console.ts` wraps the Search Console API (search analytics, sitemaps) and the Indexing API (only valid for `/jobs/[slug]` pages, since those carry JobPosting schema, per Google's terms). `npm run seo:report` prints a JSON report (top queries/pages, high impression low CTR pages, sitemap health). Two local scheduled tasks (Claude Code's own scheduler, only fires while the app is open) run this autonomously with Johannes's explicit standing authorization to push straight to main without asking: `seo-auto-optimize` (every 2 days) analyzes the report plus the codebase and makes small, build gated SEO fixes (meta tags, sitemap bugs, internal links, structured data), and `seo-cadence-switch-to-biweekly` (one time, fires 2026-08-18) automatically switches the cadence to every 2 weeks per Johannes's original request. Both tasks are self contained prompts stored under `C:\Users\johan\.claude\scheduled-tasks\`, not in this repo. First real GSC report already surfaced a live bug worth checking on: sitemap.xml has 165 URLs submitted but 0 indexed, plus 3 stray sitemap entries (`/remote-jobs`, `/pricing`, `/`) with errors, likely from manual indexing requests earlier in Search Console rather than actual sitemap submissions, the agent's first run should investigate and either fix or explain this.
 
 ### Known issues
 
