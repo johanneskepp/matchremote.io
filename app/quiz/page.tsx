@@ -1,7 +1,8 @@
 'use client'
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { Suspense, useState } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
+import { ROLE_OPTIONS, SALARY_OPTIONS, isKnownSalaryValue } from '@/lib/quiz-options'
 
 type Option = { value: string; label: string; emoji: string }
 type Question = {
@@ -18,15 +19,7 @@ const QUESTIONS: Question[] = [
     emoji: '💼',
     title: 'What kind of role are you looking for?',
     subtitle: 'Pick all that apply',
-    options: [
-      { value: 'engineering', label: 'Engineering / Development', emoji: '💻' },
-      { value: 'design', label: 'Design / Creative', emoji: '🎨' },
-      { value: 'product', label: 'Product Management', emoji: '📊' },
-      { value: 'marketing', label: 'Marketing / Growth', emoji: '📣' },
-      { value: 'sales', label: 'Sales / Business Development', emoji: '💰' },
-      { value: 'operations', label: 'Operations / Support', emoji: '⚙️' },
-      { value: 'other', label: 'Something else', emoji: '✨' },
-    ],
+    options: ROLE_OPTIONS,
   },
   {
     id: 'experience',
@@ -68,13 +61,7 @@ const QUESTIONS: Question[] = [
     emoji: '💰',
     title: 'What\'s your salary target?',
     subtitle: 'Annual, in USD. Pick all that apply',
-    options: [
-      { value: '30000', label: 'Under $50k', emoji: '💵' },
-      { value: '60000', label: '$50k to $80k', emoji: '💵' },
-      { value: '90000', label: '$80k to $120k', emoji: '💰' },
-      { value: '130000', label: '$120k to $180k', emoji: '💰' },
-      { value: '200000', label: '$180k+', emoji: '💎' },
-    ],
+    options: SALARY_OPTIONS,
   },
   {
     id: 'job_type',
@@ -198,10 +185,40 @@ const QUESTIONS: Question[] = [
   },
 ]
 
+// Role and salary can arrive prefilled from the landing page search box.
+// Anything that is not one of the fixed option values is ignored, the
+// question simply opens unanswered rather than showing an error.
+function prefilledAnswers(params: URLSearchParams): Record<string, string[]> {
+  const answers: Record<string, string[]> = {}
+
+  const role = params.get('role')
+  if (role && ROLE_OPTIONS.some((o) => o.value === role)) {
+    answers.role = [role]
+  }
+
+  const salary = params.get('salary')
+  if (salary && isKnownSalaryValue(salary)) {
+    answers.salary = [salary]
+  }
+
+  return answers
+}
+
 export default function QuizPage() {
+  return (
+    <Suspense fallback={<div className="quiz-shell" />}>
+      <Quiz />
+    </Suspense>
+  )
+}
+
+function Quiz() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [current, setCurrent] = useState(0)
-  const [answers, setAnswers] = useState<Record<string, string[]>>({})
+  const [answers, setAnswers] = useState<Record<string, string[]>>(() =>
+    prefilledAnswers(new URLSearchParams(searchParams.toString()))
+  )
   const [submitting, setSubmitting] = useState(false)
 
   const question = QUESTIONS[current]
@@ -336,7 +353,7 @@ export default function QuizPage() {
                       width: '32px',
                       height: '32px',
                       borderRadius: '50%',
-                      background: 'var(--indigo)',
+                      background: 'var(--accent)',
                       color: 'white',
                       display: 'flex',
                       alignItems: 'center',
@@ -360,7 +377,7 @@ export default function QuizPage() {
         )}
       </div>
 
-      <div style={{ padding: '20px 0', background: 'white', borderTop: '2px solid var(--border)', flex: '0 0 auto' }}>
+      <div style={{ padding: '20px 0', background: 'var(--surface)', borderTop: '2px solid var(--border)', flex: '0 0 auto' }}>
         <div className="container" style={{ display: 'flex', gap: '12px' }}>
           {current > 0 && (
             <button onClick={handleBack} className="btn-big btn-ghost" style={{ flex: '0 0 auto', width: 'auto', padding: '20px 28px' }}>

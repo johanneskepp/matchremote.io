@@ -67,7 +67,7 @@ export default function ResultsPage() {
   return (
     <div style={{ minHeight: '100vh', background: 'var(--bg)' }}>
       {/* Header */}
-      <header style={{ padding: '20px 0', background: 'white', borderBottom: '2px solid var(--border)' }}>
+      <header style={{ padding: '20px 0', background: 'var(--surface)', borderBottom: '2px solid var(--border)' }}>
         <div className="container-wide" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <Link href="/" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '10px' }}>
             <span style={{ fontSize: '32px' }}>🎯</span>
@@ -103,7 +103,7 @@ export default function ResultsPage() {
       <section style={{ paddingBottom: '80px' }}>
         <div className="container">
           {jobs.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '48px 24px', background: 'white', border: '2px solid var(--border)', borderRadius: '24px' }}>
+            <div style={{ textAlign: 'center', padding: '48px 24px', background: 'var(--surface)', border: '2px solid var(--border)', borderRadius: '24px' }}>
               <div style={{ fontSize: '48px', marginBottom: '16px' }}>🚧</div>
               <h2 className="font-display" style={{ fontSize: '24px', marginBottom: '10px' }}>
                 No matches yet
@@ -126,13 +126,13 @@ export default function ResultsPage() {
                     width: '64px',
                     height: '64px',
                     borderRadius: '16px',
-                    background: 'var(--bg-warm)',
+                    background: 'var(--surface-alt)',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                     fontSize: '24px',
                     fontWeight: 700,
-                    color: 'var(--indigo)',
+                    color: 'var(--accent)',
                     flexShrink: 0,
                   }}>{job.company.charAt(0).toUpperCase()}</div>
 
@@ -143,7 +143,7 @@ export default function ResultsPage() {
                     <div style={{ fontSize: '17px', color: 'var(--ink-soft)', marginBottom: '8px' }}>
                       {job.company} · {job.location}
                     </div>
-                    <div style={{ fontSize: '18px', fontWeight: 700, color: 'var(--indigo)' }}>
+                    <div style={{ fontSize: '18px', fontWeight: 700, color: 'var(--accent)' }}>
                       {job.salary}
                     </div>
                   </div>
@@ -153,12 +153,12 @@ export default function ResultsPage() {
                       width: '72px',
                       height: '72px',
                       borderRadius: '50%',
-                      background: 'var(--success)',
+                      background: 'var(--teal)',
                       color: 'white',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      fontFamily: 'Fraunces, serif',
+                      fontFamily: 'var(--font-display), sans-serif',
                       fontSize: '24px',
                       fontWeight: 700,
                       border: '4px solid white',
@@ -195,7 +195,7 @@ export default function ResultsPage() {
                       href={job.url || '#'}
                       target={job.url ? '_blank' : undefined}
                       rel={job.url ? 'noopener noreferrer' : undefined}
-                      className="btn-big btn-yellow"
+                      className="btn-big"
                       style={{ flex: 1, textDecoration: 'none' }}
                     >
                       Apply now →
@@ -229,17 +229,17 @@ export default function ResultsPage() {
                   {jobs.slice(FREE_MATCH_LIMIT, FREE_MATCH_LIMIT + 2).map((job) => (
                     <div key={job.id} className="card" style={{ padding: '32px', display: 'flex', gap: '20px', alignItems: 'flex-start' }}>
                       <div style={{
-                        width: '64px', height: '64px', borderRadius: '16px', background: 'var(--bg-warm)',
+                        width: '64px', height: '64px', borderRadius: '16px', background: 'var(--surface-alt)',
                         display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '24px',
-                        fontWeight: 700, color: 'var(--indigo)', flexShrink: 0,
+                        fontWeight: 700, color: 'var(--accent)', flexShrink: 0,
                       }}>{job.company.charAt(0).toUpperCase()}</div>
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <h3 className="font-display" style={{ fontSize: '24px', marginBottom: '4px' }}>{job.title}</h3>
                         <div style={{ fontSize: '17px', color: 'var(--ink-soft)' }}>{job.company} · {job.location}</div>
                       </div>
                       <div style={{
-                        width: '72px', height: '72px', borderRadius: '50%', background: 'var(--success)', color: 'white',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Fraunces, serif',
+                        width: '72px', height: '72px', borderRadius: '50%', background: 'var(--teal)', color: 'white',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'var(--font-display), sans-serif',
                         fontSize: '24px', fontWeight: 700, flexShrink: 0,
                       }}>{job.matchScore}%</div>
                     </div>
@@ -258,7 +258,7 @@ export default function ResultsPage() {
                     Unlock every match, save jobs for later, and get alerts when new ones land.
                   </p>
                   <div style={{ maxWidth: '280px', width: '100%' }}>
-                    <Link href="/pricing" className="btn-big btn-yellow">
+                    <Link href="/pricing" className="btn-big">
                       Unlock all for $9/mo →
                     </Link>
                   </div>

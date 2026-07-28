@@ -133,7 +133,7 @@ export default async function JobDetailPage({ params }: { params: Promise<{ slug
         dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
       />
 
-      <header style={{ padding: '20px 0', background: 'white', borderBottom: '2px solid var(--border)' }}>
+      <header style={{ padding: '20px 0', background: 'var(--surface)', borderBottom: '2px solid var(--border)' }}>
         <div className="container-wide" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <Link href="/" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '10px' }}>
             <span style={{ fontSize: '28px' }}>🎯</span>
@@ -141,7 +141,7 @@ export default async function JobDetailPage({ params }: { params: Promise<{ slug
           </Link>
           <Link href="/quiz" style={{
             padding: '12px 24px',
-            background: 'var(--indigo)',
+            background: 'var(--accent)',
             color: 'white',
             borderRadius: '12px',
             fontWeight: 700,
@@ -191,7 +191,7 @@ export default async function JobDetailPage({ params }: { params: Promise<{ slug
                 href={job.url}
                 target="_blank"
                 rel="noopener noreferrer nofollow"
-                className="btn-big btn-yellow"
+                className="btn-big"
                 style={{ maxWidth: '320px', marginBottom: '32px' }}
               >
                 Apply on {job.source} →
@@ -214,7 +214,7 @@ export default async function JobDetailPage({ params }: { params: Promise<{ slug
             </div>
 
             <div style={{ marginTop: '24px', textAlign: 'center' }}>
-              <Link href="/quiz" style={{ color: 'var(--indigo)', fontWeight: 600, textDecoration: 'underline' }}>
+              <Link href="/quiz" style={{ color: 'var(--accent)', fontWeight: 600, textDecoration: 'underline' }}>
                 Want jobs matched to your timezone and salary target? Take the 3 minute quiz →
               </Link>
             </div>
@@ -230,7 +230,7 @@ export default async function JobDetailPage({ params }: { params: Promise<{ slug
         </section>
       </main>
 
-      <footer style={{ padding: '24px 0', borderTop: '2px solid var(--border)', background: 'white' }}>
+      <footer style={{ padding: '24px 0', borderTop: '2px solid var(--border)', background: 'var(--surface)' }}>
         <div className="container-wide" style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: '16px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
             <span style={{ fontSize: '22px' }}>🎯</span>

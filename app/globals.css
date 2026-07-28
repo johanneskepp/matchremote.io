@@ -1,19 +1,18 @@
-@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700;9..144,800&family=Inter:wght@400;500;600;700&display=swap');
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
-  --bg: #FAFAF5;
-  --bg-warm: #FFE9E3;
-  --ink: #1A1614;
-  --ink-soft: #5C5854;
-  --indigo: #3D3AE0;
-  --indigo-dark: #2E2CB8;
-  --yellow: #FFB627;
-  --yellow-dark: #E89E15;
-  --success: #22C55E;
-  --border: #E8E4DC;
+  --bg: #EDEEF0;
+  --surface: #FFFFFF;
+  --surface-alt: #DDE0E4;
+  --ink: #1A1C20;
+  --ink-soft: #5B5F68;
+  --border: #D3D6DA;
+  --accent: #FF5A1F;
+  --accent-dark: #E14A15;
+  --teal: #0F9E96;
+  --success: #16A34A;
 }
 
 * {
@@ -25,21 +24,19 @@ html, body {
   padding: 0;
   background: var(--bg);
   color: var(--ink);
-  font-family: 'Inter', -apple-system, sans-serif;
+  font-family: var(--font-body), -apple-system, sans-serif;
   font-size: 18px;
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
 }
 
 .font-display {
-  font-family: 'Fraunces', Georgia, serif;
-  font-optical-sizing: auto;
+  font-family: var(--font-display), system-ui, sans-serif;
   letter-spacing: -0.02em;
 }
 
 h1, h2, h3 {
-  font-family: 'Fraunces', Georgia, serif;
-  font-optical-sizing: auto;
+  font-family: var(--font-display), system-ui, sans-serif;
   letter-spacing: -0.02em;
   color: var(--ink);
   margin: 0;
@@ -53,7 +50,7 @@ button {
   background: none;
 }
 
-/* BIG button - Duolingo style with shadow depth */
+/* BIG button, big clickable area with 3D shadow depth */
 .btn-big {
   display: inline-flex;
   align-items: center;
@@ -61,13 +58,13 @@ button {
   gap: 8px;
   padding: 20px 32px;
   min-height: 64px;
-  background: var(--indigo);
+  background: var(--accent);
   color: white;
-  font-family: 'Inter', sans-serif;
+  font-family: var(--font-body), sans-serif;
   font-weight: 700;
   font-size: 18px;
   border-radius: 16px;
-  box-shadow: 0 4px 0 var(--indigo-dark);
+  box-shadow: 0 4px 0 var(--accent-dark);
   transition: all 0.1s ease;
   text-decoration: none;
   border: none;
@@ -76,40 +73,40 @@ button {
 }
 
 .btn-big:hover {
-  background: var(--indigo-dark);
+  background: var(--accent-dark);
   transform: translateY(-1px);
-  box-shadow: 0 5px 0 var(--indigo-dark);
+  box-shadow: 0 5px 0 var(--accent-dark);
 }
 
 .btn-big:active {
   transform: translateY(3px);
-  box-shadow: 0 1px 0 var(--indigo-dark);
+  box-shadow: 0 1px 0 var(--accent-dark);
 }
 
-.btn-big.btn-yellow {
-  background: var(--yellow);
-  color: var(--ink);
-  box-shadow: 0 4px 0 var(--yellow-dark);
+.btn-big.btn-teal {
+  background: var(--teal);
+  color: white;
+  box-shadow: 0 4px 0 #0B7C76;
 }
 
-.btn-big.btn-yellow:hover {
-  background: var(--yellow-dark);
-  box-shadow: 0 5px 0 var(--yellow-dark);
+.btn-big.btn-teal:hover {
+  background: #0B7C76;
+  box-shadow: 0 5px 0 #0B7C76;
 }
 
-.btn-big.btn-yellow:active {
-  box-shadow: 0 1px 0 var(--yellow-dark);
+.btn-big.btn-teal:active {
+  box-shadow: 0 1px 0 #0B7C76;
 }
 
 .btn-big.btn-ghost {
-  background: white;
+  background: var(--surface);
   color: var(--ink);
   box-shadow: 0 4px 0 var(--border);
   border: 2px solid var(--border);
 }
 
 .btn-big.btn-ghost:hover {
-  background: var(--bg-warm);
+  background: var(--surface-alt);
 }
 
 /* Quiz option card - MASSIVE clickable area */
@@ -119,12 +116,12 @@ button {
   gap: 16px;
   padding: 24px;
   min-height: 80px;
-  background: white;
+  background: var(--surface);
   border: 3px solid var(--border);
   border-radius: 20px;
   cursor: pointer;
   transition: all 0.15s ease;
-  font-family: 'Inter', sans-serif;
+  font-family: var(--font-body), sans-serif;
   font-size: 18px;
   font-weight: 500;
   color: var(--ink);
@@ -133,15 +130,15 @@ button {
 }
 
 .option-card:hover {
-  border-color: var(--indigo);
-  background: var(--bg-warm);
+  border-color: var(--accent);
+  background: var(--surface-alt);
   transform: translateY(-2px);
 }
 
 .option-card.selected {
-  border-color: var(--indigo);
-  background: var(--bg-warm);
-  box-shadow: 0 4px 0 var(--indigo);
+  border-color: var(--accent);
+  background: #FFF1EA;
+  box-shadow: 0 4px 0 var(--accent);
 }
 
 .option-card .emoji {
@@ -175,7 +172,7 @@ button {
 
 .progress-fill {
   height: 100%;
-  background: var(--success);
+  background: var(--teal);
   border-radius: 999px;
   transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
@@ -198,7 +195,7 @@ button {
   align-items: center;
   gap: 6px;
   padding: 8px 16px;
-  background: var(--bg-warm);
+  background: var(--surface-alt);
   color: var(--ink);
   border-radius: 999px;
   font-size: 14px;
@@ -207,7 +204,7 @@ button {
 
 /* Card */
 .card {
-  background: white;
+  background: var(--surface);
   border-radius: 24px;
   padding: 32px;
   border: 2px solid var(--border);
@@ -226,7 +223,7 @@ button {
 .quiz-topbar {
   flex: 0 0 auto;
   padding: 16px 0 0;
-  background: white;
+  background: var(--surface);
   border-bottom: 2px solid var(--border);
 }
 
@@ -249,7 +246,7 @@ button {
   height: 34px;
   border-radius: 50%;
   border: 2px solid var(--border);
-  background: white;
+  background: var(--surface);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -261,21 +258,21 @@ button {
 }
 
 .quiz-dot:hover {
-  border-color: var(--indigo);
+  border-color: var(--accent);
 }
 
 .quiz-dot.answered {
-  border-color: var(--success);
-  color: var(--success);
-  background: #EAFBF0;
+  border-color: var(--teal);
+  color: var(--teal);
+  background: #E6F5F4;
 }
 
 .quiz-dot.current {
-  border-color: var(--indigo);
-  background: var(--indigo);
+  border-color: var(--accent);
+  background: var(--accent);
   color: white;
   transform: scale(1.15);
-  box-shadow: 0 3px 0 var(--indigo-dark);
+  box-shadow: 0 3px 0 var(--accent-dark);
 }
 
 /* Carousel: shadowed prev/next peeking beside the maximized current question */
@@ -295,7 +292,7 @@ button {
   transform: scale(0.86);
   cursor: pointer;
   transition: all 0.2s ease;
-  background: white;
+  background: var(--surface);
   border: 2px solid var(--border);
   border-radius: 20px;
   padding: 18px;
@@ -305,7 +302,7 @@ button {
 .quiz-side-card:hover {
   opacity: 0.85;
   transform: scale(0.92);
-  border-color: var(--indigo);
+  border-color: var(--accent);
 }
 
 .quiz-side-card .side-emoji {
@@ -433,7 +430,7 @@ button {
   justify-content: space-between;
   align-items: center;
   gap: 16px;
-  font-family: 'Fraunces', Georgia, serif;
+  font-family: var(--font-display), system-ui, sans-serif;
   font-weight: 600;
   font-size: 17px;
   color: var(--ink);
@@ -465,49 +462,304 @@ button {
 
 /* Big number for stats */
 .big-num {
-  font-family: 'Fraunces', serif;
+  font-family: var(--font-display), system-ui, sans-serif;
   font-size: 64px;
   font-weight: 700;
-  color: var(--indigo);
+  color: var(--accent);
   line-height: 1;
 }
 
-/* Homepage premium redesign (2026-07-27): dark fintech-leaning shell for the
-   landing page only, scoped to app/page.tsx via inline colors, not the
-   shared --bg/--ink tokens quiz/results/pricing still use. Just the
-   supporting keyframes and hover states live here since inline style can't
-   express them. */
-@keyframes premium-fade-up {
-  from {
-    opacity: 0;
-    transform: translateY(14px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+/* Landing hero: search box plus the two example match cards. Sized so the
+   whole block clears the viewport without scrolling on both phone and
+   desktop, which is why the mobile breakpoint tightens every gap. */
+.hero-main {
+  flex: 1 1 auto;
+  padding: 40px 0 56px;
 }
 
-.premium-cta {
-  display: inline-flex;
+.hero-nav {
+  display: flex;
+  justify-content: flex-end;
+  gap: 20px;
+  margin-bottom: 28px;
+}
+
+.hero-nav a {
+  color: var(--ink-soft);
+  font-size: 14px;
+  text-decoration: none;
+}
+
+.hero-head {
+  text-align: center;
+  margin-bottom: 28px;
+}
+
+.hero-head h1 {
+  font-size: clamp(32px, 6vw, 58px);
+  line-height: 1.05;
+  margin-bottom: 10px;
+}
+
+.hero-head p {
+  font-size: 19px;
+  color: var(--ink-soft);
+  margin: 0;
+}
+
+.hero-search {
+  display: flex;
+  gap: 12px;
+  align-items: flex-end;
+  background: var(--surface);
+  border: 2px solid var(--border);
+  border-radius: 20px;
+  padding: 14px;
+  box-shadow: 0 6px 0 var(--surface-alt);
+}
+
+.hero-field {
+  position: relative;
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.hero-field-salary {
+  flex: 0 1 210px;
+}
+
+.hero-field label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  padding-left: 2px;
+}
+
+.hero-field input,
+.hero-field select {
+  font-family: var(--font-body), sans-serif;
+  font-size: 17px;
+  font-weight: 500;
+  color: var(--ink);
+  background: transparent;
+  border: none;
+  border-radius: 10px;
+  padding: 10px 8px;
+  width: 100%;
+  min-height: 44px;
+  outline: none;
+}
+
+.hero-field input:focus,
+.hero-field select:focus {
+  background: var(--surface-alt);
+}
+
+/* Sits at the end of the auto typed text while the demo runs */
+.hero-caret {
+  position: absolute;
+  right: 10px;
+  bottom: 14px;
+  width: 2px;
+  height: 20px;
+  background: var(--accent);
+  animation: hero-caret-blink 1s steps(1) infinite;
+}
+
+@keyframes hero-caret-blink {
+  0%, 50% { opacity: 1; }
+  50.01%, 100% { opacity: 0; }
+}
+
+.hero-go {
+  flex: 0 0 auto;
+  min-height: 56px;
+  padding: 0 26px;
+  background: var(--accent);
+  color: white;
+  font-family: var(--font-body), sans-serif;
+  font-weight: 700;
+  font-size: 17px;
+  border-radius: 14px;
+  box-shadow: 0 4px 0 var(--accent-dark);
+  transition: all 0.1s ease;
+}
+
+.hero-go:hover {
+  background: var(--accent-dark);
+  box-shadow: 0 5px 0 var(--accent-dark);
+}
+
+.hero-go:active {
+  transform: translateY(3px);
+  box-shadow: 0 1px 0 var(--accent-dark);
+}
+
+.hero-demo-label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 20px 0 10px;
+  font-size: 13px;
+  color: var(--ink-soft);
+}
+
+.hero-cards {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.hero-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  background: var(--surface);
+  border: 2px solid var(--border);
+  border-radius: 18px;
+  padding: 18px;
+  opacity: 0;
+  transform: translateY(16px);
+  transition: opacity 0.45s ease, transform 0.45s ease;
+}
+
+.hero-card.is-in {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.hero-card-main {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.hero-card h3 {
+  font-size: 17px;
+  font-weight: 600;
+  margin: 0 0 2px;
+  line-height: 1.25;
+}
+
+.hero-card-company {
+  margin: 0;
+  font-size: 14px;
+  color: var(--ink-soft);
+}
+
+.hero-card-pay {
+  margin: 6px 0 0;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--accent);
+}
+
+.hero-card-note {
+  margin: 8px 0 0;
+  font-size: 13px;
+  color: var(--ink-soft);
+  line-height: 1.45;
+}
+
+.hero-card-score {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  padding: 18px 34px;
-  border-radius: 10px;
-  font-family: 'Inter', sans-serif;
-  font-weight: 600;
-  font-size: 16px;
-  text-decoration: none;
-  transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+  width: 62px;
+  height: 62px;
+  border-radius: 50%;
+  background: var(--teal);
+  color: white;
 }
 
-.premium-cta:hover {
-  transform: translateY(-1px);
+.hero-score-num {
+  font-family: var(--font-display), system-ui, sans-serif;
+  font-size: 19px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.hero-score-label {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  opacity: 0.85;
+  margin-top: 2px;
+}
+
+@media (max-width: 720px) {
+  .hero-main {
+    padding: 18px 0 32px;
+  }
+  .hero-nav {
+    margin-bottom: 14px;
+  }
+  .hero-head {
+    margin-bottom: 16px;
+  }
+  .hero-head p {
+    font-size: 16px;
+  }
+  .hero-search {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 6px;
+    padding: 12px;
+  }
+  /* flex-basis becomes a height once the box stacks, so the desktop 210px
+     width basis has to be reset or the salary field grows to 210px tall. */
+  .hero-field-salary {
+    flex: 1 1 auto;
+  }
+  .hero-field input,
+  .hero-field select {
+    min-height: 38px;
+    padding: 6px 8px;
+  }
+  .hero-go {
+    width: 100%;
+    min-height: 52px;
+  }
+  .hero-caret {
+    display: none;
+  }
+  .hero-demo-label {
+    margin: 12px 0 8px;
+    font-size: 12px;
+  }
+  .hero-cards {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 10px;
+  }
+  .hero-card {
+    padding: 14px;
+    gap: 10px;
+  }
+  .hero-card-note {
+    margin-top: 6px;
+    font-size: 12px;
+  }
+  .hero-card-score {
+    width: 54px;
+    height: 54px;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .premium-fade-up {
-    animation: none !important;
+  .hero-card {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+  .hero-caret {
+    animation: none;
+    opacity: 0;
   }
 }

@@ -55,7 +55,7 @@ Consider building programmatic SEO pages later, for example "Remote [role] jobs 
 
 ## Design System
 
-**Vibe:** Duolingo style. Playful but professional. Big clickable areas, warm colors, personality.
+**Vibe (updated 2026-07-28):** Cool, confident, tool like. Keeps the Duolingo bones (big clickable areas, generous radius, 3D button depth) but the palette is now a cool steel grey base with a single warm copper orange accent. Not playful pastel, not dark fintech, a calm neutral canvas where the one saturated color is always the next action.
 
 ### CRITICAL LAYOUT PRINCIPLE. No long vertical scrolling pages.
 
@@ -69,26 +69,35 @@ Consider building programmatic SEO pages later, for example "Remote [role] jobs 
 
 ### Colors (defined in `app/globals.css` as CSS variables)
 
-* `--bg` `#FAFAF5` off white background
-* `--bg-warm` `#FFE9E3` soft pink accent bg
-* `--ink` `#1A1614` text (soft black)
-* `--ink-soft` `#5C5854` muted text
-* `--indigo` `#3D3AE0` primary brand
-* `--indigo-dark` `#2E2CB8` button shadow
-* `--yellow` `#FFB627` accent (energetic)
-* `--yellow-dark` `#E89E15`
-* `--success` `#22C55E`
-* `--border` `#E8E4DC`
+* `--bg` `#EDEEF0` cool steel grey page background, not white, not black
+* `--surface` `#FFFFFF` cards, headers, footers, raised surfaces
+* `--surface-alt` `#DDE0E4` secondary surface, chips, hover states, avatars
+* `--ink` `#1A1C20` text
+* `--ink-soft` `#5B5F68` muted text
+* `--border` `#D3D6DA`
+* `--accent` `#FF5A1F` warm copper orange, primary brand and every CTA
+* `--accent-dark` `#E14A15` button 3D shadow and hover
+* `--teal` `#0F9E96` secondary accent, links, match percent ring, progress fill
+* `--success` `#16A34A` confirmations and checkmarks only
+
+The old palette (`--indigo`, `--yellow`, `--bg-warm`, and the landing page's
+separate hardcoded dark theme) is fully removed as of 2026-07-28. There is one
+palette now, shared by every page.
 
 ### Typography
 
-* Display: Fraunces (serif, for headings, class: `font-display` or h1, h2, h3)
-* Body: Inter (default)
+* Display, headings: Bricolage Grotesque (variable font, class `font-display` or h1, h2, h3)
+* Body: Inter
+
+Both are loaded via `next/font/google` in `app/layout.tsx` and exposed as
+`--font-display` and `--font-body`. Never add a Google Fonts `@import` to
+globals.css, and never hardcode a font family name in a component, always
+reference the CSS variable.
 
 ### Key CSS classes (in globals.css)
 
-* `.btn-big` main CTA button. 64px min height, 3D shadow depth like Duolingo.
-* `.btn-big.btn-yellow` yellow variant
+* `.btn-big` main CTA button. 64px min height, copper orange, 3D shadow depth.
+* `.btn-big.btn-teal` secondary teal variant
 * `.btn-big.btn-ghost` white outline variant
 * `.option-card` quiz answer card. 80px min height, big emoji plus text.
 * `.option-card.selected` selected state
@@ -100,10 +109,57 @@ Consider building programmatic SEO pages later, for example "Remote [role] jobs 
 ### Design rules
 
 * Big clickable areas. Min 64px height for buttons, 80px for option cards.
-* Emojis as visual anchors. Every option, every step has one.
+* One saturated color per screen. Copper orange is reserved for the primary
+  action. Teal is the only other saturated color, used for links, the match
+  percent ring, and progress. Everything else is grey.
 * 3D shadow effect on buttons (`box-shadow: 0 4px 0 [darker color]`). Presses down on click.
-* Serif for personality (Fraunces), sans for readability (Inter).
 * Never use generic Tailwind utility classes like `bg-blue-500`. Always use the CSS vars.
+* Never hardcode `white` or a hex value in a component. Use `var(--surface)`
+  and friends so a future palette change stays a one file change.
+
+## Landing Page Spec (rebuilt 2026-07-28)
+
+Audience is someone arriving from LinkedIn or Indeed. They already know what
+remote work is. Show the product, do not explain it.
+
+The whole page fits one desktop screen (verified at 1280x800, zero scroll) and
+puts the search box plus both example cards above the fold on a 375x812 phone
+too. Structure, top to bottom, and nothing else:
+
+1. Thin scrolling ticker of real recently added jobs (`getRecentTickerJobs`).
+2. Small right aligned nav (Pricing, Log in).
+3. Wordmark plus a tagline of at most seven words.
+4. `app/HeroSearch.tsx`: the interactive search box (role free text with a
+   datalist of suggestions, salary dropdown) and two example match cards.
+5. Footer.
+
+There is deliberately no numbered "how it works" section, no "why matchremote"
+section, and no FAQ on this page. The FAQ lives at `/faq` and is linked from
+the footer, it carries the FAQPage JSON-LD.
+
+### The hero demo
+
+`HeroSearch` runs a looping CSS plus light JavaScript demo, no video and no new
+dependency: the role field types itself out character by character, pauses,
+the two cards fade and slide up, the match percentages count from 0 to their
+final value, then after a few seconds it rotates to the next of four role
+examples. Touching either field stops the demo permanently and hands the
+inputs to the visitor. Under `prefers-reduced-motion: reduce` it renders one
+static example immediately with no typing, no counting, and no rotation.
+
+The example cards use invented company names and are labelled "Example" on
+screen. They are not real listings and must never be presented as such.
+
+### Search box to quiz prefill
+
+The CTA navigates to `/quiz?role=<value>&salary=<value>`. Free text is mapped
+onto the quiz's fixed role values by `matchRoleValue` in `lib/quiz-options.ts`
+("senior react developer" resolves to engineering). `ROLE_OPTIONS` and
+`SALARY_OPTIONS` live in that same file and are imported by both the hero and
+`app/quiz/page.tsx`, so the two can never drift apart. The quiz reads the
+params via `useSearchParams` (hence the `Suspense` wrapper) and prefills those
+two questions. An unrecognised value is ignored silently, the question just
+opens unanswered.
 
 ## Quiz UX Specification
 
@@ -133,17 +189,20 @@ The quiz is a core experience and needs special design treatment.
 
 ```
 app/
-  page.tsx           Landing page
-  quiz/page.tsx      15 question quiz (needs redesign per Quiz UX spec above)
-  results/page.tsx   Match results (currently mock data)
-  pricing/page.tsx   3 tier pricing
+  page.tsx           Landing page, see Landing Page Spec above
+  HeroSearch.tsx     Client component: hero search box plus animated demo
+  faq/page.tsx       FAQ, carries the FAQPage JSON-LD
+  quiz/page.tsx      15 question quiz, reads role/salary prefill from the URL
+  results/page.tsx   Match results
+  pricing/page.tsx   Pricing
   auth/login/page.tsx
   api/
-    matches/route.ts        Stubbed. Returns empty.
-    quiz/submit/route.ts    Stubbed. Returns success.
-  layout.tsx         Root layout. Minimal. No header or footer. Pages own their chrome.
+    matches/route.ts        Returns a user's matches joined with job data
+    quiz/submit/route.ts    Creates guest user, saves response, ranks jobs
+  layout.tsx         Root layout. Fonts (next/font), metadata, Organization JSON-LD.
   globals.css        Design system
 lib/
+  quiz-options.ts    Shared role and salary options, used by hero and quiz
   db/
     queries.ts       Supabase CRUD. All typed as `any` for build compatibility.
     schema.sql       Full DB schema. 8 tables, RLS policies.
@@ -265,7 +324,7 @@ The user (Johannes) explicitly wants:
 
 When making design changes: reach for warmth, personality, and clarity. Bigger is better. Fewer sections stacked vertically is better.
 
-**Update (2026-07):** founder pushed back on the color palette and decoration getting too "fun" and "AI generic" (rainbow tinted cards, sticker style rotated boxes, emoji everywhere). Current direction: keep the Duolingo bones (big buttons, generous radius, playful headline treatment) but restrain color to indigo plus neutrals for most UI chrome, save saturated color for the one primary CTA. Reduce emoji density, prefer numbered circles or checkmarks over decorative emoji icons for lists. When in doubt, favor the more restrained, professional looking option.
+**Update (2026-07-28):** the palette was replaced wholesale. Earlier feedback was that the design got too "fun" and "AI generic" (rainbow tinted cards, sticker style rotated boxes, emoji everywhere), then a dark fintech landing page was tried and also dropped. Current and only direction: cool steel grey canvas, copper orange for the one primary action, teal as the single supporting accent, everything else neutral. Keep the Duolingo bones (big buttons, generous radius) but restrain color hard. Reduce emoji density, prefer numbered circles or checkmarks over decorative emoji icons. When in doubt, favor the more restrained, professional looking option.
 
 ## User Preferences
 

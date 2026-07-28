@@ -78,7 +78,7 @@ export default function PricingPage() {
   return (
     <div style={{ minHeight: '100vh', background: 'var(--bg)' }}>
       {/* Header */}
-      <header style={{ padding: '20px 0', background: 'white', borderBottom: '2px solid var(--border)' }}>
+      <header style={{ padding: '20px 0', background: 'var(--surface)', borderBottom: '2px solid var(--border)' }}>
         <div className="container-wide" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <Link href="/" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '10px' }}>
             <span style={{ fontSize: '32px' }}>🎯</span>
@@ -86,7 +86,7 @@ export default function PricingPage() {
           </Link>
           <Link href="/quiz" style={{
             padding: '12px 24px',
-            background: 'var(--indigo)',
+            background: 'var(--accent)',
             color: 'white',
             borderRadius: '12px',
             fontWeight: 700,
@@ -116,10 +116,10 @@ export default function PricingPage() {
             {plans.map((plan) => (
               <div key={plan.name} style={{
                 padding: '40px 32px',
-                background: plan.featured ? 'var(--indigo)' : 'white',
+                background: plan.featured ? 'var(--accent)' : 'var(--surface)',
                 color: plan.featured ? 'white' : 'var(--ink)',
                 borderRadius: '24px',
-                border: plan.featured ? '4px solid var(--indigo-dark)' : '2px solid var(--border)',
+                border: plan.featured ? '4px solid var(--accent-dark)' : '2px solid var(--border)',
                 position: 'relative',
                 transform: plan.featured ? 'scale(1.02)' : 'none',
               }}>
@@ -129,8 +129,8 @@ export default function PricingPage() {
                     top: '-14px',
                     left: '50%',
                     transform: 'translateX(-50%)',
-                    background: 'var(--yellow)',
-                    color: 'var(--ink)',
+                    background: 'var(--teal)',
+                    color: 'white',
                     padding: '6px 16px',
                     borderRadius: '999px',
                     fontSize: '13px',
@@ -156,13 +156,13 @@ export default function PricingPage() {
                 <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 32px 0' }}>
                   {plan.features.map((f) => (
                     <li key={f} style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', marginBottom: '12px', fontSize: '16px' }}>
-                      <span style={{ color: plan.featured ? 'var(--yellow)' : 'var(--success)', fontWeight: 700 }}>✓</span>
+                      <span style={{ color: plan.featured ? 'white' : 'var(--success)', fontWeight: 700 }}>✓</span>
                       <span>{f}</span>
                     </li>
                   ))}
                 </ul>
 
-                <Link href={plan.href} className={`btn-big ${plan.featured ? 'btn-yellow' : ''}`}>
+                <Link href={plan.href} className={`btn-big ${plan.featured ? 'btn-ghost' : ''}`}>
                   {plan.cta}
                 </Link>
               </div>
@@ -172,7 +172,7 @@ export default function PricingPage() {
           {/* FAQ small */}
           <div style={{ marginTop: '80px', textAlign: 'center' }}>
             <p style={{ color: 'var(--ink-soft)', fontSize: '15px' }}>
-              Questions? Email us at <a href="mailto:hello@matchremote.io" style={{ color: 'var(--indigo)', fontWeight: 600 }}>hello@matchremote.io</a>
+              Questions? Email us at <a href="mailto:hello@matchremote.io" style={{ color: 'var(--accent)', fontWeight: 600 }}>hello@matchremote.io</a>
             </p>
           </div>
         </div>

@@ -79,7 +79,7 @@ export default async function RemoteJobsCategoryPage({ params }: { params: Promi
         dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
       />
 
-      <header style={{ padding: '20px 0', background: 'white', borderBottom: '2px solid var(--border)' }}>
+      <header style={{ padding: '20px 0', background: 'var(--surface)', borderBottom: '2px solid var(--border)' }}>
         <div className="container-wide" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <Link href="/" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '10px' }}>
             <span style={{ fontSize: '28px' }}>🎯</span>
@@ -87,7 +87,7 @@ export default async function RemoteJobsCategoryPage({ params }: { params: Promi
           </Link>
           <Link href="/quiz" style={{
             padding: '12px 24px',
-            background: 'var(--indigo)',
+            background: 'var(--accent)',
             color: 'white',
             borderRadius: '12px',
             fontWeight: 700,
@@ -164,7 +164,7 @@ export default async function RemoteJobsCategoryPage({ params }: { params: Promi
                     <p style={{ color: 'var(--ink-soft)', fontWeight: 600, marginBottom: '12px' }}>
                       {job.company}
                     </p>
-                    <p style={{ fontWeight: 700, color: 'var(--indigo)', margin: 0 }}>
+                    <p style={{ fontWeight: 700, color: 'var(--accent)', margin: 0 }}>
                       {formatSalary(job.salary_min ?? undefined, job.salary_max ?? undefined)}
                     </p>
                   </Link>
@@ -175,7 +175,7 @@ export default async function RemoteJobsCategoryPage({ params }: { params: Promi
         </section>
       </main>
 
-      <footer style={{ padding: '24px 0', borderTop: '2px solid var(--border)', background: 'white' }}>
+      <footer style={{ padding: '24px 0', borderTop: '2px solid var(--border)', background: 'var(--surface)' }}>
         <div className="container-wide" style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: '16px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
             <span style={{ fontSize: '22px' }}>🎯</span>
