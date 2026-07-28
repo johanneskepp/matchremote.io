@@ -60,6 +60,24 @@ export async function getUserMatches(userId: string, limit: number = 20): Promis
   return data || []
 }
 
+export async function getAllUserMatches(userId: string): Promise<any[]> {
+  const { data } = await sbAdmin
+    .from('matches')
+    .select('*, jobs(*)')
+    .eq('user_id', userId)
+    .order('match_score', { ascending: false })
+  return data || []
+}
+
+export async function markMatchesSeen(matchIds: string[]): Promise<void> {
+  if (matchIds.length === 0) return
+  await sbAdmin
+    .from('matches')
+    .update({ seen_at: new Date().toISOString() })
+    .in('id', matchIds)
+    .is('seen_at', null)
+}
+
 export async function getMatchScore(userId: string, jobId: string): Promise<number | null> {
   const { data } = await sbAdmin.from('matches').select('match_score').eq('user_id', userId).eq('job_id', jobId).single()
   return data?.match_score || null

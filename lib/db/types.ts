@@ -169,6 +169,8 @@ export type Database = {
           match_reasons: Record<string, any>
           created_at: string
           updated_at: string
+          notified_at: string | null
+          seen_at: string | null
         }
         Insert: {
           id?: string
@@ -178,6 +180,8 @@ export type Database = {
           match_reasons?: Record<string, any>
           created_at?: string
           updated_at?: string
+          notified_at?: string | null
+          seen_at?: string | null
         }
         Update: {
           id?: string
@@ -187,6 +191,8 @@ export type Database = {
           match_reasons?: Record<string, any>
           created_at?: string
           updated_at?: string
+          notified_at?: string | null
+          seen_at?: string | null
         }
       }
       email_logs: {

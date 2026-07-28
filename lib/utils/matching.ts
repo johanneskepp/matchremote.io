@@ -208,8 +208,42 @@ const ADJACENT_REGIONS: Record<string, string[]> = {
   asia: ['europe'],
 }
 
-function isCompatibleTimezone(region1: string, region2: string): boolean {
+export function isCompatibleTimezone(region1: string, region2: string): boolean {
   return ADJACENT_REGIONS[region1.toLowerCase()]?.includes(region2.toLowerCase()) ?? false
+}
+
+/**
+ * One short line naming the two strongest reasons a job scored well, shown
+ * above the lock on paid matches so the lock is concrete rather than a blank
+ * tease.
+ *
+ * Every phrase is gated on a threshold that can only be reached when the
+ * underlying data actually exists. timezoneFit in particular is 0 whenever
+ * job.timezone is null (the dimension is excluded from scoring entirely) and
+ * only 2 when the regions genuinely do not overlap, so requiring 7 means we
+ * never claim a timezone fit we cannot back. Same reasoning for the rest: no
+ * phrase is emitted from a missing or weak signal.
+ *
+ * Deliberately qualitative. skillsMatch is a 0 to 15 score, not a count, so
+ * "two of your three skills" would be invented precision.
+ */
+const TEASER_PHRASES: { key: keyof MatchResult['reasons']; min: number; strong: number; strongText: string; text: string }[] = [
+  { key: 'salaryMatch', min: 10, strong: 20, strongText: 'your salary target', text: 'a salary near your target' },
+  { key: 'skillsMatch', min: 8, strong: 12, strongText: 'your skills', text: 'part of your skill set' },
+  { key: 'timezoneFit', min: 7, strong: 10, strongText: 'your timezone', text: 'hours that overlap yours' },
+  { key: 'asyncAlignment', min: 14, strong: 18, strongText: 'how you like to work', text: 'a work style close to yours' },
+  { key: 'experienceMatch', min: 9, strong: 13, strongText: 'your experience level', text: 'roughly your experience level' },
+  { key: 'industryPreference', min: 10, strong: 10, strongText: 'an industry you picked', text: 'an industry you picked' },
+]
+
+export function getMatchTeaser(reasons: Record<string, number>): string {
+  const hits = TEASER_PHRASES.filter((p) => (reasons[p.key] ?? 0) >= p.min)
+    .slice(0, 2)
+    .map((p) => ((reasons[p.key] ?? 0) >= p.strong ? p.strongText : p.text))
+
+  if (hits.length === 0) return 'Partial fit on what you told us'
+  if (hits.length === 1) return `Matches ${hits[0]}`
+  return `Matches ${hits[0]} and ${hits[1]}`
 }
 
 /**
