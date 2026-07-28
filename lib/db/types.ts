@@ -110,6 +110,7 @@ export type Database = {
           created_at: string
           updated_at: string
           scraped_at: string | null
+          expires_at: string | null
           is_active: boolean
           tags: string[]
           company_size: string | null
@@ -132,6 +133,7 @@ export type Database = {
           created_at?: string
           updated_at?: string
           scraped_at?: string | null
+          expires_at?: string | null
           is_active?: boolean
           tags?: string[]
           company_size?: string | null
@@ -154,6 +156,7 @@ export type Database = {
           created_at?: string
           updated_at?: string
           scraped_at?: string | null
+          expires_at?: string | null
           is_active?: boolean
           tags?: string[]
           company_size?: string | null

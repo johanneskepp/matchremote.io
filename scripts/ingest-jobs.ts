@@ -15,7 +15,9 @@ import {
   LINK_CHECKABLE_SOURCES,
   MAX_JOB_AGE_DAYS,
   isExpiredByAge,
+  isExpiredBySource,
   looksGone,
+  parseSourceExpiry,
 } from '../lib/utils/job-freshness'
 
 type JobInsert = Database['public']['Tables']['jobs']['Insert']
@@ -373,6 +375,10 @@ async function fetchHimalayas(): Promise<JobInsert[]> {
         url,
         posted_date: job.pubDate ? new Date(job.pubDate * 1000).toISOString() : new Date().toISOString(),
         scraped_at: new Date().toISOString(),
+        // The only source that tells us when a listing stops being valid.
+        // Stored so the freshness pass can retire it on their date instead of
+        // our generic age rule, and so the page publishes their date to Google.
+        expires_at: parseSourceExpiry(job.expiryDate),
         is_active: true,
         tags: (job.categories || []).slice(0, 12).map((t) => t.toLowerCase()),
         company_size: null,
@@ -461,7 +467,7 @@ async function main() {
 async function retireStaleJobs(seenUrls: Set<string>) {
   const { data: active, error } = await jobsTable
     .from('jobs')
-    .select('id, title, url, source, posted_date')
+    .select('id, title, url, source, posted_date, expires_at')
     .eq('is_active', true)
 
   if (error) {
@@ -470,10 +476,17 @@ async function retireStaleJobs(seenUrls: Set<string>) {
   }
 
   const rows = active ?? []
-  const expired = rows.filter((job: any) => isExpiredByAge(job.posted_date))
 
-  // Only worth a request when the source answers honestly and the feed no
-  // longer lists it. Everything else is left to the age rule above.
+  // The source's own expiry wins over our guess wherever we have one.
+  const expiredBySource = rows.filter((job: any) => isExpiredBySource(job.expires_at))
+  const expiredByAge = rows.filter(
+    (job: any) => !job.expires_at && isExpiredByAge(job.posted_date)
+  )
+  const expired = [...expiredBySource, ...expiredByAge]
+
+  // A job the feed still lists is being asserted as live by its source, so
+  // there is nothing to learn from fetching it. Everything else that can
+  // answer gets checked.
   const toCheck = rows.filter(
     (job: any) =>
       !expired.includes(job) &&
@@ -503,7 +516,7 @@ async function retireStaleJobs(seenUrls: Set<string>) {
 
   if (retire.length === 0) {
     console.log(
-      `Freshness: nothing to retire. ${rows.length} active, ${toCheck.length} link checked, max age ${MAX_JOB_AGE_DAYS} days.`
+      `Freshness: nothing to retire. ${rows.length} active, ${toCheck.length} link checked, ${rows.filter((j: any) => j.expires_at).length} carry a source expiry, max age ${MAX_JOB_AGE_DAYS} days for the rest.`
     )
     return
   }
@@ -519,7 +532,7 @@ async function retireStaleJobs(seenUrls: Set<string>) {
   }
 
   console.log(
-    `Freshness: retired ${retire.length} (${expired.length} older than ${MAX_JOB_AGE_DAYS} days, ${gone.length} confirmed gone by link check of ${toCheck.length}). ${rows.length - retire.length} still active.`
+    `Freshness: retired ${retire.length} (${expiredBySource.length} past the source's own expiry, ${expiredByAge.length} older than ${MAX_JOB_AGE_DAYS} days, ${gone.length} confirmed gone by link check of ${toCheck.length}). ${rows.length - retire.length} still active.`
   )
 }
 

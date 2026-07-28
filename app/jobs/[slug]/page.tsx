@@ -79,7 +79,9 @@ export default async function JobDetailPage({ params }: { params: Promise<{ slug
   // vague or worldwide locations omit jobLocationType entirely rather than
   // claim TELECOMMUTE without backing it up.
   const applicantCountries = deriveApplicantCountries(job.location)
-  const validThrough = validThroughFor(job.posted_date)
+  // Himalayas listings carry the source's own expiry, so those publish a real
+  // date rather than our posting date plus MAX_JOB_AGE_DAYS estimate.
+  const validThrough = validThroughFor(job.posted_date, job.expires_at)
 
   const jobPostingJsonLd = {
     '@context': 'https://schema.org',
