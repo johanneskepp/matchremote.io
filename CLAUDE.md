@@ -277,27 +277,26 @@ working in production:
 
 Keep this section current after every session. This is the single source of truth for what is done versus not done, check it before starting new work.
 
-### BLOCKED, needs Johannes, do this first
+### Still blocked, needs Johannes
 
-Two manual steps stand between the code on main and a working paid product.
-Everything below in "Working" that mentions auth, subscriptions or the daily
-email is **written, built and pushed but inert** until these are done. Nothing
-crashes meanwhile: every query swallows its error, so a missing table just
-means "logged out" and "no subscribers", which fails closed, not open.
+**The three migrations are done.** Johannes ran `001_auth.sql`,
+`002_match_notifications.sql` and `003_subscriptions.sql` in the Supabase SQL
+editor on 2026-07-28, verified afterwards by probing all 14 new tables and
+columns directly. Do not re-run or re-ask.
 
-1. **Run the three migrations in the Supabase SQL editor**, in order:
-   `lib/db/migrations/001_auth.sql`, `002_match_notifications.sql`,
-   `003_subscriptions.sql`. Each one is guarded (`IF NOT EXISTS`) and safe to
-   re-run. Verified 2026-07-28 that none of them have been applied yet: no
-   `otp_codes`, `sessions` or `subscriptions` table exists, and `matches` has
-   neither `notified_at` nor `seen_at`. This cannot be done from code, the
-   service role key talks to PostgREST, which does not execute DDL.
-2. **Set `RESEND_API_KEY`** in `.env.local` and in Vercel. Confirmed live in
-   this session: requesting a sign in code returns a clean "Could not send the
-   code" to the user and logs `RESEND_API_KEY is not configured` server side.
+What is still missing:
 
-Paddle keys are a third blocker, but only for checkout and cancel, and
-Johannes asked to be consulted before those get wired for real.
+1. **`RESEND_API_KEY`** in `.env.local` and in Vercel. Without it the sign in
+   code and the match email cannot actually be delivered. Both fail cleanly
+   rather than crashing: the login form shows "Could not send the code" and the
+   server logs `RESEND_API_KEY is not configured`. Everything downstream of
+   delivery is already verified, see below.
+2. **Paddle keys** (`NEXT_PUBLIC_PADDLE_CLIENT_TOKEN`, `PADDLE_API_KEY`,
+   `PADDLE_WEBHOOK_SECRET`), only for real checkout and cancel. Johannes asked
+   to be consulted before these get wired.
+3. **The daily scheduled task for `npm run notify:matches` is deliberately not
+   set up.** It sends real email to real people, Johannes approves the cadence
+   first.
 
 ### Working
 
@@ -310,7 +309,8 @@ Johannes asked to be consulted before those get wired for real.
   * **"Never the same job twice" is enforced by two columns, not by hoping.** `matches.seen_at` is set the moment a match is shown in full on `/results` or `/dashboard`, `matches.notified_at` the moment it is emailed. The notification query requires both to be null. So a match shown free is never emailed, and an emailed match never comes back around.
   * **Honest badges (del 9).** `getTimezoneBadge` returns null unless both the job and the user have a known region, and never claims a number of overlapping hours, because the data is three coarse buckets (`americas`/`europe`/`asia`) and around half of jobs have none. `lib/utils/salary-insight.ts` compares a job against the **median** of the user's other matches in the same role category, not the mean: caught during verification that a single 200k listing made four ordinary jobs read "20 percent below average", which is arithmetically true and useless. Needs at least three comparable peers with real salary and a gap of at least five percent, otherwise no badge at all. The badge says "typical", not "average", because a median is what it actually computes.
   * `components/MatchCard.tsx` is the one match card, shared by `/results` and `/dashboard`, extracted so the two pages cannot drift.
-  * Verified this session: build clean, unit checks on the timezone badge, salary insight and summary line all pass, `/dashboard` correctly 307s to login when signed out, and the sign in form fails with a clean user facing message rather than a crash while `RESEND_API_KEY` is missing. **Not yet verified end to end with a real signed in user, because that needs the migrations above.**
+  * **Verified end to end against the real database (2026-07-28), after the migrations ran.** Full journey walked in the browser: hero prefill (`/quiz?role=engineering&salary=130000` opened with 2 of 15 already answered), quiz submit, `/results` (exactly 2 open, 18 locked). Confirmed by calling `/api/matches` directly that a locked card's payload contains only `id`, `locked`, `matchScore` and `teaser`, no company, salary or url, so the paywall is genuinely server side. Sign in: two wrong codes counted down correctly ("4 tries left", "3 tries left"), the right code created the session, and the `mr_session` cookie was confirmed invisible to JavaScript, so `httpOnly` really is set. The guest merge worked: guest row deleted, its 20 matches and 1 quiz response reassigned, `is_guest` false on the new account, and the 2 matches shown free were already carrying `seen_at`. Dashboard as a non paying user showed 2 open plus 18 locked; after inserting a test subscription it showed all 20 open with no upgrade banner. Filter counts were right (All 20, over 60 20, over 75 1, over 90 0) and switching was instant with no refetch. Badges behaved honestly under real data: 17 of 20 got a timezone badge (3 jobs have no region), only 2 of 20 got a salary badge (the rest lack salary or enough peers). Email: with everything seen, the dry run correctly sent nothing; after inserting one fresh 88% match it picked up exactly that one and nothing else, and raising the threshold to 90 correctly dropped it again. Account page showed the active subscription, next charge date and a visible cancel button. All test rows were deleted afterwards, database back to 6 users and 120 matches.
+  * Note on the interaction between `seen_at` and the email: opening the dashboard marks every match currently shown as seen, so an engaged paying user will not be emailed about matches they already scrolled past. Only genuinely new matches (created later by the daily ingestion, `seen_at` and `notified_at` both null) trigger an email. This is intended, the email is for what you have not seen, not a digest of what you have.
 * Custom domain matchremote.io purchased and connected (Vercel + one.com DNS). Apex domain is primary, www redirects to it.
 * Landing page redesigned: compact single or two column layout, no long stacked sections. Scrolling recent jobs ticker (mock data) under the header. Hand drawn underline accent on the hero headline, wavy section divider. Color palette toned down deliberately, restrained to indigo plus neutrals, most emoji driven decoration removed after founder feedback that it looked "AI generic" and unprofessional. Numbered circle icons for "How it works", checkmark circles for "Why matchremote", both with proper semantic h2 headings.
 * Quiz fully redesigned per the Quiz UX Specification: shadowed prev and next question cards peeking beside the maximized current question (clickable to jump), a dot navigation strip to jump to any of the 15 questions directly, progress bar shows percent answered not position, every question is multi select regardless of whether it looks single choice.
