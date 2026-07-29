@@ -24,11 +24,9 @@ export const metadata: Metadata = {
 }
 
 const INCLUDED = [
-  'Every match unlocked, not just the free two',
-  'New matches as soon as they show up, never the same job twice',
-  'You set the score threshold, so you only hear about matches worth your time',
-  'Email alerts at your threshold, nothing below it',
-  'Fresh matches every time you retake the quiz',
+  'Every match unlocked, never the same job twice',
+  'New matches the moment they exist',
+  'Email alerts, only above your score threshold',
 ]
 
 export default function PricingPage() {
@@ -58,7 +56,7 @@ export default function PricingPage() {
               One plan. Six dollars a week.
             </h1>
             <p style={{ fontSize: '17px', color: 'var(--ink-soft)', margin: 0 }}>
-              Your first {FREE_MATCH_LIMIT} matches are free and always will be. This is for the rest.
+              First {FREE_MATCH_LIMIT} matches free. Unlock the rest.
             </p>
           </div>
 
@@ -70,8 +68,7 @@ export default function PricingPage() {
               <span style={{ fontSize: '17px', color: 'var(--ink-soft)' }}>per week</span>
             </div>
             <p style={{ margin: '0 0 26px', fontSize: '15px', color: 'var(--ink-soft)' }}>
-              Renews automatically every week until you cancel it yourself. There is no bigger tier to upgrade to,
-              this is the whole product.
+              Cancel anytime, two clicks, no support ticket.
             </p>
 
             <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 30px' }}>
@@ -84,15 +81,7 @@ export default function PricingPage() {
             </ul>
 
             <Link href="/account" className="btn-big">Subscribe</Link>
-
-            <p style={{ margin: '18px 0 0', fontSize: '14px', color: 'var(--ink-soft)', textAlign: 'center' }}>
-              Cancel from your account page in two clicks. No email, no support ticket.
-            </p>
           </div>
-
-          <p style={{ textAlign: 'center', fontSize: '15px', color: 'var(--ink-soft)', marginTop: '28px' }}>
-            Not sure yet? <Link href="/quiz" style={{ color: 'var(--teal)', fontWeight: 600 }}>Take the quiz free</Link> and see your first {FREE_MATCH_LIMIT} matches.
-          </p>
         </div>
       </main>
 
