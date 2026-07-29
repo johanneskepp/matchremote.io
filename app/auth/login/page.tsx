@@ -25,12 +25,35 @@ function Login() {
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
   const [cooldown, setCooldown] = useState(0)
+  // A session cookie already logged in doesn't mean the visitor wants to see
+  // the login form again, send them straight on. Starts true so the form
+  // never flashes before this check resolves.
+  const [checkingSession, setCheckingSession] = useState(true)
+
+  useEffect(() => {
+    fetch('/api/auth/me')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.user) {
+          router.replace(next)
+        } else {
+          setCheckingSession(false)
+        }
+      })
+      .catch(() => setCheckingSession(false))
+    // Only ever needs to run once on mount, next/router identity churn shouldn't retrigger it.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   useEffect(() => {
     if (cooldown <= 0) return
     const id = setTimeout(() => setCooldown((c) => c - 1), 1000)
     return () => clearTimeout(id)
   }, [cooldown])
+
+  if (checkingSession) {
+    return <main style={{ minHeight: '100vh' }} />
+  }
 
   const requestCode = async () => {
     setError('')
