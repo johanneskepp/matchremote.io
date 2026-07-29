@@ -19,15 +19,15 @@ export default function OpengraphImage() {
         }}
       >
         <svg width={120} height={120} viewBox="0 0 128 128" style={{ marginBottom: 28 }}>
-          <rect width="128" height="128" rx="30" fill="#FF5A1F" />
+          <rect width="128" height="128" rx="30" fill="#1E3A8A" />
           <circle cx="64" cy="64" r="46" fill="none" stroke="#FFFFFF" strokeWidth="7" opacity="0.95" />
           <circle cx="64" cy="64" r="27" fill="none" stroke="#FFFFFF" strokeWidth="7" opacity="0.95" />
           <circle cx="64" cy="64" r="9" fill="#FFFFFF" />
-          <circle cx="112" cy="16" r="17" fill="#0F9E96" stroke="#EDEEF0" strokeWidth="5" />
+          <circle cx="112" cy="16" r="17" fill="#1C9AD6" stroke="#EDEEF0" strokeWidth="5" />
         </svg>
         <div style={{ display: 'flex', fontSize: 64, fontWeight: 700 }}>
           <span style={{ color: '#1A1C20' }}>match</span>
-          <span style={{ color: '#FF5A1F' }}>remote</span>
+          <span style={{ color: '#1E3A8A' }}>remote</span>
         </div>
         <div style={{ fontSize: 32, color: '#5B5F68', marginTop: 20, textAlign: 'center', maxWidth: 900 }}>
           Find remote work that actually fits your life

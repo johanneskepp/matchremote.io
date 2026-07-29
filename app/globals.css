@@ -9,9 +9,10 @@
   --ink: #1A1C20;
   --ink-soft: #5B5F68;
   --border: #D3D6DA;
-  --accent: #FF5A1F;
-  --accent-dark: #E14A15;
-  --teal: #0F9E96;
+  --accent: #1E3A8A;
+  --accent-dark: #16295F;
+  /* Sky blue, not literally teal anymore, kept the variable name to avoid touching every consumer */
+  --teal: #1C9AD6;
   --success: #16A34A;
 }
 
@@ -86,16 +87,16 @@ button {
 .btn-big.btn-teal {
   background: var(--teal);
   color: white;
-  box-shadow: 0 4px 0 #0B7C76;
+  box-shadow: 0 4px 0 #12719F;
 }
 
 .btn-big.btn-teal:hover {
-  background: #0B7C76;
-  box-shadow: 0 5px 0 #0B7C76;
+  background: #12719F;
+  box-shadow: 0 5px 0 #12719F;
 }
 
 .btn-big.btn-teal:active {
-  box-shadow: 0 1px 0 #0B7C76;
+  box-shadow: 0 1px 0 #12719F;
 }
 
 .btn-big.btn-ghost {
@@ -136,7 +137,7 @@ button {
 
 .option-card.selected {
   border-color: var(--accent);
-  background: #FFF1EA;
+  background: #E8ECF7;
   box-shadow: 0 4px 0 var(--accent);
 }
 
@@ -309,7 +310,7 @@ button {
 .quiz-dot.answered {
   border-color: var(--teal);
   color: var(--teal);
-  background: #E6F5F4;
+  background: #E3F3FB;
 }
 
 .quiz-dot.current {
@@ -536,6 +537,10 @@ button {
 .hero-main {
   flex: 1 1 auto;
   padding: 40px 0 56px;
+  /* Subtle light/dark wave down the page, echoes the ticker's dark bar above
+     and the white footer below without introducing a new color or touching
+     any text contrast, the cards and headline all still sit on near-flat ground. */
+  background: linear-gradient(180deg, var(--bg) 0%, #F8F9FA 42%, #F8F9FA 62%, var(--bg) 100%);
 }
 
 .hero-nav {

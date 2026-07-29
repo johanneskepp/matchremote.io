@@ -52,12 +52,12 @@ function htmlBody(matches: NotifiableMatch[], summary: string): string {
         <tr><td style="padding: 0 0 18px;">
           <table width="100%" cellpadding="0" cellspacing="0" style="border: 1px solid #D3D6DA; border-radius: 14px;">
             <tr><td style="padding: 18px 20px;">
-              <span style="display: inline-block; background: #0F9E96; color: #ffffff; font-size: 13px; font-weight: 700; border-radius: 999px; padding: 3px 10px;">${match.score}% match</span>
+              <span style="display: inline-block; background: #1C9AD6; color: #ffffff; font-size: 13px; font-weight: 700; border-radius: 999px; padding: 3px 10px;">${match.score}% match</span>
               <p style="font-size: 18px; font-weight: 700; margin: 12px 0 4px; color: #1A1C20;">${match.title}</p>
               <p style="font-size: 14px; color: #5B5F68; margin: 0 0 4px;">${match.company} · ${match.location}</p>
-              <p style="font-size: 15px; font-weight: 700; color: #FF5A1F; margin: 0 0 10px;">${formatSalary(match.salaryMin ?? undefined, match.salaryMax ?? undefined)}</p>
+              <p style="font-size: 15px; font-weight: 700; color: #1E3A8A; margin: 0 0 10px;">${formatSalary(match.salaryMin ?? undefined, match.salaryMax ?? undefined)}</p>
               <p style="font-size: 14px; color: #5B5F68; margin: 0 0 14px;">${match.teaser}</p>
-              <a href="${match.url}" style="display: inline-block; background: #FF5A1F; color: #ffffff; text-decoration: none; font-size: 15px; font-weight: 700; border-radius: 10px; padding: 11px 20px;">View job</a>
+              <a href="${match.url}" style="display: inline-block; background: #1E3A8A; color: #ffffff; text-decoration: none; font-size: 15px; font-weight: 700; border-radius: 10px; padding: 11px 20px;">View job</a>
             </td></tr>
           </table>
         </td></tr>`
@@ -72,7 +72,7 @@ function htmlBody(matches: NotifiableMatch[], summary: string): string {
       <table width="100%" cellpadding="0" cellspacing="0">${cards}</table>
       <p style="font-size: 15px; font-weight: 600; margin: 8px 0 20px;">${summary}</p>
       <p style="font-size: 14px; color: #5B5F68; margin: 0 0 6px;">
-        <a href="${SITE_URL}/dashboard" style="color: #0F9E96;">See everything in your dashboard</a>
+        <a href="${SITE_URL}/dashboard" style="color: #1C9AD6;">See everything in your dashboard</a>
       </p>
       <p style="font-size: 13px; color: #5B5F68; margin: 0;">
         <a href="${SITE_URL}/account" style="color: #5B5F68;">Change which matches reach you</a>
