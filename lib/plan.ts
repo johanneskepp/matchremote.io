@@ -2,7 +2,7 @@
 // completely open: company, title, salary, description, apply link.
 export const FREE_MATCH_LIMIT = 2
 
-export const PRICE_PER_WEEK_USD = 6
+export const PRICE_PER_WEEK_USD = 7
 
 // Match score thresholds the dashboard filter and the email alert setting
 // both use, so the two never drift apart.
