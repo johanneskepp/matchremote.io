@@ -5,7 +5,7 @@ import Logo from '@/components/Logo'
 
 const TITLE = 'Pricing'
 const DESCRIPTION =
-  'Six dollars a week for every remote job match we score for you, with new ones as soon as they exist. Cancel yourself, any time, from your account page.'
+  'Unlock remote job matches for $6 a week, new ones as soon as they exist. Cancel anytime, two clicks, from your account page.'
 
 export const metadata: Metadata = {
   title: TITLE,
@@ -25,7 +25,7 @@ export const metadata: Metadata = {
 }
 
 const INCLUDED = [
-  'Every match unlocked, never the same job twice',
+  'Every match unlocked',
   'New matches the moment they exist',
   'Email alerts, only above your score threshold',
   'Your own dashboard, all matches saved and ready whenever you check back',
@@ -53,7 +53,7 @@ export default function PricingPage() {
         <div className="container" style={{ maxWidth: '560px' }}>
           <div style={{ textAlign: 'center', marginBottom: '32px' }}>
             <h1 className="font-display" style={{ fontSize: 'clamp(32px, 5vw, 46px)', marginBottom: '10px' }}>
-              One plan. Six dollars a week.
+              One plan. Unlock for $6.
             </h1>
             <p style={{ fontSize: '17px', color: 'var(--ink-soft)', margin: 0 }}>
               First {FREE_MATCH_LIMIT} matches free. Unlock the rest.
