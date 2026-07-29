@@ -27,6 +27,7 @@ const INCLUDED = [
   'Every match unlocked, never the same job twice',
   'New matches the moment they exist',
   'Email alerts, only above your score threshold',
+  'Your own dashboard, all matches saved and ready whenever you check back',
 ]
 
 export default function PricingPage() {
