@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { LockedMatchCard, OpenMatchCard, UpgradeBanner, type MatchView } from '@/components/MatchCard'
+import Logo from '@/components/Logo'
 
 type Match = MatchView
 
@@ -44,7 +45,13 @@ export default function ResultsPage() {
     return (
       <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <div style={{ textAlign: 'center' }}>
-          <div style={{ fontSize: '56px', marginBottom: '16px' }}>🎯</div>
+          <svg width="56" height="56" viewBox="0 0 128 128" aria-hidden="true" style={{ marginBottom: '16px' }}>
+            <rect width="128" height="128" rx="30" fill="var(--accent)" />
+            <circle cx="64" cy="64" r="46" fill="none" stroke="#FFFFFF" strokeWidth="7" opacity="0.95" />
+            <circle cx="64" cy="64" r="27" fill="none" stroke="#FFFFFF" strokeWidth="7" opacity="0.95" />
+            <circle cx="64" cy="64" r="9" fill="#FFFFFF" />
+            <circle className="logo-pulse-dot" cx="112" cy="16" r="17" fill="var(--teal)" stroke="var(--surface)" strokeWidth="5" />
+          </svg>
           <p style={{ fontSize: '19px', fontWeight: 600 }}>Finding your matches...</p>
         </div>
       </div>
@@ -58,9 +65,7 @@ export default function ResultsPage() {
     <div style={{ minHeight: '100vh' }}>
       <header style={{ padding: '20px 0', background: 'var(--surface)', borderBottom: '2px solid var(--border)' }}>
         <div className="container-wide" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <Link href="/" style={{ textDecoration: 'none' }}>
-            <span className="font-display" style={{ fontSize: '22px', fontWeight: 700, color: 'var(--ink)' }}>matchremote</span>
-          </Link>
+          <Logo />
           <Link href="/quiz" style={{ color: 'var(--ink-soft)', fontSize: '15px', textDecoration: 'underline' }}>
             Retake quiz
           </Link>

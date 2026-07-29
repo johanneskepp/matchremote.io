@@ -368,7 +368,7 @@ button {
   display: inline-flex;
   align-items: center;
   gap: 40px;
-  animation: ticker-scroll 32s linear infinite;
+  animation: ticker-scroll 40s linear infinite;
   will-change: transform;
 }
 
@@ -413,6 +413,23 @@ button {
 
 @media (prefers-reduced-motion: reduce) {
   .job-ticker-track {
+    animation: none;
+  }
+}
+
+/* Logo mark's corner dot, a small sign of life rather than static branding */
+.logo-pulse-dot {
+  transform-origin: 112px 16px;
+  animation: logo-pulse 2.6s ease-in-out infinite;
+}
+
+@keyframes logo-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.6; transform: scale(1.18); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .logo-pulse-dot {
     animation: none;
   }
 }
@@ -499,6 +516,19 @@ button {
   font-size: clamp(32px, 6vw, 58px);
   line-height: 1.05;
   margin-bottom: 10px;
+}
+
+.hero-wordmark {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.22em;
+}
+
+.hero-wordmark-icon {
+  width: 0.86em;
+  height: 0.86em;
+  flex-shrink: 0;
 }
 
 .hero-head p {

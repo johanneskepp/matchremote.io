@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import type { Metadata } from 'next'
 import { JOB_CATEGORIES } from '@/lib/utils/job-categories'
+import Logo from '@/components/Logo'
 
 const SITE_URL = 'https://matchremote.io'
 const TITLE = 'Remote Jobs by Category'
@@ -19,10 +20,7 @@ export default function RemoteJobsIndexPage() {
     <div style={{ minHeight: '100vh', background: 'var(--bg)' }}>
       <header style={{ padding: '20px 0', background: 'var(--surface)', borderBottom: '2px solid var(--border)' }}>
         <div className="container-wide" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <Link href="/" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <span style={{ fontSize: '28px' }}>🎯</span>
-            <span className="font-display" style={{ fontSize: '22px', fontWeight: 700, color: 'var(--ink)' }}>matchremote</span>
-          </Link>
+          <Logo />
           <Link href="/quiz" style={{
             padding: '12px 24px',
             background: 'var(--accent)',
@@ -71,10 +69,7 @@ export default function RemoteJobsIndexPage() {
 
       <footer style={{ padding: '24px 0', borderTop: '2px solid var(--border)', background: 'var(--surface)' }}>
         <div className="container-wide" style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: '16px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <span style={{ fontSize: '22px' }}>🎯</span>
-            <span className="font-display" style={{ fontWeight: 700 }}>matchremote</span>
-          </div>
+          <Logo size={22} href="" />
           <div style={{ color: 'var(--ink-soft)', fontSize: '13px' }}>
             © 2026 matchremote. Made for people who want more.
           </div>

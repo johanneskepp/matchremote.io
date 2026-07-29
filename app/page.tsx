@@ -4,6 +4,7 @@ import { getAllJobs } from '@/lib/db/queries'
 import { formatSalary } from '@/lib/utils/helpers'
 import type { Job } from '@/lib/db/types'
 import HeroSearch from './HeroSearch'
+import Logo from '@/components/Logo'
 
 const TITLE = 'Personalized Remote Job Matches by Timezone, Salary & Work Style'
 const DESCRIPTION =
@@ -88,7 +89,16 @@ export default async function Home() {
           </nav>
 
           <header className="hero-head">
-            <h1 className="font-display">matchremote</h1>
+            <h1 className="font-display hero-wordmark">
+              <svg viewBox="0 0 128 128" aria-hidden="true" className="hero-wordmark-icon">
+                <rect width="128" height="128" rx="30" fill="var(--accent)" />
+                <circle cx="64" cy="64" r="46" fill="none" stroke="#FFFFFF" strokeWidth="7" opacity="0.95" />
+                <circle cx="64" cy="64" r="27" fill="none" stroke="#FFFFFF" strokeWidth="7" opacity="0.95" />
+                <circle cx="64" cy="64" r="9" fill="#FFFFFF" />
+                <circle className="logo-pulse-dot" cx="112" cy="16" r="17" fill="var(--teal)" stroke="var(--bg)" strokeWidth="5" />
+              </svg>
+              match<span style={{ color: 'var(--accent)' }}>remote</span>
+            </h1>
             <p>Hundreds of remote jobs. We show you yours.</p>
           </header>
 
@@ -98,7 +108,7 @@ export default async function Home() {
 
       <footer style={{ padding: '24px 0', borderTop: '2px solid var(--border)', background: 'var(--surface)' }}>
         <div className="container-wide" style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: '16px', alignItems: 'center' }}>
-          <span className="font-display" style={{ fontSize: '15px', fontWeight: 600 }}>matchremote</span>
+          <Logo size={18} href="" />
           <div style={{ display: 'flex', gap: '20px', alignItems: 'center', flexWrap: 'wrap' }}>
             <Link href="/remote-jobs" style={{ color: 'var(--ink-soft)', fontSize: '13px', textDecoration: 'none' }}>Browse jobs</Link>
             <Link href="/pricing" style={{ color: 'var(--ink-soft)', fontSize: '13px', textDecoration: 'none' }}>Pricing</Link>

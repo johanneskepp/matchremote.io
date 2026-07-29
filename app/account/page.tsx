@@ -6,6 +6,7 @@ import { getAccessState } from '@/lib/billing/subscription'
 import { getAlertSettings } from '@/lib/db/queries'
 import { DEFAULT_ALERT_THRESHOLD, PRICE_PER_WEEK_USD } from '@/lib/plan'
 import AccountControls from './AccountControls'
+import Logo from '@/components/Logo'
 
 export const metadata: Metadata = {
   title: 'Your account',
@@ -25,9 +26,7 @@ export default async function AccountPage() {
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
       <header style={{ padding: '20px 0', background: 'var(--surface)', borderBottom: '2px solid var(--border)' }}>
         <div className="container-wide" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <Link href="/" style={{ textDecoration: 'none' }}>
-            <span className="font-display" style={{ fontSize: '22px', fontWeight: 700, color: 'var(--ink)' }}>matchremote</span>
-          </Link>
+          <Logo />
           <Link href="/dashboard" style={{ color: 'var(--ink-soft)', fontSize: '15px', textDecoration: 'none' }}>
             Your matches
           </Link>

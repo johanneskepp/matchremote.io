@@ -3,6 +3,7 @@
 import { Suspense, useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
+import Logo from '@/components/Logo'
 
 const RESEND_COOLDOWN_S = 60
 
@@ -109,9 +110,7 @@ function Login() {
     <main style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
       <header style={{ padding: '20px 0', background: 'var(--surface)', borderBottom: '2px solid var(--border)' }}>
         <div className="container-wide">
-          <Link href="/" style={{ textDecoration: 'none' }}>
-            <span className="font-display" style={{ fontSize: '22px', fontWeight: 700, color: 'var(--ink)' }}>matchremote</span>
-          </Link>
+          <Logo />
         </div>
       </header>
 

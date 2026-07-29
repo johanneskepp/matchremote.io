@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import type { Metadata } from 'next'
 import { PRICE_PER_WEEK_USD, FREE_MATCH_LIMIT } from '@/lib/plan'
+import Logo from '@/components/Logo'
 
 const TITLE = 'Pricing'
 const DESCRIPTION =
@@ -35,9 +36,7 @@ export default function PricingPage() {
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
       <header style={{ padding: '20px 0', background: 'var(--surface)', borderBottom: '2px solid var(--border)' }}>
         <div className="container-wide" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <Link href="/" style={{ textDecoration: 'none' }}>
-            <span className="font-display" style={{ fontSize: '22px', fontWeight: 700, color: 'var(--ink)' }}>matchremote</span>
-          </Link>
+          <Logo />
           <Link href="/quiz" style={{
             padding: '12px 24px',
             background: 'var(--accent)',
@@ -88,7 +87,7 @@ export default function PricingPage() {
 
       <footer style={{ padding: '24px 0', borderTop: '2px solid var(--border)', background: 'var(--surface)' }}>
         <div className="container-wide" style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: '16px' }}>
-          <span className="font-display" style={{ fontSize: '15px', fontWeight: 600 }}>matchremote</span>
+          <Logo size={18} href="" />
           <div style={{ display: 'flex', gap: '20px', alignItems: 'center' }}>
             <Link href="/remote-jobs" style={{ color: 'var(--ink-soft)', fontSize: '13px', textDecoration: 'none' }}>Browse jobs</Link>
             <Link href="/faq" style={{ color: 'var(--ink-soft)', fontSize: '13px', textDecoration: 'none' }}>FAQ</Link>
