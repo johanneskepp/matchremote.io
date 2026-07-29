@@ -151,7 +151,7 @@ export default function HeroSearch() {
 
   return (
     <div>
-      <div className="hero-search">
+      <div className="hero-search" onPointerDown={takeOver}>
         <div className="hero-field">
           <label htmlFor="hero-role">Role</label>
           <input
