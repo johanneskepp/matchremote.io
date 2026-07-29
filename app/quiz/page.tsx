@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { ROLE_OPTIONS, SALARY_OPTIONS } from '@/lib/quiz-options'
@@ -182,6 +182,14 @@ export default function QuizPage() {
   const nextQuestion = current < QUESTIONS.length - 1 ? QUESTIONS[current + 1] : null
   const isLast = current === QUESTIONS.length - 1
 
+  const scrollRef = useRef<HTMLDivElement>(null)
+  const mainCardRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (scrollRef.current) scrollRef.current.scrollTop = 0
+    if (mainCardRef.current) mainCardRef.current.scrollTop = 0
+  }, [current])
+
   const isScreenAnswered = (q: Question) =>
     screenFieldIds(q).every((id) => (answers[id]?.length ?? 0) > 0)
 
@@ -245,7 +253,10 @@ export default function QuizPage() {
   }
 
   const renderOptions = (fieldId: string, options: Option[], compact: boolean) => (
-    <div className={compact ? 'quiz-options quiz-options-compact' : 'quiz-options'}>
+    <div
+      className={compact ? 'quiz-options quiz-options-compact' : 'quiz-options'}
+      ref={compact ? undefined : scrollRef}
+    >
       {options.map((opt) => {
         const selected = isSelected(fieldId, opt.value)
         return (
@@ -303,7 +314,7 @@ export default function QuizPage() {
           </button>
         )}
 
-        <div className="quiz-main-card">
+        <div className="quiz-main-card" ref={mainCardRef}>
           <div style={{ textAlign: 'center', marginBottom: '24px', flex: '0 0 auto' }}>
             <h1 className="font-display" style={{ fontSize: 'clamp(24px, 4vw, 36px)', marginBottom: '10px', lineHeight: 1.2 }}>
               {question.title}
@@ -316,7 +327,7 @@ export default function QuizPage() {
           </div>
 
           {question.groups ? (
-            <div className="quiz-groups">
+            <div className="quiz-groups" ref={scrollRef}>
               {question.groups.map((g) => (
                 <div key={g.id} className="quiz-group">
                   <h2 className="quiz-group-title">{g.title}</h2>
