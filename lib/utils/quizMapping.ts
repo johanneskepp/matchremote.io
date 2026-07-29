@@ -38,10 +38,12 @@ function mapAsyncNeed(workStyle: string[] | undefined): number {
   return 6
 }
 
-function mapMeetingTolerance(meetings: string[] | undefined): number {
-  const choice = meetings?.[0]
-  if (choice === 'minimal') return 2
-  if (choice === 'many') return 9
+function mapMeetingTolerance(workStyle: string[] | undefined): number {
+  const styles = workStyle || []
+  const hasAsync = styles.includes('async')
+  const hasSync = styles.includes('sync')
+  if (hasAsync && !hasSync) return 2
+  if (hasSync && !hasAsync) return 9
   return 5
 }
 
@@ -58,7 +60,7 @@ export function mapQuizAnswersToResponse(answers: Record<string, string[]>) {
   return {
     timezone: answers.timezone?.[0] ?? 'europe',
     async_need: mapAsyncNeed(answers.work_style),
-    meeting_tolerance: mapMeetingTolerance(answers.meetings),
+    meeting_tolerance: mapMeetingTolerance(answers.work_style),
     salary_min: min,
     salary_max: max,
     skills: answers.role ?? [],

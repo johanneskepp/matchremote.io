@@ -109,7 +109,7 @@ button {
   background: var(--surface-alt);
 }
 
-/* Quiz option card - MASSIVE clickable area */
+/* Quiz option card - large clickable area */
 .option-card {
   display: flex;
   align-items: center;
@@ -117,8 +117,8 @@ button {
   padding: 24px;
   min-height: 80px;
   background: var(--surface);
-  border: 3px solid var(--border);
-  border-radius: 20px;
+  border: 2px solid var(--border);
+  border-radius: 10px;
   cursor: pointer;
   transition: all 0.15s ease;
   font-family: var(--font-body), sans-serif;
@@ -132,7 +132,6 @@ button {
 .option-card:hover {
   border-color: var(--accent);
   background: var(--surface-alt);
-  transform: translateY(-2px);
 }
 
 .option-card.selected {
@@ -144,6 +143,52 @@ button {
 .option-card .emoji {
   font-size: 32px;
   flex-shrink: 0;
+}
+
+.option-check {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+/* Compact variant, used when two mini questions share one screen */
+.option-card-compact {
+  min-height: 52px;
+  padding: 14px 18px;
+  font-size: 15px;
+  border-radius: 8px;
+}
+
+.quiz-options-compact {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+}
+
+.quiz-groups {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  overflow-y: auto;
+  padding: 4px 2px 8px;
+}
+
+.quiz-group-title {
+  font-family: var(--font-body), sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--ink-soft);
+  margin: 0 0 10px;
 }
 
 /* Container */
@@ -294,7 +339,7 @@ button {
   transition: all 0.2s ease;
   background: var(--surface);
   border: 2px solid var(--border);
-  border-radius: 20px;
+  border-radius: 10px;
   padding: 18px;
   text-align: left;
 }
@@ -303,10 +348,6 @@ button {
   opacity: 0.85;
   transform: scale(0.92);
   border-color: var(--accent);
-}
-
-.quiz-side-card .side-emoji {
-  font-size: 28px;
 }
 
 .quiz-side-card .side-title {
@@ -353,6 +394,9 @@ button {
   }
   .quiz-carousel {
     padding: 12px;
+  }
+  .quiz-options-compact {
+    grid-template-columns: 1fr;
   }
 }
 
