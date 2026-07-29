@@ -198,11 +198,6 @@ export default function HeroSearch() {
         </button>
       </div>
 
-      <div className="hero-demo-label">
-        <span className="chip chip-sm">Example</span>
-        <span>This is what your results look like. Yours are scored on your own answers.</span>
-      </div>
-
       <div className="hero-cards" aria-live="polite">
         {demo.matches.map((match, i) => (
           <article
@@ -223,6 +218,10 @@ export default function HeroSearch() {
           </article>
         ))}
       </div>
+
+      <p className="hero-demo-caption">
+        <strong>Example.</strong> Scored the same way yours will be.
+      </p>
     </div>
   )
 }

@@ -89,7 +89,7 @@ export default async function Home() {
 
           <header className="hero-head">
             <h1 className="font-display">matchremote</h1>
-            <p>Remote jobs scored against how you work.</p>
+            <p>Hundreds of remote jobs. We show you yours.</p>
           </header>
 
           <HeroSearch />

@@ -600,13 +600,15 @@ button {
   box-shadow: 0 1px 0 var(--accent-dark);
 }
 
-.hero-demo-label {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin: 20px 0 10px;
+.hero-demo-caption {
+  margin: 12px 0 0;
   font-size: 13px;
   color: var(--ink-soft);
+  text-align: center;
+}
+
+.hero-demo-caption strong {
+  color: var(--ink);
 }
 
 .hero-cards {
@@ -730,8 +732,8 @@ button {
   .hero-caret {
     display: none;
   }
-  .hero-demo-label {
-    margin: 12px 0 8px;
+  .hero-demo-caption {
+    margin: 10px 0 0;
     font-size: 12px;
   }
   .hero-cards {
