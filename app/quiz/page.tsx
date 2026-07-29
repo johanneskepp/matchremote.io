@@ -137,30 +137,13 @@ const QUESTIONS: Question[] = [
     ],
   },
   {
-    id: 'final_details',
-    title: 'Almost there',
-    groups: [
-      {
-        id: 'must_haves',
-        title: "What's non negotiable",
-        options: [
-          { value: 'health_insurance', label: 'Health insurance', emoji: '' },
-          { value: 'equity', label: 'Equity / Stock options', emoji: '' },
-          { value: 'unlimited_pto', label: 'Generous time off', emoji: '' },
-          { value: 'learning_budget', label: 'Learning budget', emoji: '' },
-          { value: '4_day_week', label: '4 day work week', emoji: '' },
-          { value: 'home_office', label: 'Home office stipend', emoji: '' },
-        ],
-      },
-      {
-        id: 'when',
-        title: 'When would you start',
-        options: [
-          { value: 'asap', label: 'ASAP, actively looking', emoji: '' },
-          { value: 'soon', label: 'Within 1 to 3 months', emoji: '' },
-          { value: 'browsing', label: 'Just browsing for now', emoji: '' },
-        ],
-      },
+    id: 'when',
+    title: 'When would you start?',
+    subtitle: 'Select all that apply',
+    options: [
+      { value: 'asap', label: 'ASAP, actively looking', emoji: '' },
+      { value: 'soon', label: 'Within 1 to 3 months', emoji: '' },
+      { value: 'browsing', label: 'Just browsing for now', emoji: '' },
     ],
   },
 ]
