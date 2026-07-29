@@ -68,7 +68,7 @@ export default function PricingPage() {
               <span style={{ fontSize: '17px', color: 'var(--ink-soft)' }}>per week</span>
             </div>
             <p style={{ margin: '0 0 26px', fontSize: '15px', color: 'var(--ink-soft)' }}>
-              Cancel anytime, two clicks, no support ticket.
+              Cancel anytime.
             </p>
 
             <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 30px' }}>
