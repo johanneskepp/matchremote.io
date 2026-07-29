@@ -512,10 +512,9 @@ button {
   gap: 12px;
   align-items: flex-end;
   background: var(--surface);
-  border: 2px solid var(--border);
   border-radius: 20px;
   padding: 14px;
-  box-shadow: 0 6px 0 var(--surface-alt);
+  box-shadow: 0 1px 2px rgba(20, 22, 26, 0.04), 0 12px 32px rgba(20, 22, 26, 0.08);
 }
 
 .hero-field {
@@ -615,6 +614,7 @@ button {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 14px;
+  margin-top: 22px;
 }
 
 .hero-card {
@@ -622,9 +622,9 @@ button {
   align-items: flex-start;
   gap: 14px;
   background: var(--surface);
-  border: 2px solid var(--border);
   border-radius: 18px;
   padding: 18px;
+  box-shadow: 0 1px 2px rgba(20, 22, 26, 0.03), 0 6px 16px rgba(20, 22, 26, 0.05);
   opacity: 0;
   transform: translateY(16px);
   transition: opacity 0.45s ease, transform 0.45s ease;
