@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { ROLE_OPTIONS, SALARY_OPTIONS, matchRoleValue } from '@/lib/quiz-options'
+import { ROLE_OPTIONS, SALARY_OPTIONS } from '@/lib/quiz-options'
 
 type DemoMatch = {
   title: string
@@ -137,13 +137,9 @@ export default function HeroSearch() {
   }
 
   const start = () => {
-    const params = new URLSearchParams()
-    const roleValue = matchRoleValue(userOwns ? role : demo.role)
-    if (roleValue) params.set('role', roleValue)
-    const salaryValue = userOwns ? salary : demo.salary
-    if (salaryValue) params.set('salary', salaryValue)
-    const query = params.toString()
-    router.push(query ? `/quiz?${query}` : '/quiz')
+    // The quiz never arrives pre-answered, so this deliberately does not
+    // carry role/salary along as query params anymore.
+    router.push('/quiz')
   }
 
   const roleFieldValue = userOwns ? role : typed

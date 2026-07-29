@@ -150,16 +150,16 @@ static example immediately with no typing, no counting, and no rotation.
 The example cards use invented company names and are labelled "Example" on
 screen. They are not real listings and must never be presented as such.
 
-### Search box to quiz prefill
+### Search box to quiz
 
-The CTA navigates to `/quiz?role=<value>&salary=<value>`. Free text is mapped
-onto the quiz's fixed role values by `matchRoleValue` in `lib/quiz-options.ts`
-("senior react developer" resolves to engineering). `ROLE_OPTIONS` and
-`SALARY_OPTIONS` live in that same file and are imported by both the hero and
-`app/quiz/page.tsx`, so the two can never drift apart. The quiz reads the
-params via `useSearchParams` (hence the `Suspense` wrapper) and prefills those
-two questions. An unrecognised value is ignored silently, the question just
-opens unanswered.
+The CTA navigates to a plain `/quiz`, no query params. This used to carry the
+typed role and salary target along to prefill those two quiz questions, removed
+2026-07-29 on Johannes's explicit instruction: no answer option should ever
+arrive pre-selected, regardless of how the visitor got to the quiz. `ROLE_OPTIONS`
+and `SALARY_OPTIONS` still live in `lib/quiz-options.ts` and are imported by both
+the hero and `app/quiz/page.tsx` so the option lists can't drift apart, but the
+matching/prefill helpers (`matchRoleValue`, `isKnownSalaryValue`) were deleted
+along with the feature since nothing called them anymore.
 
 ## Quiz UX Specification
 
@@ -187,11 +187,9 @@ The quiz is a core experience and needs special design treatment.
 
 ### Entry from the landing page
 
-Arriving from the hero search box, the quiz opens with the role and salary
-questions already answered, read from `?role=` and `?salary=` via
-`useSearchParams` (hence the `Suspense` wrapper). A value that does not map
-onto a known option is ignored silently and that question simply opens
-unanswered, never an error. No login is required to take the quiz or to see
+The quiz always opens with every question unanswered, including from the hero
+search box, which no longer carries role/salary along as query params (see
+"Search box to quiz" above). No login is required to take the quiz or to see
 the two free matches at the end.
 
 ## Project Structure
@@ -201,7 +199,7 @@ app/
   page.tsx           Landing page, see Landing Page Spec above
   HeroSearch.tsx     Client component: hero search box plus animated demo
   faq/page.tsx       FAQ, carries the FAQPage JSON-LD
-  quiz/page.tsx      15 question quiz, reads role/salary prefill from the URL
+  quiz/page.tsx      15 question quiz, always opens fully unanswered
   results/page.tsx   Match results, two open then locked, see paywall below
   pricing/page.tsx   Pricing, one plan only
   dashboard/page.tsx        Signed in match list, server component, builds the view models
@@ -300,6 +298,7 @@ What is still missing:
 
 ### Working
 
+* **Quiz never arrives pre-answered (2026-07-29).** Johannes flagged an option showing pre-selected inside the quiz. Confirmed the only source was the intentional hero-search-to-quiz prefill (`?role=`/`?salary=` on the URL, built in an earlier session), verified nothing pre-selects on a bare `/quiz` load. Removed on his explicit instruction that no answer should ever be pre-marked, regardless of entry point: `app/quiz/page.tsx` no longer reads `useSearchParams` (dropped the `Suspense` wrapper it existed for), `HeroSearch.tsx`'s CTA now pushes to a plain `/quiz`, and the now-unused `matchRoleValue`/`isKnownSalaryValue` helpers were deleted from `lib/quiz-options.ts`. Verified with old-style `/quiz?role=engineering&salary=130000` links too, in case a stale bookmark or the old OG/share text still has them, still opens with zero options selected.
 * **Stale listings now get retired, daily (2026-07-28).** Johannes asked whether jobs that can no longer be applied to are kept out of the daily runs. They were not: `scripts/ingest-jobs.ts` only ever set `is_active: true` and nothing anywhere set it false, so dead listings accumulated forever. Measured before fixing: **78 of 394 active jobs (20%) were not in that day's feeds** yet stayed live on the site.
   * **Feed absence is deliberately not treated as proof a job is gone.** RemoteOK's API returns its most recent 100 while we hold ~141 active RemoteOK jobs. Measured: the 68 sitting outside its feed had a **median age of 4 days and none older than 7**, so they are fresh jobs that fell out of a window which churns in a week, not dead ones. Retiring on feed absence would delete almost entirely live listings.
   * **Each source was probed with an invented job URL to see whether it signals removal at all.** Jobicy and RemoteOK answer 404, Arbeitnow and Remotive answer 410. So all four do remove pages and say so, and `LINK_CHECKABLE_SOURCES` covers all four. **Himalayas answers 403 to any request from us** and is excluded, which costs nothing because it hands us a real expiry date instead.

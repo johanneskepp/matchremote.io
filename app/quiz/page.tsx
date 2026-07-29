@@ -1,8 +1,8 @@
 'use client'
-import { Suspense, useState } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { ROLE_OPTIONS, SALARY_OPTIONS, isKnownSalaryValue } from '@/lib/quiz-options'
+import { ROLE_OPTIONS, SALARY_OPTIONS } from '@/lib/quiz-options'
 
 type Option = { value: string; label: string; emoji: string }
 type Question = {
@@ -185,40 +185,12 @@ const QUESTIONS: Question[] = [
   },
 ]
 
-// Role and salary can arrive prefilled from the landing page search box.
-// Anything that is not one of the fixed option values is ignored, the
-// question simply opens unanswered rather than showing an error.
-function prefilledAnswers(params: URLSearchParams): Record<string, string[]> {
-  const answers: Record<string, string[]> = {}
-
-  const role = params.get('role')
-  if (role && ROLE_OPTIONS.some((o) => o.value === role)) {
-    answers.role = [role]
-  }
-
-  const salary = params.get('salary')
-  if (salary && isKnownSalaryValue(salary)) {
-    answers.salary = [salary]
-  }
-
-  return answers
-}
-
 export default function QuizPage() {
-  return (
-    <Suspense fallback={<div className="quiz-shell" />}>
-      <Quiz />
-    </Suspense>
-  )
-}
-
-function Quiz() {
   const router = useRouter()
-  const searchParams = useSearchParams()
   const [current, setCurrent] = useState(0)
-  const [answers, setAnswers] = useState<Record<string, string[]>>(() =>
-    prefilledAnswers(new URLSearchParams(searchParams.toString()))
-  )
+  // Always starts empty. Nothing about this quiz should ever arrive
+  // pre-selected, not from a URL, not from a previous session.
+  const [answers, setAnswers] = useState<Record<string, string[]>>({})
   const [submitting, setSubmitting] = useState(false)
 
   const question = QUESTIONS[current]
