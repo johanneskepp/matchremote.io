@@ -113,6 +113,7 @@ export default async function Home() {
             <Link href="/remote-jobs" style={{ color: 'var(--ink-soft)', fontSize: '13px', textDecoration: 'none' }}>Browse jobs</Link>
             <Link href="/pricing" style={{ color: 'var(--ink-soft)', fontSize: '13px', textDecoration: 'none' }}>Pricing</Link>
             <Link href="/faq" style={{ color: 'var(--ink-soft)', fontSize: '13px', textDecoration: 'none' }}>FAQ</Link>
+            <a href="/feed.xml" style={{ color: 'var(--ink-soft)', fontSize: '13px', textDecoration: 'none' }}>RSS</a>
             <span style={{ color: 'var(--ink-soft)', fontSize: '13px' }}>© 2026 matchremote</span>
           </div>
         </div>
