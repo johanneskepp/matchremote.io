@@ -115,6 +115,7 @@ export type Database = {
           tags: string[]
           company_size: string | null
           industries: string[]
+          posted_to_bluesky_at: string | null
         }
         Insert: {
           id?: string
@@ -138,6 +139,7 @@ export type Database = {
           tags?: string[]
           company_size?: string | null
           industries?: string[]
+          posted_to_bluesky_at?: string | null
         }
         Update: {
           id?: string
@@ -161,6 +163,7 @@ export type Database = {
           tags?: string[]
           company_size?: string | null
           industries?: string[]
+          posted_to_bluesky_at?: string | null
         }
       }
       matches: {

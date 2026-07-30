@@ -50,6 +50,28 @@ export async function createJob(job: any): Promise<any> {
   return data
 }
 
+// Active jobs never announced on the Bluesky distribution bot, newest first
+// so a capped run always leads with the freshest postings.
+export async function getJobsToPostToBluesky(limit: number = 5): Promise<any[]> {
+  const { data } = await sbAdmin
+    .from('jobs')
+    .select('*')
+    .eq('is_active', true)
+    .is('posted_to_bluesky_at', null)
+    .order('posted_date', { ascending: false })
+    .limit(limit)
+  return data || []
+}
+
+export async function markJobsPostedToBluesky(jobIds: string[]): Promise<void> {
+  if (jobIds.length === 0) return
+  await sbAdmin
+    .from('jobs')
+    .update({ posted_to_bluesky_at: new Date().toISOString() })
+    .in('id', jobIds)
+    .is('posted_to_bluesky_at', null)
+}
+
 export async function createMatch(userId: string, jobId: string, score: number, reasons: any): Promise<any> {
   const { data } = await sbAdmin.from('matches').upsert({ user_id: userId, job_id: jobId, match_score: score, match_reasons: reasons }).select().single()
   return data

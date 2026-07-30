@@ -11,9 +11,11 @@
     "seo:report": "tsx --env-file=.env.local scripts/seo-report.ts",
     "seo:combo-pages": "tsx --env-file=.env.local scripts/analyze-combo-pages.ts",
     "check:vitals": "tsx scripts/check-web-vitals.ts",
-    "notify:matches": "tsx --env-file=.env.local scripts/send-match-notifications.ts"
+    "notify:matches": "tsx --env-file=.env.local scripts/send-match-notifications.ts",
+    "social:bluesky": "tsx --env-file=.env.local scripts/post-jobs-to-bluesky.ts"
   },
   "dependencies": {
+    "@atproto/api": "^0.20.34",
     "@supabase/auth-helpers-nextjs": "^0.15.0",
     "@supabase/auth-helpers-react": "^0.15.0",
     "@supabase/supabase-js": "^2.110.8",

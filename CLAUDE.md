@@ -230,10 +230,11 @@ lib/
   email/client.ts          Resend init, returns null when the key is missing
   email/otp.ts             Sign in code email
   email/match-notification.ts  Daily new match email
+  social/bluesky.ts        Bluesky post client, dynamic import of @atproto/api (see status below), returns null when the app password is missing
   db/
     queries.ts       Supabase CRUD. All typed as `any` for build compatibility.
     schema.sql       Original schema. 7 tables, RLS policies.
-    migrations/      001_auth, 002_match_notifications, 003_subscriptions
+    migrations/      001_auth, 002_match_notifications, 003_subscriptions, 004_job_expiry, 005_bluesky_posts
     supabase.ts      Client init
     types.ts         TypeScript types
   utils/
@@ -252,6 +253,8 @@ scripts/
   seo-report.ts               Pulls GSC search analytics plus sitemap status, run with npm run seo:report
   analyze-combo-pages.ts      Combo page coverage report, run with npm run seo:combo-pages
   check-web-vitals.ts         Lighthouse check against a local prod server, run with npm run check:vitals
+  send-match-notifications.ts  Daily new match email, run with npm run notify:matches, --dry-run supported
+  post-jobs-to-bluesky.ts     Posts newest unannounced jobs to Bluesky, run with npm run social:bluesky, --dry-run supported (see status below, no account yet)
 secrets/
   <service-account>.json   Google service account key, gitignored, never committed
 ```
@@ -277,7 +280,7 @@ Keep this section current after every session. This is the single source of trut
 
 ### Still blocked, needs Johannes
 
-**All four migrations are done.** Johannes ran `001_auth.sql`,
+**Migrations 001 through 004 are done.** Johannes ran `001_auth.sql`,
 `002_match_notifications.sql`, `003_subscriptions.sql` and `004_job_expiry.sql`
 in the Supabase SQL editor on 2026-07-28, each verified afterwards by probing
 the new tables and columns directly. Do not re-run or re-ask.
@@ -295,6 +298,23 @@ What is still missing:
 3. **The daily scheduled task for `npm run notify:matches` is deliberately not
    set up.** It sends real email to real people, Johannes approves the cadence
    first.
+4. **Migration `005_bluesky_posts.sql` has not been run yet**, confirmed
+   2026-07-30 by querying the live `jobs` table directly (`column
+   jobs.posted_to_bluesky_at does not exist`, Postgres error 42703). Needed
+   before `npm run social:bluesky` can find anything to post, it currently
+   runs cleanly and reports zero jobs rather than erroring, see below.
+5. **`BLUESKY_HANDLE` and `BLUESKY_APP_PASSWORD`** are not set anywhere yet,
+   there is no Bluesky account for matchremote at all yet. Johannes needs to
+   create one, generate an app password (bsky.app > Settings > App Passwords,
+   never the main account password), and add both to `.env.local` and Vercel.
+   Fails cleanly like the two above: the script logs "BLUESKY_HANDLE or
+   BLUESKY_APP_PASSWORD is not configured, nothing to do" rather than crashing.
+6. **No scheduled task runs `npm run social:bluesky` automatically, on
+   purpose.** Same reasoning as `notify:matches`: it posts real, public,
+   irreversible content on a real account. Build it, verify the mechanics,
+   let Johannes decide the cadence once the account exists, exactly the
+   established pattern in this file, do not set up the recurring task
+   without him separately approving it.
 
 ### Working
 
@@ -302,7 +322,10 @@ What is still missing:
   * **`app/jobs-feed.xml/route.ts`**: a generic job aggregator XML feed in the format Indeed's classic partner ingestion popularized and that Jooble/Careerjet also accept (`<source><job>title/date/referencenumber/url/company/city/country/description/jobtype/salary</job></source>`). Pulls from `getAllJobs(500)`, revalidates hourly. **This only builds the feed, it does not register it anywhere**, submitting `https://matchremote.io/jobs-feed.xml` through each aggregator's partner/publisher signup form is still a manual one time step Johannes needs to do per platform, no API exists for that part.
   * **`app/feed.xml/route.ts`**: a standard RSS 2.0 feed of the 50 newest active jobs, sorted by `posted_date`. Lower effort target than the aggregator feed, remote work newsletters and community bots commonly pull job listings from a feed like this. Linked from the homepage footer ("RSS") and declared in `app/layout.tsx`'s metadata `alternates.types` for feed reader autodiscovery.
   * Both verified locally: valid XML/RSS, real job data and links resolving to real `/jobs/[slug]` pages, hourly revalidation via the same `getAllJobs` the rest of the site already uses so the daily ingestion keeps both feeds current with zero extra maintenance.
-  * Not built this round, flagged as future work: a Bluesky bot posting new jobs (Bluesky's API is free and far less locked down than Twitter/X, safer than Reddit/LinkedIn for unattended posting), and the actual partner registrations for the XML feed above.
+* **Distribution automation, round 2: Bluesky posting bot (2026-07-30).** `scripts/post-jobs-to-bluesky.ts` (`npm run social:bluesky`, `--dry-run` supported) posts the newest active jobs never announced before to the matchremote Bluesky account, one line per job with a real link back to its `/jobs/[slug]` page, capped at 5 per run on purpose since a brand new account with no followers yet reads as spam if it posts a wall of jobs at once. `lib/db/migrations/005_bluesky_posts.sql` adds `jobs.posted_to_bluesky_at`, set only after a post actually succeeds (same "mark after success" pattern as `notified_at`/`seen_at`), so a failure leaves the job queued for the next run instead of silently skipping it forever. `lib/social/bluesky.ts` mirrors `lib/email/client.ts`'s convention: returns a clean "not configured" result rather than crashing when `BLUESKY_HANDLE`/`BLUESKY_APP_PASSWORD` are missing.
+  * **Real, non-obvious bug hit and fixed while building this: `@atproto/api` is ESM-only and its dependency `multiformats@13` dropped its CommonJS build entirely, but this project's scripts run through the `tsx` CLI which compiles everything to CommonJS.** A plain top level `import` of `@atproto/api` crashed with `ERR_PACKAGE_PATH_NOT_EXPORTED: Package subpath './cid' is not defined`, confirmed by tracing it to tsx's own CJS-style path-alias resolver hook (triggered by this project's `tsconfig.json` `paths: {"@/*": ["./*"]}`) intercepting even bare package specifiers and refusing to see multiformats' ESM-only `"import"` export condition. Renaming the script to `.mts` did not fix it (tsx's resolver hook still intercepts it the same way). The actual fix: `lib/social/bluesky.ts` loads `@atproto/api` with a dynamic `await import(...)` instead of a static import, since a genuine dynamic `import()` call goes through Node's real ESM resolver even from a CommonJS file, which is the one path that correctly honors the package's conditions. Confirmed fixed by running the script directly (`npm run social:bluesky -- --dry-run`) and watching the error disappear.
+  * **Verified end to end short of an actual post**, since there is no Bluesky account yet: typecheck clean, `npm run social:bluesky -- --dry-run` runs and correctly reports "BLUESKY_HANDLE or BLUESKY_APP_PASSWORD is not configured, nothing to do" with real credentials absent, and with dummy credentials substituted it correctly reaches the database query (confirmed separately, see below, that migration 005 is the reason it finds nothing yet, not a bug in the query).
+  * Not built this round, flagged as future work: the actual Bluesky account creation and the recurring scheduled task to run this daily, both intentionally left for Johannes, see "Still blocked" above. Also the actual partner registrations for the XML feed from round 1.
 * **Quiz redesigned for a more confident, less "playful" feel and cut from 15 steps to 10 (2026-07-29).** Johannes felt the quiz read as childish (a 64px decorative emoji on every question, an emoji on every option card, cutesy copy like "Yes, show me my matches! ✨") and wanted it to feel more powerful, plus fewer "Continue" clicks. Changes in `app/quiz/page.tsx` and `app/globals.css`:
   * All decorative emoji removed (question header emoji, per option emoji, side card emoji). The selected state keeps a plain circular checkmark. `option-card` and `quiz-side-card` corner radius tightened (20px to 10px) and the hover lift removed, sharper and flatter rather than bouncy. Copy tightened, no exclamation marks ("See your matches" instead of "Yes, show me my matches! ✨").
   * **The separate `meetings` question was merged into `work_style`.** Both fed the matching engine independently (`async_need` and `meeting_tolerance` in `lib/utils/quizMapping.ts`) but measure the same underlying thing, so `mapMeetingTolerance` now derives its value from the same async/sync answer as `mapAsyncNeed`, one fewer screen, no lost signal.
