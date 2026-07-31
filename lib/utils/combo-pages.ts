@@ -1,6 +1,7 @@
 import { getAllJobs } from '@/lib/db/queries'
 import { JOB_CATEGORIES, jobMatchesCategory, type JobCategory } from '@/lib/utils/job-categories'
 import { deriveTimezoneRegion, TIMEZONE_REGION_LABELS, type TimezoneRegion } from '@/lib/utils/timezone-region'
+import { sortJobsBySalaryFirst } from '@/lib/utils/job-sort'
 import type { Job } from '@/lib/db/types'
 
 // A "[role] jobs in [region]" page is only worth indexing once there's
@@ -26,7 +27,7 @@ export async function getQualifyingComboPages(): Promise<ComboPage[]> {
     for (const region of Object.keys(TIMEZONE_REGION_LABELS) as TimezoneRegion[]) {
       const matching = jobs.filter((job) => jobMatchesCategory(job, category) && deriveTimezoneRegion(job.location) === region)
       if (matching.length >= MIN_COMBO_JOBS) {
-        combos.push({ category, region, regionLabel: TIMEZONE_REGION_LABELS[region], jobs: matching })
+        combos.push({ category, region, regionLabel: TIMEZONE_REGION_LABELS[region], jobs: sortJobsBySalaryFirst(matching) })
       }
     }
   }

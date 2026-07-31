@@ -5,6 +5,7 @@ import { getAllJobs } from '@/lib/db/queries'
 import { JOB_CATEGORIES, getCategoryBySlug, jobMatchesCategory } from '@/lib/utils/job-categories'
 import { buildJobSlug } from '@/lib/utils/job-slug'
 import { getQualifyingComboPages } from '@/lib/utils/combo-pages'
+import { sortJobsBySalaryFirst } from '@/lib/utils/job-sort'
 import { formatSalary, formatDate } from '@/lib/utils/helpers'
 import type { Job } from '@/lib/db/types'
 import Logo from '@/components/Logo'
@@ -41,7 +42,7 @@ export default async function RemoteJobsCategoryPage({ params }: { params: Promi
   if (!category) notFound()
 
   const allJobs: Job[] = await getAllJobs(300)
-  const jobs = allJobs.filter((job) => jobMatchesCategory(job, category))
+  const jobs = sortJobsBySalaryFirst(allJobs.filter((job) => jobMatchesCategory(job, category)))
   const regionLinks = (await getQualifyingComboPages()).filter((c) => c.category.slug === slug)
 
   const itemListJsonLd = {
