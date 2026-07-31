@@ -56,7 +56,13 @@ ${newest.map(jobItem).join('\n')}
 
   return new Response(body, {
     headers: {
-      'Content-Type': 'application/rss+xml; charset=utf-8',
+      // Chrome downgrades application/rss+xml straight to a plain text
+      // response and skips its normal XML document view entirely, which
+      // silently drops the xml-stylesheet below along with it. application/xml
+      // gets the real XML view (confirmed against jobs-feed.xml, which already
+      // used it), and feed readers parse by the <rss> root element rather than
+      // by this header, so this is still a perfectly standard RSS content type.
+      'Content-Type': 'application/xml; charset=utf-8',
       'Cache-Control': 'public, max-age=3600',
     },
   })
