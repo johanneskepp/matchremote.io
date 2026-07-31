@@ -42,6 +42,7 @@ export async function GET() {
     .slice(0, FEED_SIZE)
 
   const body = `<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="/rss-style.xsl"?>
 <rss version="2.0">
   <channel>
     <title>matchremote: new remote jobs</title>
