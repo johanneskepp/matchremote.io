@@ -431,6 +431,18 @@ async function main() {
     process.exit(1)
   }
 
+  // The same listing sometimes reaches us twice with an identical apply URL
+  // (e.g. syndicated through more than one source, or an overlapping page from
+  // Himalayas's pagination). A single upsert statement errors ("ON CONFLICT DO
+  // UPDATE command cannot affect row a second time") if its conflict target
+  // repeats within one call, which previously failed the entire batch that
+  // duplicate landed in. Dedupe by url first, keeping the last occurrence.
+  const beforeDedupe = allJobs.length
+  allJobs = [...new Map(allJobs.map((job) => [job.url, job])).values()]
+  if (allJobs.length !== beforeDedupe) {
+    console.log(`Deduped ${beforeDedupe - allJobs.length} jobs sharing a url with another entry.`)
+  }
+
   console.log(`Upserting ${allJobs.length} jobs into Supabase (conflict target: url)...`)
 
   const BATCH_SIZE = 200
