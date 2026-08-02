@@ -10,7 +10,7 @@ AI-powered remote job matching platform. Users take a 15 question quiz and get p
 
 **Vision:** Build a service that generates revenue within 6 months. Heavy focus on SEO from day one. Organic growth is a primary channel, not an afterthought.
 
-**Payment provider:** Paddle (checkout built and verified in Sandbox as of 2026-08-02, Live keys not wired yet, see Current Status)
+**Payment provider:** Paddle (Live as of 2026-08-02, real checkout is active on matchremote.io, see Current Status)
 **Domain:** matchremote.io (purchased and connected via Vercel, DNS hosted at one.com)
 
 ## Writing Style Rules
@@ -38,7 +38,7 @@ Good: "matchremote is a job board for remote workers."
 * Database: Supabase (PostgreSQL). Configured in Vercel env vars.
 * Hosting: Vercel. Auto deploys on push to main.
 * Language: TypeScript
-* Payments: Paddle (Sandbox checkout wired and verified, Live keys pending)
+* Payments: Paddle (Live as of 2026-08-02)
 
 ## SEO Priority
 
@@ -267,11 +267,11 @@ secrets/
 * `GOOGLE_SERVICE_ACCOUNT_KEY_PATH` (local only, points at the gitignored file in `secrets/`)
 * `GOOGLE_SEARCH_CONSOLE_SITE` (`sc-domain:matchremote.io`)
 
-Declared in `.env.example` and required by shipped code. `RESEND_API_KEY` is now
-set (see below, 2026-08-02). Still **not set anywhere** as of 2026-07-28, which
-is what blocks checkout and cancel from working in production:
-
-* `NEXT_PUBLIC_PADDLE_CLIENT_TOKEN`, `PADDLE_API_KEY`, `PADDLE_WEBHOOK_SECRET` (checkout and cancel)
+Declared in `.env.example` and required by shipped code. `RESEND_API_KEY` and all
+six Paddle Live variables (`PADDLE_ENVIRONMENT`, `NEXT_PUBLIC_PADDLE_ENVIRONMENT`,
+`NEXT_PUBLIC_PADDLE_CLIENT_TOKEN`, `NEXT_PUBLIC_PADDLE_PRICE_ID`, `PADDLE_API_KEY`,
+`PADDLE_WEBHOOK_SECRET`) are now set in both `.env.local` and Vercel Production
+(2026-08-02), see Current Status for the Paddle Live flip. Nothing left unset here.
 
 ## Current Status
 
@@ -286,8 +286,7 @@ the new tables and columns directly. Do not re-run or re-ask.
 
 What is still missing:
 
-1. **Paddle is fully wired and verified end to end in Sandbox (2026-08-02), only live keys are missing.** See the "Working" entry below for the full build. What is left: swap the four Sandbox env vars for real Live ones (`PADDLE_ENVIRONMENT=production`, a Live client token, a Live API key scoped to Subscriptions, a Live webhook secret from a new Live notification destination) and add all four to Vercel, they are deliberately local only right now. Johannes asked to be consulted before flipping to Live, which is what this line tracks now, not missing code.
-2. **The daily scheduled task for `npm run notify:matches` is deliberately not
+1. **The daily scheduled task for `npm run notify:matches` is deliberately not
    set up.** It sends real email to real people, Johannes approves the cadence
    first. `RESEND_API_KEY` is now in place (see below), so this is only
    waiting on his go ahead, no remaining code blocker.
@@ -323,8 +322,9 @@ What is still missing:
   * **Env vars added, Sandbox only, local `.env.local` only, deliberately not in Vercel yet**: `PADDLE_ENVIRONMENT`, `NEXT_PUBLIC_PADDLE_ENVIRONMENT`, `NEXT_PUBLIC_PADDLE_CLIENT_TOKEN`, `NEXT_PUBLIC_PADDLE_PRICE_ID`, `PADDLE_API_KEY` (scoped to Subscriptions Read plus Write only, least privilege), `PADDLE_WEBHOOK_SECRET`.
   * **Verified live against the real Paddle Sandbox API and the real database** (local dev points at the same Supabase project as production, there is no separate dev database in this project): the API key was confirmed against `GET /subscriptions` (200, empty list). Signed in as Johannes locally, opened `/account`, clicked Subscribe, and confirmed via the rendered iframe's own payload that the Sandbox checkout overlay loaded with the correct price id, his email, and `custom_data` carrying both his real user id and `app: matchremote`. Completing an actual card entry inside Paddle's cross origin iframe is not something browser automation can drive (by design, it's a different origin), so the last mile, an actual test card submission, was verified a different way: a webhook event was signed with the real secret and posted to the local webhook endpoint, confirmed it flipped `/account` to "Active, $7 a week, next charge 9 August 2026" with a working Cancel button, exactly what a real completed checkout would trigger. A second signed event without `app: matchremote` was posted and confirmed to create zero rows, proving the Finnely isolation guard. **All test rows were deleted and the test user's plan reset to `free` immediately after**, nothing fake was left in the live database.
   * **Known separate issue, flagged not fixed:** `app/pricing/page.tsx`'s meta description still hardcodes "$6 a week" while `lib/plan.ts`'s `PRICE_PER_WEEK_USD` is 7, pending Johannes's confirmation before touching it.
-  * Not done, on purpose: no real transaction has ever been completed through Paddle's actual card form (only the mechanics around it are proven), and Live keys are not requested yet, see "Still blocked" above.
-* **`RESEND_API_KEY` configured, sign in and match emails now actually deliver (2026-08-02).** Resend domain verification set up for `matchremote.io` at one.com (SPF TXT on `send.matchremote.io`, MX on `send.matchremote.io`, DKIM TXT on `resend._domainkey.matchremote.io`, DMARC TXT on `_dmarc.matchremote.io`), verified via DNS lookup before touching Resend. Key added to `.env.local` and to Vercel (Production environment, marked Sensitive). **Verified live, not just assumed from the dashboard**, per the established pattern in this file: a direct call to the Resend API confirmed the key and domain work (returned a real message id), then `POST https://matchremote.io/api/auth/request-code` was called against production with Johannes's real email and returned `{"success":true}`, a real sign in code delivered to his inbox. One retry was needed, the first call right after the redeploy 502'd ("Could not send the code"), most likely the deployment and the env var save landed within the same minute and the first request hit before both were fully live; it resolved on its own within a couple of minutes with no other change. Paddle keys are the only remaining item blocking real signups/payments, see "Still blocked" above.
+  * Not done at the time, on purpose: no real transaction had been completed through Paddle's actual card form and Live keys had not been requested yet. **Both now done, see the next entry.**
+* **Paddle flipped from Sandbox to Live (2026-08-02, same day as the Sandbox build above).** Johannes created the real product/price in Paddle's Live catalog ($7/week) and generated a Live client token, a Live API key (scoped to Subscriptions), and a Live webhook secret from a new Live notification destination, all pasted in chat and written straight into `.env.local` and Vercel (Production, all marked Sensitive) by Claude Code directly, no manual dashboard copy paste needed on the Vercel side. `PADDLE_ENVIRONMENT` and `NEXT_PUBLIC_PADDLE_ENVIRONMENT` both set to `production`. `lib/billing/paddle.ts`'s existing sandbox/live switch (built the same day, see above) needed no changes, it was already environment aware. **Verified against the real Live infrastructure, not assumed:** the Live API key was confirmed with `GET https://api.paddle.com/subscriptions` (200, empty list, the real production endpoint, not sandbox). Ran `vercel env add` for all six variables via the Vercel CLI (already authenticated, project already linked), then `vercel --prod` to deploy, confirmed `Aliased https://matchremote.io` in the output. After deploy, a webhook event was signed with the real Live `PADDLE_WEBHOOK_SECRET` and posted straight to `https://matchremote.io/api/webhooks/paddle` with `custom_data.app` deliberately set to a non-matchremote value, confirmed `200 {"received":true}`, proving signature verification works against the Live secret in production while the Finnely isolation guard kept it from touching any real data, zero cleanup needed. **matchremote.io now runs on Paddle Live: real checkouts create real subscriptions and charge real cards.** No real end user transaction has been completed yet (nobody has signed up and paid since the flip), only the plumbing is proven, same caveat as the Sandbox verification had.
+* **`RESEND_API_KEY` configured, sign in and match emails now actually deliver (2026-08-02).** Resend domain verification set up for `matchremote.io` at one.com (SPF TXT on `send.matchremote.io`, MX on `send.matchremote.io`, DKIM TXT on `resend._domainkey.matchremote.io`, DMARC TXT on `_dmarc.matchremote.io`), verified via DNS lookup before touching Resend. Key added to `.env.local` and to Vercel (Production environment, marked Sensitive). **Verified live, not just assumed from the dashboard**, per the established pattern in this file: a direct call to the Resend API confirmed the key and domain work (returned a real message id), then `POST https://matchremote.io/api/auth/request-code` was called against production with Johannes's real email and returned `{"success":true}`, a real sign in code delivered to his inbox. One retry was needed, the first call right after the redeploy 502'd ("Could not send the code"), most likely the deployment and the env var save landed within the same minute and the first request hit before both were fully live; it resolved on its own within a couple of minutes with no other change.
 * **Distribution automation, round 1: job feed syndication (2026-07-30).** Discussed with Johannes that SEO alone is unlikely to bring visitors within 6 months for a brand new domain with zero backlinks, and that some distribution needs to be automatable without risking a spam flag (ruled out autonomous Reddit/LinkedIn posting for that reason, see the conversation). Two feeds shipped as a first, low risk step:
   * **`app/jobs-feed.xml/route.ts`**: a generic job aggregator XML feed in the format Indeed's classic partner ingestion popularized and that Jooble/Careerjet also accept (`<source><job>title/date/referencenumber/url/company/city/country/description/jobtype/salary</job></source>`). Pulls from `getAllJobs(500)`, revalidates hourly. **This only builds the feed, it does not register it anywhere**, submitting `https://matchremote.io/jobs-feed.xml` through each aggregator's partner/publisher signup form is still a manual one time step Johannes needs to do per platform, no API exists for that part.
   * **`app/feed.xml/route.ts`**: a standard RSS 2.0 feed of the 50 newest active jobs, sorted by `posted_date`. Lower effort target than the aggregator feed, remote work newsletters and community bots commonly pull job listings from a feed like this. Linked from the homepage footer ("RSS") and declared in `app/layout.tsx`'s metadata `alternates.types` for feed reader autodiscovery.
