@@ -41,18 +41,53 @@ function fixMojibake(text: string): string {
   return repaired.includes('�') ? text : repaired
 }
 
+// Converts source HTML into readable plain text with paragraph breaks kept
+// intact (job detail pages render this with white-space: pre-wrap), rather
+// than collapsing every tag to a single space, which used to turn every
+// description into one unreadable wall of text.
 function stripHtml(html: string): string {
   return html
-    .replace(/<[^>]*>/g, ' ')
+    .replace(/<(br|hr)\s*\/?>/gi, '\n')
+    .replace(/<\/(p|div|li|h[1-6])>/gi, '\n')
+    .replace(/<li[^>]*>/gi, '• ')
+    .replace(/<[^>]*>/g, '')
     .replace(/&nbsp;/g, ' ')
     .replace(/&amp;/g, '&')
     .replace(/&lt;/g, '<')
     .replace(/&gt;/g, '>')
     .replace(/&#39;/g, "'")
     .replace(/&quot;/g, '"')
-    .replace(/\s+/g, ' ')
+    .replace(/[ \t]+/g, ' ')
+    .replace(/ *\n */g, '\n')
+    .replace(/\n{3,}/g, '\n\n')
     .trim()
     .slice(0, 5000)
+}
+
+// Job descriptions from these sources routinely run several thousand
+// characters, most of it boilerplate (company history, generic benefits
+// lists). Johannes asked for future listings to be much shorter and easier
+// to scan, existing rows are left as they are. Cuts at the nearest sentence
+// or paragraph break rather than mid word, and always leaves the "Apply on
+// [source]" link as the way to read the full original posting.
+const DESCRIPTION_MAX_LENGTH = 600
+
+function truncateDescription(text: string, maxLength: number = DESCRIPTION_MAX_LENGTH): string {
+  if (text.length <= maxLength) return text
+
+  const slice = text.slice(0, maxLength)
+  const lastParagraphBreak = slice.lastIndexOf('\n')
+  const lastSentenceEnd = Math.max(slice.lastIndexOf('. '), slice.lastIndexOf('.\n'))
+  const lastWordBreak = slice.lastIndexOf(' ')
+
+  const cutAt =
+    lastSentenceEnd > maxLength * 0.4
+      ? lastSentenceEnd + 1
+      : lastParagraphBreak > maxLength * 0.4
+        ? lastParagraphBreak
+        : lastWordBreak
+
+  return slice.slice(0, cutAt > 0 ? cutAt : maxLength).trim() + '…'
 }
 
 // Below this, a value isn't a real annual salary, it's noise (e.g. an hourly
@@ -123,7 +158,7 @@ async function fetchRemoteOk(): Promise<JobInsert[]> {
       const tags = (job.tags || []).map((t) => t.toLowerCase())
       const location = fixMojibake(job.location || 'Worldwide')
       const title = fixMojibake(job.position!)
-      const description = fixMojibake(stripHtml(job.description || ''))
+      const description = truncateDescription(fixMojibake(stripHtml(job.description || '')))
       return {
         title,
         company: fixMojibake(job.company || 'Unknown'),
@@ -175,7 +210,7 @@ async function fetchRemotive(): Promise<JobInsert[]> {
       const { min, max } = parseSalaryRange(job.salary)
       const location = fixMojibake(job.candidate_required_location || 'Worldwide')
       const title = fixMojibake(job.title)
-      const description = fixMojibake(stripHtml(job.description || ''))
+      const description = truncateDescription(fixMojibake(stripHtml(job.description || '')))
       return {
         title,
         company: fixMojibake(job.company_name || 'Unknown'),
@@ -225,7 +260,7 @@ async function fetchArbeitnow(): Promise<JobInsert[]> {
     .map((job) => {
       const location = fixMojibake(job.location || 'Worldwide')
       const title = fixMojibake(job.title)
-      const description = fixMojibake(stripHtml(job.description || ''))
+      const description = truncateDescription(fixMojibake(stripHtml(job.description || '')))
       return {
       title,
       company: fixMojibake(job.company_name || 'Unknown'),
@@ -288,7 +323,7 @@ async function fetchJobicy(): Promise<JobInsert[]> {
     .map((job) => {
       const location = fixMojibake(job.jobGeo || 'Worldwide')
       const title = fixMojibake(job.jobTitle)
-      const description = fixMojibake(stripHtml(job.jobDescription || ''))
+      const description = truncateDescription(fixMojibake(stripHtml(job.jobDescription || '')))
       return {
         title,
         company: fixMojibake(job.companyName || 'Unknown'),
@@ -360,7 +395,7 @@ async function fetchHimalayas(): Promise<JobInsert[]> {
       const url = job.applicationLink || job.guid!
       const location = fixMojibake(job.locationRestrictions?.join(', ') || 'Worldwide')
       const title = fixMojibake(job.title)
-      const description = fixMojibake(stripHtml(job.description || ''))
+      const description = truncateDescription(fixMojibake(stripHtml(job.description || '')))
       return {
         title,
         company: fixMojibake(job.companyName || 'Unknown'),
