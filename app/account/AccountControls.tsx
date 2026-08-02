@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { SCORE_THRESHOLDS } from '@/lib/plan'
 import CheckoutButton from '@/components/CheckoutButton'
@@ -126,7 +127,14 @@ export default function AccountControls({ userId, email, paddleConfigured, activ
               You are on the free two matches. ${pricePerWeek} a week unlocks the rest and emails you new ones.
             </p>
             {paddleConfigured ? (
-              <CheckoutButton userId={userId} email={email} />
+              <>
+                <CheckoutButton userId={userId} email={email} />
+                <p style={{ margin: '10px 0 0', fontSize: '13px', color: 'var(--ink-soft)' }}>
+                  By subscribing you agree to our{' '}
+                  <Link href="/terms" style={{ color: 'var(--teal)' }}>Terms</Link> and{' '}
+                  <Link href="/privacy" style={{ color: 'var(--teal)' }}>Privacy Policy</Link>. Billing is handled by Paddle.
+                </p>
+              </>
             ) : (
               <p style={{ margin: 0, fontSize: '15px', color: 'var(--ink-soft)' }}>
                 Upgrading is not open yet. Check back soon.
