@@ -267,11 +267,10 @@ secrets/
 * `GOOGLE_SERVICE_ACCOUNT_KEY_PATH` (local only, points at the gitignored file in `secrets/`)
 * `GOOGLE_SEARCH_CONSOLE_SITE` (`sc-domain:matchremote.io`)
 
-Declared in `.env.example` and required by shipped code, but **not set anywhere yet**
-as of 2026-07-28, which is what blocks sign in and the notification email from
-working in production:
+Declared in `.env.example` and required by shipped code. `RESEND_API_KEY` is now
+set (see below, 2026-08-02). Still **not set anywhere** as of 2026-07-28, which
+is what blocks checkout and cancel from working in production:
 
-* `RESEND_API_KEY` (sign in codes and the daily match email both fail cleanly without it)
 * `NEXT_PUBLIC_PADDLE_CLIENT_TOKEN`, `PADDLE_API_KEY`, `PADDLE_WEBHOOK_SECRET` (checkout and cancel)
 
 ## Current Status
@@ -287,29 +286,25 @@ the new tables and columns directly. Do not re-run or re-ask.
 
 What is still missing:
 
-1. **`RESEND_API_KEY`** in `.env.local` and in Vercel. Without it the sign in
-   code and the match email cannot actually be delivered. Both fail cleanly
-   rather than crashing: the login form shows "Could not send the code" and the
-   server logs `RESEND_API_KEY is not configured`. Everything downstream of
-   delivery is already verified, see below.
-2. **Paddle keys** (`NEXT_PUBLIC_PADDLE_CLIENT_TOKEN`, `PADDLE_API_KEY`,
+1. **Paddle keys** (`NEXT_PUBLIC_PADDLE_CLIENT_TOKEN`, `PADDLE_API_KEY`,
    `PADDLE_WEBHOOK_SECRET`), only for real checkout and cancel. Johannes asked
    to be consulted before these get wired.
-3. **The daily scheduled task for `npm run notify:matches` is deliberately not
+2. **The daily scheduled task for `npm run notify:matches` is deliberately not
    set up.** It sends real email to real people, Johannes approves the cadence
-   first.
-4. **Migration `005_bluesky_posts.sql` has not been run yet**, confirmed
+   first. `RESEND_API_KEY` is now in place (see below), so this is only
+   waiting on his go ahead, no remaining code blocker.
+3. **Migration `005_bluesky_posts.sql` has not been run yet**, confirmed
    2026-07-30 by querying the live `jobs` table directly (`column
    jobs.posted_to_bluesky_at does not exist`, Postgres error 42703). Needed
    before `npm run social:bluesky` can find anything to post, it currently
    runs cleanly and reports zero jobs rather than erroring, see below.
-5. **`BLUESKY_HANDLE` and `BLUESKY_APP_PASSWORD`** are not set anywhere yet,
+4. **`BLUESKY_HANDLE` and `BLUESKY_APP_PASSWORD`** are not set anywhere yet,
    there is no Bluesky account for matchremote at all yet. Johannes needs to
    create one, generate an app password (bsky.app > Settings > App Passwords,
    never the main account password), and add both to `.env.local` and Vercel.
    Fails cleanly like the two above: the script logs "BLUESKY_HANDLE or
    BLUESKY_APP_PASSWORD is not configured, nothing to do" rather than crashing.
-6. **No scheduled task runs `npm run social:bluesky` automatically, on
+5. **No scheduled task runs `npm run social:bluesky` automatically, on
    purpose.** Same reasoning as `notify:matches`: it posts real, public,
    irreversible content on a real account. Build it, verify the mechanics,
    let Johannes decide the cadence once the account exists, exactly the
@@ -318,6 +313,7 @@ What is still missing:
 
 ### Working
 
+* **`RESEND_API_KEY` configured, sign in and match emails now actually deliver (2026-08-02).** Resend domain verification set up for `matchremote.io` at one.com (SPF TXT on `send.matchremote.io`, MX on `send.matchremote.io`, DKIM TXT on `resend._domainkey.matchremote.io`, DMARC TXT on `_dmarc.matchremote.io`), verified via DNS lookup before touching Resend. Key added to `.env.local` and to Vercel (Production environment, marked Sensitive). **Verified live, not just assumed from the dashboard**, per the established pattern in this file: a direct call to the Resend API confirmed the key and domain work (returned a real message id), then `POST https://matchremote.io/api/auth/request-code` was called against production with Johannes's real email and returned `{"success":true}`, a real sign in code delivered to his inbox. One retry was needed, the first call right after the redeploy 502'd ("Could not send the code"), most likely the deployment and the env var save landed within the same minute and the first request hit before both were fully live; it resolved on its own within a couple of minutes with no other change. Paddle keys are the only remaining item blocking real signups/payments, see "Still blocked" above.
 * **Distribution automation, round 1: job feed syndication (2026-07-30).** Discussed with Johannes that SEO alone is unlikely to bring visitors within 6 months for a brand new domain with zero backlinks, and that some distribution needs to be automatable without risking a spam flag (ruled out autonomous Reddit/LinkedIn posting for that reason, see the conversation). Two feeds shipped as a first, low risk step:
   * **`app/jobs-feed.xml/route.ts`**: a generic job aggregator XML feed in the format Indeed's classic partner ingestion popularized and that Jooble/Careerjet also accept (`<source><job>title/date/referencenumber/url/company/city/country/description/jobtype/salary</job></source>`). Pulls from `getAllJobs(500)`, revalidates hourly. **This only builds the feed, it does not register it anywhere**, submitting `https://matchremote.io/jobs-feed.xml` through each aggregator's partner/publisher signup form is still a manual one time step Johannes needs to do per platform, no API exists for that part.
   * **`app/feed.xml/route.ts`**: a standard RSS 2.0 feed of the 50 newest active jobs, sorted by `posted_date`. Lower effort target than the aggregator feed, remote work newsletters and community bots commonly pull job listings from a feed like this. Linked from the homepage footer ("RSS") and declared in `app/layout.tsx`'s metadata `alternates.types` for feed reader autodiscovery.

@@ -122,7 +122,7 @@ export default function AccountControls({ active, status, renewsAt, cancelAt, th
               You are on the free two matches. ${pricePerWeek} a week unlocks the rest and emails you new ones.
             </p>
             <p style={{ margin: 0, fontSize: '15px', color: 'var(--ink-soft)' }}>
-              Checkout is not connected yet. This is the last piece waiting on Paddle keys.
+              Upgrading is not open yet. Check back soon.
             </p>
           </>
         )}
