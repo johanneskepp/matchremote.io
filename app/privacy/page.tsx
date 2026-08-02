@@ -124,7 +124,7 @@ export default function PrivacyPage() {
             <ul style={ulStyle}>
               <li>Access the personal data we hold about you</li>
               <li>Correct inaccurate data</li>
-              <li>Request deletion of your data ("right to be forgotten")</li>
+              <li>Delete your data yourself, any time, from your account page ("right to be forgotten"), or by asking us to do it for you</li>
               <li>Request a copy of your data in a portable format</li>
               <li>Object to or restrict certain processing</li>
               <li>Lodge a complaint with your national supervisory authority. In Sweden, that is the{' '}
@@ -158,6 +158,7 @@ export default function PrivacyPage() {
           <Logo size={18} href="" />
           <div style={{ display: 'flex', gap: '20px', alignItems: 'center' }}>
             <Link href="/terms" style={{ color: 'var(--ink-soft)', fontSize: '13px', textDecoration: 'none' }}>Terms</Link>
+            <Link href="/about" style={{ color: 'var(--ink-soft)', fontSize: '13px', textDecoration: 'none' }}>About</Link>
             <Link href="/faq" style={{ color: 'var(--ink-soft)', fontSize: '13px', textDecoration: 'none' }}>FAQ</Link>
             <span style={{ color: 'var(--ink-soft)', fontSize: '13px' }}>© 2026 matchremote</span>
           </div>

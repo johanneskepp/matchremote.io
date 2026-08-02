@@ -31,6 +31,8 @@ export default function AccountControls({ userId, email, paddleConfigured, activ
   const [note, setNote] = useState('')
   const [busy, setBusy] = useState(false)
   const [confirmingCancel, setConfirmingCancel] = useState(false)
+  const [confirmingDelete, setConfirmingDelete] = useState(false)
+  const [deleteNote, setDeleteNote] = useState('')
 
   const saveAlerts = async (nextThreshold: number, nextActive: boolean) => {
     setBusy(true)
@@ -78,6 +80,24 @@ export default function AccountControls({ userId, email, paddleConfigured, activ
   const signOut = async () => {
     await fetch('/api/auth/logout', { method: 'POST' })
     router.push('/')
+  }
+
+  const deleteAccount = async () => {
+    setBusy(true)
+    setDeleteNote('')
+    try {
+      const res = await fetch('/api/account/delete', { method: 'POST' })
+      const data = await res.json()
+      if (!res.ok) {
+        setDeleteNote(data.message || 'Could not delete your account right now.')
+        return
+      }
+      router.push('/')
+    } catch {
+      setDeleteNote('Could not reach the server.')
+    } finally {
+      setBusy(false)
+    }
   }
 
   return (
@@ -179,6 +199,33 @@ export default function AccountControls({ userId, email, paddleConfigured, activ
       </section>
 
       <button onClick={signOut} className="btn-big btn-ghost">Sign out</button>
+
+      <section className="card">
+        <h2 className="font-display" style={{ fontSize: '17px', marginBottom: '6px' }}>Delete account</h2>
+        {confirmingDelete ? (
+          <div>
+            <p style={{ fontSize: '15px', color: 'var(--ink-soft)', marginTop: 0 }}>
+              This permanently deletes your account, quiz answers, and match history{active ? ', and cancels your subscription' : ''}. This cannot be undone.
+            </p>
+            <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+              <button onClick={deleteAccount} disabled={busy} className="btn-big" style={{ width: 'auto', minHeight: '52px', background: '#B91C1C', boxShadow: '0 4px 0 #7F1D1D' }}>
+                {busy ? 'Deleting...' : 'Yes, delete everything'}
+              </button>
+              <button onClick={() => setConfirmingDelete(false)} className="btn-big btn-ghost" style={{ width: 'auto', minHeight: '52px' }}>
+                Keep my account
+              </button>
+            </div>
+          </div>
+        ) : (
+          <button
+            onClick={() => setConfirmingDelete(true)}
+            style={{ color: 'var(--ink-soft)', textDecoration: 'underline', fontSize: '14px', background: 'none', border: 'none', padding: 0 }}
+          >
+            Delete my account and all my data
+          </button>
+        )}
+        {deleteNote && <p style={{ margin: '14px 0 0', fontSize: '14px', color: 'var(--ink-soft)' }}>{deleteNote}</p>}
+      </section>
     </div>
   )
 }

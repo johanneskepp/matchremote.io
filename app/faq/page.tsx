@@ -121,6 +121,7 @@ export default function FaqPage() {
           <Logo size={18} href="" />
           <div style={{ display: 'flex', gap: '20px', alignItems: 'center' }}>
             <Link href="/remote-jobs" style={{ color: 'var(--ink-soft)', fontSize: '13px', textDecoration: 'none' }}>Browse jobs</Link>
+            <Link href="/about" style={{ color: 'var(--ink-soft)', fontSize: '13px', textDecoration: 'none' }}>About</Link>
             <Link href="/pricing" style={{ color: 'var(--ink-soft)', fontSize: '13px', textDecoration: 'none' }}>Pricing</Link>
             <Link href="/privacy" style={{ color: 'var(--ink-soft)', fontSize: '13px', textDecoration: 'none' }}>Privacy</Link>
             <Link href="/terms" style={{ color: 'var(--ink-soft)', fontSize: '13px', textDecoration: 'none' }}>Terms</Link>

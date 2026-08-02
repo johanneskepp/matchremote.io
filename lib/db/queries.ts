@@ -177,6 +177,12 @@ export async function getActiveAlerts(frequency?: string): Promise<any[]> {
   return data || []
 }
 
+export async function deleteUser(userId: string): Promise<void> {
+  // Cascades to quiz_responses, matches, saved_jobs, email_logs, email_alerts,
+  // subscriptions, and sessions, every one of those FKs is ON DELETE CASCADE.
+  await sbAdmin.from('users').delete().eq('id', userId)
+}
+
 export async function getSubscription(userId: string): Promise<any | null> {
   const { data } = await sbAdmin.from('subscriptions').select('*').eq('user_id', userId).maybeSingle()
   return data || null
