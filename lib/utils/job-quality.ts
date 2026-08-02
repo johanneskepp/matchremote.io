@@ -24,7 +24,21 @@ const BOILERPLATE_PHRASES = [
   'book recommendation',
   'job hunting indecision',
   'i want all the money',
+  // Generic open application forms with no actual role attached, seen from
+  // both English and French language sources.
+  'spontaneous application',
+  'postuler chez nous',
+  'candidature spontanee',
 ]
+
+// Titles that are template placeholders rather than a real role name. Checked
+// as an exact match so a legitimate title like "Test Engineer" still passes.
+const EXACT_PLACEHOLDER_TITLES = ['test', 'job details', 'jop posting title']
+
+// A real description is never Lorem Ipsum filler or a raw application form
+// field list, both seen from RemoteOK entries that are placeholder or
+// non-job content, not an actual posting.
+const DESCRIPTION_BOILERPLATE_PHRASES = ['lorem ipsum', 'formulaire de postulation']
 
 const QUESTION_STARTERS = ['how ', 'why ', 'what ', 'when ']
 
@@ -50,10 +64,14 @@ export function isLikelyRealJob(title: string, description: string, company: str
   const lower = t.toLowerCase()
   if (lower === company.trim().toLowerCase()) return false
   if (BOILERPLATE_PHRASES.some((p) => lower.includes(p))) return false
+  if (EXACT_PLACEHOLDER_TITLES.includes(lower)) return false
   if (isUrlLike(t)) return false
   if (isAllCapsSlogan(t)) return false
   if (isQuestionOrBlogTitle(t)) return false
   if (!/[a-zA-Z]{3,}/.test(t)) return false
+
+  const lowerDescription = description.toLowerCase()
+  if (DESCRIPTION_BOILERPLATE_PHRASES.some((p) => lowerDescription.includes(p))) return false
 
   // A real posting almost always has a real description. Both the title AND
   // the description being suspiciously thin is a stronger signal than either

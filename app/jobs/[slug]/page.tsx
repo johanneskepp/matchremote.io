@@ -25,7 +25,13 @@ const EMPLOYMENT_TYPE_MAP: Record<Job['job_type'], string> = {
 async function loadJob(slug: string): Promise<Job | null> {
   const id = extractJobIdFromSlug(slug)
   if (!id) return null
-  return getJobById(id)
+  const job = await getJobById(id)
+  // A deactivated job (filled, expired, or removed as a non-job listing) must
+  // stop serving JobPosting structured data, not just drop out of listings
+  // and the sitemap. getJobById does not filter by is_active since other
+  // callers need the raw row, so the check belongs here.
+  if (!job || !job.is_active) return null
+  return job
 }
 
 export async function generateStaticParams() {
