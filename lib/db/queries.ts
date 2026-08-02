@@ -31,8 +31,30 @@ export async function getLatestQuizResponse(userId: string): Promise<any | null>
 }
 
 export async function getAllJobs(limit: number = 100): Promise<any[]> {
-  const { data } = await sb.from('jobs').select('*').eq('is_active', true).limit(limit)
-  return data || []
+  // Supabase's PostgREST caps any single request at 1000 rows server side
+  // (the project's Max Rows setting) regardless of what .limit() asks for,
+  // it silently truncates rather than erroring. Page through in 1000 row
+  // chunks so a limit above that actually returns that many rows.
+  const pageSize = 1000
+  const rows: any[] = []
+  let from = 0
+
+  while (rows.length < limit) {
+    const to = Math.min(from + pageSize, limit) - 1
+    const { data } = await sb
+      .from('jobs')
+      .select('*')
+      .eq('is_active', true)
+      .order('posted_date', { ascending: false })
+      .range(from, to)
+
+    if (!data || data.length === 0) break
+    rows.push(...data)
+    if (data.length < to - from + 1) break
+    from += pageSize
+  }
+
+  return rows
 }
 
 export async function getJobById(id: string): Promise<any | null> {

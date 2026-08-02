@@ -55,7 +55,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.7,
   }))
 
-  const jobs = await getAllJobs(300)
+  // No arbitrary cap: 300 used to silently leave most active jobs out of the
+  // sitemap entirely once the catalogue grew past it, invisible to Google.
+  // Well under Google's 50,000 URL per sitemap limit even with room to grow.
+  const jobs = await getAllJobs(5000)
   const jobPages: MetadataRoute.Sitemap = jobs.map((job) => ({
     url: `${BASE_URL}/jobs/${buildJobSlug(job)}`,
     lastModified: job.scraped_at ? new Date(job.scraped_at) : now,
