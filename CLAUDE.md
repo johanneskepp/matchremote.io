@@ -55,7 +55,7 @@ Consider building programmatic SEO pages later, for example "Remote [role] jobs 
 
 ## Design System
 
-**Vibe (updated 2026-07-28):** Cool, confident, tool like. Keeps the Duolingo bones (big clickable areas, generous radius, 3D button depth) but the palette is now a cool steel grey base with a single warm copper orange accent. Not playful pastel, not dark fintech, a calm neutral canvas where the one saturated color is always the next action.
+**Vibe (updated 2026-08-02):** Cool, confident, tool like. Keeps the Duolingo bones (big clickable areas, generous radius, 3D button depth) but the palette is a cool steel grey base with a single navy blue accent. Not playful pastel, not dark fintech, a calm neutral canvas where the one saturated color is always the next action.
 
 ### CRITICAL LAYOUT PRINCIPLE. No long vertical scrolling pages.
 
@@ -75,14 +75,21 @@ Consider building programmatic SEO pages later, for example "Remote [role] jobs 
 * `--ink` `#1A1C20` text
 * `--ink-soft` `#5B5F68` muted text
 * `--border` `#D3D6DA`
-* `--accent` `#FF5A1F` warm copper orange, primary brand and every CTA
-* `--accent-dark` `#E14A15` button 3D shadow and hover
-* `--teal` `#0F9E96` secondary accent, links, match percent ring, progress fill
+* `--accent` `#1E3A8A` navy blue, primary brand and every CTA
+* `--accent-dark` `#16295F` button 3D shadow and hover
+* `--teal` `#1C9AD6` sky blue (variable kept named `--teal` to avoid touching every consumer), secondary accent, links, match percent ring, progress fill
 * `--success` `#16A34A` confirmations and checkmarks only
 
-The old palette (`--indigo`, `--yellow`, `--bg-warm`, and the landing page's
-separate hardcoded dark theme) is fully removed as of 2026-07-28. There is one
-palette now, shared by every page.
+The palette moved from copper orange to navy blue (`ac4acb7 Replace orange
+accent with navy blue, teal with sky blue`). `components/Logo.tsx` reads the
+CSS variables so it updated automatically, but `app/icon.svg`,
+`app/apple-icon.png`, `public/icon.png`, and `public/logo/*.svg` had the old
+orange hardcoded and silently kept shipping the wrong favicon, Apple touch
+icon, and Organization JSON-LD logo until caught and fixed 2026-08-02, see the
+Working entry below. If the palette changes again, grep for hardcoded hex
+colors in `app/icon.svg`, `app/apple-icon.png` (regenerate from
+`public/logo/matchremote-icon.svg` with `sharp`), and `public/logo/*.svg`,
+none of them read the CSS variables.
 
 ### Typography
 
@@ -311,6 +318,7 @@ What is still missing:
 
 ### Working
 
+* **Stale orange brand assets found and fixed while preparing a Bluesky profile picture (2026-08-02).** The live site's actual icon mark (`components/Logo.tsx`) already reads `var(--accent)`, which the `ac4acb7` commit changed to navy blue (`#1E3A8A`) with sky blue (`#1C9AD6`) some time ago, confirmed by fetching the live homepage and finding `fill="var(--accent)"` in the rendered SVG. But three static, non-variable brand asset files never got updated in that commit and were still hardcoded to the old copper orange (`#FF5A1F`) and old teal (`#0F9E96`): `app/icon.svg` (the actual favicon Next.js serves), `app/apple-icon.png`, and `public/icon.png` (referenced by absolute URL in the Organization JSON-LD in `app/layout.tsx`), plus the standalone `public/logo/matchremote-icon.svg` and `matchremote-logo.svg` used for anything shared outside the app itself (like a Bluesky profile picture). All five fixed to the current navy/sky blue palette, the two PNGs regenerated from the corrected SVG with `sharp` (already a dependency) rather than hand exported, so they exactly match. This CLAUDE.md file's own Colors section is separately still stale (says copper orange as current), that section needs a rewrite the next time anyone touches the design system, not done here since it was out of scope for an icon fix.
 * **Automation audit: real 1000 row Supabase cap found and fixed, sitemap and matching were both silently truncated (2026-08-02).** Johannes asked whether the daily job ingestion and SEO automation were actually doing well, specifically whether stale listings really get cleaned up and whether "1200 active jobs" was real. Checked live against the database rather than trusting prior notes:
   * **The numbers are real and healthy.** 1227 active jobs, 43 retired (deactivated, not deleted), 1270 ever ingested, split 309 RemoteOK / 319 Jobicy / 498 Himalayas / 34 Remotive / 67 Arbeitnow, matching exactly. `jobs.url` is a DB level `UNIQUE` constraint, so duplicate listings are structurally impossible, not just unlikely. Zero active jobs are older than the 40 day cutoff and zero are past their own source-provided expiry date, so the retirement logic from the 2026-07-28 session is working correctly, there was simply nothing eligible to retire yet since the pipeline is only about a week old (a job has to reach 40 days old before that logic ever touches it). The growth from 394 active jobs (2026-07-28) to 1227 now is expected accumulation, not a bug, and should start plateauing once the pipeline itself passes 40 days old.
   * **Real bug found while checking why: `app/sitemap.ts` called `getAllJobs(300)`, an arbitrary cap that used to be roughly the whole catalogue and quietly became "the newest or oldest 300 of 1227, in no defined order" as the catalogue grew, meaning roughly 900 real, live job pages had no sitemap entry at all and no realistic path to being discovered by Google.** Raised the sitemap's call to `getAllJobs(5000)` to fix the immediate symptom, then found the actual root cause while verifying: `lib/db/queries.ts`'s `getAllJobs` hit **Supabase's own PostgREST server side cap of 1000 rows per request** (a project setting, not something the client's `.limit()` can override, confirmed directly against the REST API: asked for 5000, got back exactly 1000 with `content-range: 0-999/1227`, HTTP 206 not 200). `getAllJobs` now pages through in 1000 row chunks via `.range()` until it reaches the requested limit or runs out of rows, so this cannot silently reoccur as the catalogue keeps growing, no dashboard setting to remember. Also added `.order('posted_date', { ascending: false })`, previously unordered so which jobs made it into any capped result was arbitrary.

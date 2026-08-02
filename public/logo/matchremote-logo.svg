@@ -2,13 +2,13 @@
   <title>matchremote</title>
 
   <g transform="translate(48,66)">
-    <rect x="0" y="0" width="128" height="128" rx="30" fill="#FF5A1F"/>
+    <rect x="0" y="0" width="128" height="128" rx="30" fill="#1E3A8A"/>
     <circle cx="64" cy="64" r="46" fill="none" stroke="#FFFFFF" stroke-width="7" opacity="0.95"/>
     <circle cx="64" cy="64" r="27" fill="none" stroke="#FFFFFF" stroke-width="7" opacity="0.95"/>
     <circle cx="64" cy="64" r="9" fill="#FFFFFF"/>
-    <circle cx="112" cy="16" r="17" fill="#0F9E96" stroke="#FFFFFF" stroke-width="5"/>
+    <circle cx="112" cy="16" r="17" fill="#1C9AD6" stroke="#FFFFFF" stroke-width="5"/>
   </g>
 
-  <text x="212" y="128" font-family="Bricolage Grotesque, Poppins, Arial, sans-serif" font-weight="800" font-size="66" fill="#1A1C20">match<tspan fill="#FF5A1F">remote</tspan></text>
+  <text x="212" y="128" font-family="Bricolage Grotesque, Poppins, Arial, sans-serif" font-weight="800" font-size="66" fill="#1A1C20">match<tspan fill="#1E3A8A">remote</tspan></text>
   <text x="214" y="164" font-family="Poppins, Arial, sans-serif" font-weight="600" font-size="20" letter-spacing="1" fill="#5B5F68">JOBS SCORED TO FIT YOU</text>
 </svg>
