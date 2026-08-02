@@ -7,6 +7,7 @@ import { getAlertSettings } from '@/lib/db/queries'
 import { DEFAULT_ALERT_THRESHOLD, PRICE_PER_WEEK_USD } from '@/lib/plan'
 import AccountControls from './AccountControls'
 import Logo from '@/components/Logo'
+import SignOutLink from '@/components/SignOutLink'
 
 export const metadata: Metadata = {
   title: 'Your account',
@@ -27,9 +28,12 @@ export default async function AccountPage() {
       <header style={{ padding: '20px 0', background: 'var(--surface)', borderBottom: '2px solid var(--border)' }}>
         <div className="container-wide" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <Logo />
-          <Link href="/dashboard" style={{ color: 'var(--ink-soft)', fontSize: '15px', textDecoration: 'none' }}>
-            Your matches
-          </Link>
+          <div style={{ display: 'flex', gap: '20px', alignItems: 'center' }}>
+            <Link href="/dashboard" style={{ color: 'var(--ink-soft)', fontSize: '15px', textDecoration: 'none' }}>
+              Your matches
+            </Link>
+            <SignOutLink />
+          </div>
         </div>
       </header>
 

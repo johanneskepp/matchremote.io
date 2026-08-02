@@ -12,6 +12,7 @@ import { FREE_MATCH_LIMIT } from '@/lib/plan'
 import type { MatchView } from '@/components/MatchCard'
 import DashboardMatches from './DashboardMatches'
 import Logo from '@/components/Logo'
+import SignOutLink from '@/components/SignOutLink'
 
 export const metadata: Metadata = {
   title: 'Your matches',
@@ -99,6 +100,7 @@ export default async function DashboardPage() {
             <Link href="/account" style={{ color: 'var(--ink-soft)', fontSize: '15px', textDecoration: 'none' }}>
               Account
             </Link>
+            <SignOutLink />
           </div>
         </div>
       </header>
