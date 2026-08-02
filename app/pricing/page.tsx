@@ -4,8 +4,7 @@ import { PRICE_PER_WEEK_USD, FREE_MATCH_LIMIT } from '@/lib/plan'
 import Logo from '@/components/Logo'
 
 const TITLE = 'Pricing'
-const DESCRIPTION =
-  'Unlock remote job matches for $6 a week, new ones as soon as they exist. Cancel anytime, two clicks, from your account page.'
+const DESCRIPTION = `Unlock remote job matches for $${PRICE_PER_WEEK_USD} a week, new ones as soon as they exist. Cancel anytime, two clicks, from your account page.`
 
 export const metadata: Metadata = {
   title: TITLE,

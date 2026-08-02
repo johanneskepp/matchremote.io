@@ -33,6 +33,16 @@ export async function POST(request: Request) {
     }
 
     const data = event.data ?? {}
+
+    // This Paddle seller account also runs another, unrelated product, so
+    // notification destinations receive every subscription event on the
+    // account, not just matchremote's. custom_data.app is set to 'matchremote'
+    // at checkout time specifically so this handler can ignore anything that
+    // isn't ours instead of guessing from email or writing bad data.
+    if (data.custom_data?.app !== 'matchremote') {
+      return NextResponse.json({ received: true })
+    }
+
     // custom_data.userId is set when the checkout is opened, which is how a
     // Paddle subscription is tied back to a matchremote account.
     const userId: string | undefined = data.custom_data?.userId

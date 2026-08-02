@@ -1,6 +1,7 @@
 import { createHmac, timingSafeEqual } from 'node:crypto'
 
-const PADDLE_API_BASE = 'https://api.paddle.com'
+const PADDLE_API_BASE =
+  process.env.PADDLE_ENVIRONMENT === 'sandbox' ? 'https://sandbox-api.paddle.com' : 'https://api.paddle.com'
 
 /**
  * Paddle Billing sends a Paddle-Signature header shaped like

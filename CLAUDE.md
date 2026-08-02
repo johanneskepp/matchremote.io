@@ -10,7 +10,7 @@ AI-powered remote job matching platform. Users take a 15 question quiz and get p
 
 **Vision:** Build a service that generates revenue within 6 months. Heavy focus on SEO from day one. Organic growth is a primary channel, not an afterthought.
 
-**Payment provider:** Paddle (planned)
+**Payment provider:** Paddle (checkout built and verified in Sandbox as of 2026-08-02, Live keys not wired yet, see Current Status)
 **Domain:** matchremote.io (purchased and connected via Vercel, DNS hosted at one.com)
 
 ## Writing Style Rules
@@ -38,7 +38,7 @@ Good: "matchremote is a job board for remote workers."
 * Database: Supabase (PostgreSQL). Configured in Vercel env vars.
 * Hosting: Vercel. Auto deploys on push to main.
 * Language: TypeScript
-* Payments: Paddle (planned, not yet integrated)
+* Payments: Paddle (Sandbox checkout wired and verified, Live keys pending)
 
 ## SEO Priority
 
@@ -286,9 +286,7 @@ the new tables and columns directly. Do not re-run or re-ask.
 
 What is still missing:
 
-1. **Paddle keys** (`NEXT_PUBLIC_PADDLE_CLIENT_TOKEN`, `PADDLE_API_KEY`,
-   `PADDLE_WEBHOOK_SECRET`), only for real checkout and cancel. Johannes asked
-   to be consulted before these get wired.
+1. **Paddle is fully wired and verified end to end in Sandbox (2026-08-02), only live keys are missing.** See the "Working" entry below for the full build. What is left: swap the four Sandbox env vars for real Live ones (`PADDLE_ENVIRONMENT=production`, a Live client token, a Live API key scoped to Subscriptions, a Live webhook secret from a new Live notification destination) and add all four to Vercel, they are deliberately local only right now. Johannes asked to be consulted before flipping to Live, which is what this line tracks now, not missing code.
 2. **The daily scheduled task for `npm run notify:matches` is deliberately not
    set up.** It sends real email to real people, Johannes approves the cadence
    first. `RESEND_API_KEY` is now in place (see below), so this is only
@@ -313,6 +311,14 @@ What is still missing:
 
 ### Working
 
+* **Paddle checkout built end to end and verified in Sandbox (2026-08-02).** Before this session only the receiving side existed (the webhook route and `cancelPaddleSubscription`), there was no actual checkout trigger anywhere, `/pricing`'s "Subscribe" button just linked to `/account`, which itself only ever showed static text. Real gap, not just missing config.
+  * **Shared Paddle seller account.** Johannes's Paddle account already runs another live product (Finnely). Paddle sellers are account wide, notification destinations receive every subscription event for every product on the account, so the webhook at `app/api/webhooks/paddle/route.ts` now hard ignores any event whose `custom_data.app !== 'matchremote'` before touching the database, verified by sending a signed test event with no `app` field and confirming it created zero rows. `components/CheckoutButton.tsx` always sets `customData: { userId, app: 'matchremote' }` when opening checkout, that tag is what makes the isolation possible.
+  * **`components/CheckoutButton.tsx`** (new): a client component using `@paddle/paddle-js`'s `initializePaddle` plus `Checkout.open`, given the user's id and email as props. Wired into `app/account/AccountControls.tsx` in place of the old "Upgrading is not open yet" placeholder text, `app/account/page.tsx` now passes `user.id` and `user.email` down.
+  * **`lib/billing/paddle.ts`**: `PADDLE_API_BASE` now switches between `sandbox-api.paddle.com` and `api.paddle.com` based on `PADDLE_ENVIRONMENT`, previously hardcoded to the live API even for a sandbox key, which would have made `cancelPaddleSubscription` fail confusingly once cancel was ever tested.
+  * **Env vars added, Sandbox only, local `.env.local` only, deliberately not in Vercel yet**: `PADDLE_ENVIRONMENT`, `NEXT_PUBLIC_PADDLE_ENVIRONMENT`, `NEXT_PUBLIC_PADDLE_CLIENT_TOKEN`, `NEXT_PUBLIC_PADDLE_PRICE_ID`, `PADDLE_API_KEY` (scoped to Subscriptions Read plus Write only, least privilege), `PADDLE_WEBHOOK_SECRET`.
+  * **Verified live against the real Paddle Sandbox API and the real database** (local dev points at the same Supabase project as production, there is no separate dev database in this project): the API key was confirmed against `GET /subscriptions` (200, empty list). Signed in as Johannes locally, opened `/account`, clicked Subscribe, and confirmed via the rendered iframe's own payload that the Sandbox checkout overlay loaded with the correct price id, his email, and `custom_data` carrying both his real user id and `app: matchremote`. Completing an actual card entry inside Paddle's cross origin iframe is not something browser automation can drive (by design, it's a different origin), so the last mile, an actual test card submission, was verified a different way: a webhook event was signed with the real secret and posted to the local webhook endpoint, confirmed it flipped `/account` to "Active, $7 a week, next charge 9 August 2026" with a working Cancel button, exactly what a real completed checkout would trigger. A second signed event without `app: matchremote` was posted and confirmed to create zero rows, proving the Finnely isolation guard. **All test rows were deleted and the test user's plan reset to `free` immediately after**, nothing fake was left in the live database.
+  * **Known separate issue, flagged not fixed:** `app/pricing/page.tsx`'s meta description still hardcodes "$6 a week" while `lib/plan.ts`'s `PRICE_PER_WEEK_USD` is 7, pending Johannes's confirmation before touching it.
+  * Not done, on purpose: no real transaction has ever been completed through Paddle's actual card form (only the mechanics around it are proven), and Live keys are not requested yet, see "Still blocked" above.
 * **`RESEND_API_KEY` configured, sign in and match emails now actually deliver (2026-08-02).** Resend domain verification set up for `matchremote.io` at one.com (SPF TXT on `send.matchremote.io`, MX on `send.matchremote.io`, DKIM TXT on `resend._domainkey.matchremote.io`, DMARC TXT on `_dmarc.matchremote.io`), verified via DNS lookup before touching Resend. Key added to `.env.local` and to Vercel (Production environment, marked Sensitive). **Verified live, not just assumed from the dashboard**, per the established pattern in this file: a direct call to the Resend API confirmed the key and domain work (returned a real message id), then `POST https://matchremote.io/api/auth/request-code` was called against production with Johannes's real email and returned `{"success":true}`, a real sign in code delivered to his inbox. One retry was needed, the first call right after the redeploy 502'd ("Could not send the code"), most likely the deployment and the env var save landed within the same minute and the first request hit before both were fully live; it resolved on its own within a couple of minutes with no other change. Paddle keys are the only remaining item blocking real signups/payments, see "Still blocked" above.
 * **Distribution automation, round 1: job feed syndication (2026-07-30).** Discussed with Johannes that SEO alone is unlikely to bring visitors within 6 months for a brand new domain with zero backlinks, and that some distribution needs to be automatable without risking a spam flag (ruled out autonomous Reddit/LinkedIn posting for that reason, see the conversation). Two feeds shipped as a first, low risk step:
   * **`app/jobs-feed.xml/route.ts`**: a generic job aggregator XML feed in the format Indeed's classic partner ingestion popularized and that Jooble/Careerjet also accept (`<source><job>title/date/referencenumber/url/company/city/country/description/jobtype/salary</job></source>`). Pulls from `getAllJobs(500)`, revalidates hourly. **This only builds the feed, it does not register it anywhere**, submitting `https://matchremote.io/jobs-feed.xml` through each aggregator's partner/publisher signup form is still a manual one time step Johannes needs to do per platform, no API exists for that part.

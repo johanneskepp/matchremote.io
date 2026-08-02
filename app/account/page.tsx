@@ -39,6 +39,9 @@ export default async function AccountPage() {
           <p style={{ color: 'var(--ink-soft)', marginTop: 0, marginBottom: '30px' }}>{user.email}</p>
 
           <AccountControls
+            userId={user.id}
+            email={user.email}
+            paddleConfigured={Boolean(process.env.NEXT_PUBLIC_PADDLE_CLIENT_TOKEN && process.env.NEXT_PUBLIC_PADDLE_PRICE_ID)}
             active={access.active}
             status={access.status}
             renewsAt={access.renewsAt}

@@ -3,8 +3,12 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { SCORE_THRESHOLDS } from '@/lib/plan'
+import CheckoutButton from '@/components/CheckoutButton'
 
 type Props = {
+  userId: string
+  email: string
+  paddleConfigured: boolean
   active: boolean
   status: string | null
   renewsAt: string | null
@@ -19,7 +23,7 @@ function formatDay(value: string | null): string {
   return new Date(value).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })
 }
 
-export default function AccountControls({ active, status, renewsAt, cancelAt, threshold, alertsActive, pricePerWeek }: Props) {
+export default function AccountControls({ userId, email, paddleConfigured, active, status, renewsAt, cancelAt, threshold, alertsActive, pricePerWeek }: Props) {
   const router = useRouter()
   const [savedThreshold, setSavedThreshold] = useState(threshold)
   const [alertsOn, setAlertsOn] = useState(alertsActive)
@@ -121,9 +125,13 @@ export default function AccountControls({ active, status, renewsAt, cancelAt, th
             <p style={{ margin: '0 0 16px', fontSize: '16px', color: 'var(--ink-soft)' }}>
               You are on the free two matches. ${pricePerWeek} a week unlocks the rest and emails you new ones.
             </p>
-            <p style={{ margin: 0, fontSize: '15px', color: 'var(--ink-soft)' }}>
-              Upgrading is not open yet. Check back soon.
-            </p>
+            {paddleConfigured ? (
+              <CheckoutButton userId={userId} email={email} />
+            ) : (
+              <p style={{ margin: 0, fontSize: '15px', color: 'var(--ink-soft)' }}>
+                Upgrading is not open yet. Check back soon.
+              </p>
+            )}
           </>
         )}
       </section>
