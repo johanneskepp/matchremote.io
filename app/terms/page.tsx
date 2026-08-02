@@ -79,6 +79,18 @@ export default function TermsPage() {
           </section>
 
           <section style={sectionStyle}>
+            <h2 className="font-display" style={h2Style}>Refund policy</h2>
+            <p style={pStyle}>
+              Because Paddle is the Merchant of Record, refund requests are handled by Paddle directly under its own
+              buyer terms, available at{' '}
+              <a href="https://www.paddle.com/legal/checkout-buyer-terms" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--teal)' }}>paddle.com/legal/checkout-buyer-terms</a>.
+              You can also reach us first at{' '}
+              <a href="mailto:johanneskepp@gmail.com" style={{ color: 'var(--teal)' }}>johanneskepp@gmail.com</a>{' '}
+              and we will help route the request.
+            </p>
+          </section>
+
+          <section style={sectionStyle}>
             <h2 className="font-display" style={h2Style}>What matchremote is not</h2>
             <ul style={ulStyle}>
               <li>We are not an employer, recruiter, or staffing agency. We do not guarantee that any listing is still open, accurate, or that applying will lead to an interview or an offer.</li>
