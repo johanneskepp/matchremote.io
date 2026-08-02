@@ -75,11 +75,11 @@ export default function PrivacyPage() {
           <section style={sectionStyle}>
             <h2 className="font-display" style={h2Style}>Payment data</h2>
             <p style={pStyle}>
-              Subscriptions are billed by Paddle.com Market Limited, our payment provider and the Merchant of
-              Record for every purchase. Paddle collects and processes your billing details and card information
-              directly, we never see or store your full card number. Paddle acts as an independent data controller
-              for that billing data under its own privacy policy, available at{' '}
-              <a href="https://www.paddle.com/legal/privacy" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--teal)' }}>paddle.com/legal/privacy</a>.
+              Subscriptions are billed through <strong>Stripe</strong>, our payment processor. Stripe collects and
+              processes your billing details and card information directly, we never see or store your full card
+              number. Stripe acts as an independent data controller for that billing data under its own privacy
+              policy, available at{' '}
+              <a href="https://stripe.com/privacy" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--teal)' }}>stripe.com/privacy</a>.
             </p>
           </section>
 
@@ -97,7 +97,7 @@ export default function PrivacyPage() {
             <p style={pStyle}>We use a small number of processors to run the service, each only for the purpose named:</p>
             <ul style={ulStyle}>
               <li><strong>Supabase</strong>, our database host, stores your account, quiz answers, and matches.</li>
-              <li><strong>Paddle</strong>, our payment provider and Merchant of Record, handles billing and card data.</li>
+              <li><strong>Stripe</strong>, our payment processor, handles billing and card data.</li>
               <li><strong>Resend</strong>, our email provider, delivers sign in codes and match alerts.</li>
               <li><strong>Vercel</strong>, our hosting provider, serves the website.</li>
             </ul>
@@ -113,8 +113,8 @@ export default function PrivacyPage() {
             <p style={pStyle}>
               We keep your account, quiz answers, and match history for as long as your account is active. If you
               ask us to delete your account, we delete your personal data within 30 days, except where we are
-              legally required to keep billing records for longer (Paddle handles those retention obligations for
-              payment data on our behalf).
+              legally required to keep billing records for longer (Stripe retains payment data on our behalf per
+              its own obligations).
             </p>
           </section>
 

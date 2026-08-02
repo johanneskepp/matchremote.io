@@ -9,7 +9,7 @@ import CheckoutButton from '@/components/CheckoutButton'
 type Props = {
   userId: string
   email: string
-  paddleConfigured: boolean
+  checkoutConfigured: boolean
   active: boolean
   status: string | null
   renewsAt: string | null
@@ -24,7 +24,7 @@ function formatDay(value: string | null): string {
   return new Date(value).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })
 }
 
-export default function AccountControls({ userId, email, paddleConfigured, active, status, renewsAt, cancelAt, threshold, alertsActive, pricePerWeek }: Props) {
+export default function AccountControls({ userId, email, checkoutConfigured, active, status, renewsAt, cancelAt, threshold, alertsActive, pricePerWeek }: Props) {
   const router = useRouter()
   const [savedThreshold, setSavedThreshold] = useState(threshold)
   const [alertsOn, setAlertsOn] = useState(alertsActive)
@@ -146,13 +146,13 @@ export default function AccountControls({ userId, email, paddleConfigured, activ
             <p style={{ margin: '0 0 16px', fontSize: '16px', color: 'var(--ink-soft)' }}>
               You are on the free two matches. ${pricePerWeek} a week unlocks the rest and emails you new ones.
             </p>
-            {paddleConfigured ? (
+            {checkoutConfigured ? (
               <>
                 <CheckoutButton userId={userId} email={email} />
                 <p style={{ margin: '10px 0 0', fontSize: '13px', color: 'var(--ink-soft)' }}>
                   By subscribing you agree to our{' '}
                   <Link href="/terms" style={{ color: 'var(--teal)' }}>Terms</Link> and{' '}
-                  <Link href="/privacy" style={{ color: 'var(--teal)' }}>Privacy Policy</Link>. Billing is handled by Paddle.
+                  <Link href="/privacy" style={{ color: 'var(--teal)' }}>Privacy Policy</Link>. Billing is handled by Stripe.
                 </p>
               </>
             ) : (

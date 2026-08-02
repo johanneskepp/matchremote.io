@@ -216,11 +216,11 @@ export async function upsertSubscription(userId: string, fields: any): Promise<v
     .upsert({ user_id: userId, ...fields, updated_at: new Date().toISOString() }, { onConflict: 'user_id' })
 }
 
-export async function getSubscriptionByPaddleId(paddleSubscriptionId: string): Promise<any | null> {
+export async function getSubscriptionByStripeId(stripeSubscriptionId: string): Promise<any | null> {
   const { data } = await sbAdmin
     .from('subscriptions')
     .select('*')
-    .eq('paddle_subscription_id', paddleSubscriptionId)
+    .eq('stripe_subscription_id', stripeSubscriptionId)
     .maybeSingle()
   return data || null
 }

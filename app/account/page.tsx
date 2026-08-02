@@ -45,7 +45,7 @@ export default async function AccountPage() {
           <AccountControls
             userId={user.id}
             email={user.email}
-            paddleConfigured={Boolean(process.env.NEXT_PUBLIC_PADDLE_CLIENT_TOKEN && process.env.NEXT_PUBLIC_PADDLE_PRICE_ID)}
+            checkoutConfigured={Boolean(process.env.STRIPE_SECRET_KEY && process.env.STRIPE_PRICE_ID)}
             active={access.active}
             status={access.status}
             renewsAt={access.renewsAt}

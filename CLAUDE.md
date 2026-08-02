@@ -10,7 +10,7 @@ AI-powered remote job matching platform. Users take a 15 question quiz and get p
 
 **Vision:** Build a service that generates revenue within 6 months. Heavy focus on SEO from day one. Organic growth is a primary channel, not an afterthought.
 
-**Payment provider:** Paddle (Live as of 2026-08-02, real checkout is active on matchremote.io, see Current Status)
+**Payment provider:** Stripe direct (switched from Paddle 2026-08-02, Paddle rejected the account, "job boards" are explicitly prohibited under their Acceptable Use Policy, see Current Status). Stripe is not a Merchant of Record, matchremote is the seller of record and handles its own VAT via Stripe Tax.
 **Domain:** matchremote.io (purchased and connected via Vercel, DNS hosted at one.com)
 
 ## Writing Style Rules
@@ -38,7 +38,7 @@ Good: "matchremote is a job board for remote workers."
 * Database: Supabase (PostgreSQL). Configured in Vercel env vars.
 * Hosting: Vercel. Auto deploys on push to main.
 * Language: TypeScript
-* Payments: Paddle (Live as of 2026-08-02)
+* Payments: Stripe direct (switched from Paddle 2026-08-02, see Current Status)
 
 ## SEO Priority
 
@@ -210,7 +210,7 @@ app/
   results/page.tsx   Match results, two open then locked, see paywall below
   pricing/page.tsx   Pricing, one plan only
   privacy/page.tsx   GDPR privacy policy, noindex
-  terms/page.tsx     Terms of Service, noindex, Paddle Merchant of Record disclosure
+  terms/page.tsx     Terms of Service, noindex
   about/page.tsx     Founder story, indexed, trust signal for a brand new domain
   dashboard/page.tsx        Signed in match list, server component, builds the view models
   dashboard/DashboardMatches.tsx  Client component: score filter, in memory, no refetch
@@ -225,9 +225,10 @@ app/
     auth/logout/route.ts
     auth/me/route.ts
     account/alert-settings/route.ts   Reads and saves the email threshold
-    account/cancel/route.ts           Cancels the Paddle subscription
-    account/delete/route.ts           Cancels any active Paddle subscription, deletes the user (cascades to every table), ends the session
-    webhooks/paddle/route.ts          Mirrors Paddle state into subscriptions
+    account/cancel/route.ts           Cancels the Stripe subscription at period end
+    account/delete/route.ts           Cancels any active Stripe subscription immediately, deletes the user (cascades to every table), ends the session
+    checkout/create-session/route.ts  Creates a Stripe Checkout Session, returns the URL to redirect to
+    webhooks/stripe/route.ts          Mirrors Stripe subscription state into subscriptions
   layout.tsx         Root layout. Fonts (next/font), metadata, Organization JSON-LD.
   globals.css        Design system
 components/
@@ -236,7 +237,7 @@ lib/
   quiz-options.ts    Shared role and salary options, used by hero and quiz
   plan.ts            FREE_MATCH_LIMIT, price, score thresholds, default alert threshold
   auth/session.ts    Session cookie, hashing, lookup
-  billing/paddle.ts        Paddle API client
+  billing/stripe.ts        Stripe API client, cancel helpers
   billing/subscription.ts  isActive plus getAccessState, the single access check
   email/client.ts          Resend init, returns null when the key is missing
   email/otp.ts             Sign in code email
@@ -279,12 +280,15 @@ secrets/
 * `GOOGLE_SEARCH_CONSOLE_SITE` (`sc-domain:matchremote.io`)
 
 Declared in `.env.example` and required by shipped code. `RESEND_API_KEY` and all
-six Paddle Live variables (`PADDLE_ENVIRONMENT`, `NEXT_PUBLIC_PADDLE_ENVIRONMENT`,
-`NEXT_PUBLIC_PADDLE_CLIENT_TOKEN`, `NEXT_PUBLIC_PADDLE_PRICE_ID`, `PADDLE_API_KEY`,
-`PADDLE_WEBHOOK_SECRET`) are now set in both `.env.local` and Vercel Production
-(2026-08-02), see Current Status for the Paddle Live flip. `BLUESKY_HANDLE` and
-`BLUESKY_APP_PASSWORD` are also now set the same way (2026-08-02), see the
-Bluesky "Working" entry. Nothing left unset here.
+six Paddle Live variables were set 2026-08-02, then **removed the same day**
+when Paddle rejected the account, see Current Status for the full story.
+`BLUESKY_HANDLE` and `BLUESKY_APP_PASSWORD` are set (2026-08-02, in both
+`.env.local` and Vercel Production), see the Bluesky "Working" entry.
+
+**Stripe migration in progress (2026-08-02):** `STRIPE_SECRET_KEY`,
+`STRIPE_PRICE_ID`, `STRIPE_WEBHOOK_SECRET` are declared in `.env.local` but
+still blank, waiting on Johannes to finish creating the Stripe account and
+Test mode product. Not in Vercel yet. See "Still blocked" below.
 
 ## Current Status
 
@@ -301,9 +305,16 @@ What is still missing:
 
 1. ~~The daily scheduled task for `npm run notify:matches`~~ **Done (2026-08-02).** Johannes approved the cadence, scheduled task `daily-match-notifications` now runs every day at 07:03 local, see the Working entry below. Do not re-ask.
 3. ~~Migration `005_bluesky_posts.sql`, Bluesky account, env vars, scheduled task~~ **All done (2026-08-02).** See the Working entry below. Do not re-ask about any of it.
+4. **Stripe account and Test mode product are being set up by Johannes right now (2026-08-02), migration to Stripe in progress.** See the "Payments moved from Paddle to Stripe" Working entry below for the full story and code state. Once he has a Stripe account, a Test mode product/price, and Test mode API keys, paste them in and the checkout flow can be verified end to end in Test mode before ever touching Live keys, same discipline as the original Paddle Sandbox build.
 
 ### Working
 
+* **Payments moved from Paddle to Stripe (2026-08-02): Paddle rejected the account, migration to Stripe in progress.** Same day Paddle went Live (see the entries further below), Johannes submitted `matchremote.io` for Paddle's required checkout domain approval. Paddle's review team rejected it outright: their automated email flagged the product category as "Advertising and Marketing / Job Boards" and quoted their own Acceptable Use Policy, which explicitly names "Advertising Services, including but not limited to **job boards**" as prohibited, not just restricted. Verified this was not a one-off by checking the two other mainstream indie-friendly Merchant of Record providers directly against their own published policies: **Lemon Squeezy** and **Polar.sh** both also explicitly name "job boards" as a prohibited category. This appears to be a shared, deliberate norm among MoR providers (they carry legal/financial responsibility for every transaction, and recruitment-adjacent products are apparently a bright line for all of them), not something an appeal or a rephrased business description was likely to overturn given the "job board" language is company-name-explicit in all three policies, so an appeal was not pursued. Confirmed **Stripe direct is not on Stripe's own restricted/prohibited business list** (`stripe.com/legal/restricted-businesses`), the practical path forward, at the cost of matchremote becoming its own seller of record: VAT/sales tax registration and remittance is now matchremote's own legal responsibility rather than Paddle's, mitigated by turning on Stripe Tax at checkout (automatic calculation, not automatic registration, Johannes still needs to register where required).
+  * **Code rebuilt end to end the same day**, all still using Stripe's Test mode, nothing Live yet: `lib/billing/stripe.ts` (new, replaces `lib/billing/paddle.ts`, deleted), `app/api/checkout/create-session/route.ts` (new) creates a Stripe Checkout Session server side and returns its URL, `components/CheckoutButton.tsx` now just redirects the browser there (`window.location.href`) instead of opening Paddle's embedded overlay, meaning **no client-side Stripe library and no domain-approval step at all**, sidestepping the entire class of problem that sank Paddle. `app/api/webhooks/stripe/route.ts` (new, replaces `app/api/webhooks/paddle/route.ts`, deleted) verifies Stripe's signature and mirrors `customer.subscription.*` events into the `subscriptions` table, matched to a matchremote account via `subscription_data.metadata.userId` set at checkout creation, no separate lookup table needed. `cancelStripeSubscription` (used by `/api/account/cancel`) cancels at period end, matching the existing "you keep access until the date you paid for" UX promise; a separate `cancelStripeSubscriptionImmediately` (used only by `/api/account/delete`) cancels right away since there is no account left to keep access on.
+  * **`lib/db/migrations/006_stripe_billing.sql`** renames `subscriptions.paddle_subscription_id`/`paddle_customer_id` to `stripe_subscription_id`/`stripe_customer_id`. Confirmed the table had zero rows before renaming (checked live, not assumed), so this was a safe rename with no data migration needed. Run in the Supabase SQL editor same day, verified afterwards by querying the renamed columns directly (200, not a column-does-not-exist error).
+  * **Legal pages and copy updated to match**: `app/terms/page.tsx`'s "Subscriptions and billing" and "Refund policy" sections rewritten (matchremote is now the seller of record, not Paddle; refunds are matchremote's own policy now, not deferred to a third party's buyer terms). `app/privacy/page.tsx`'s payment data and sub-processor sections swapped Paddle for Stripe. `AccountControls.tsx`'s "Billing is handled by Paddle" line updated to Stripe.
+  * **`@paddle/paddle-js` uninstalled, `stripe` (server SDK) installed.** No client-side Stripe package needed given the redirect-based Checkout flow.
+  * **Not done yet, waiting on Johannes**: creating the actual Stripe account, a Test mode product/price, and pasting the Test mode `STRIPE_SECRET_KEY`/`STRIPE_PRICE_ID` into `.env.local`. Once those exist the whole flow needs the same live-against-real-infrastructure verification the Paddle Sandbox build got (a real Test mode checkout, a real signed webhook event, confirmed account state change) before Live keys are ever requested. See "Still blocked" above.
 * **Bluesky bot fully live end to end (2026-08-02), first real posts went out.** Johannes created the real `@matchremote.bsky.social` account and an app password, pasted both in chat, Claude Code wrote `BLUESKY_HANDLE`/`BLUESKY_APP_PASSWORD` into `.env.local` and Vercel Production directly via `vercel env add` (same pattern as the Paddle Live keys). Migration `005_bluesky_posts.sql` (adds `jobs.posted_to_bluesky_at`) was run in the Supabase SQL editor, confirmed by querying the column directly (200 instead of the prior 42703 error). `npm run social:bluesky -- --dry-run` then found 5 real postable jobs, then the real (non dry run) command was run with Johannes's explicit go ahead since it posts real public content: **all 5 posted successfully**, verified independently by querying Bluesky's own public API (`app.bsky.feed.getAuthorFeed`) and seeing all 5 posts live on the real account, not just trusting the script's own success message. Scheduled task `daily-bluesky-posts` now runs every day at 08:02 local, posts up to 5 never-before-posted active jobs, matches the existing `notify:matches` pattern (script never edited by the automated run, failures just requeue for tomorrow, no git operations).
 * **Stale orange brand assets found and fixed while preparing a Bluesky profile picture (2026-08-02).** The live site's actual icon mark (`components/Logo.tsx`) already reads `var(--accent)`, which the `ac4acb7` commit changed to navy blue (`#1E3A8A`) with sky blue (`#1C9AD6`) some time ago, confirmed by fetching the live homepage and finding `fill="var(--accent)"` in the rendered SVG. But three static, non-variable brand asset files never got updated in that commit and were still hardcoded to the old copper orange (`#FF5A1F`) and old teal (`#0F9E96`): `app/icon.svg` (the actual favicon Next.js serves), `app/apple-icon.png`, and `public/icon.png` (referenced by absolute URL in the Organization JSON-LD in `app/layout.tsx`), plus the standalone `public/logo/matchremote-icon.svg` and `matchremote-logo.svg` used for anything shared outside the app itself (like a Bluesky profile picture). All five fixed to the current navy/sky blue palette, the two PNGs regenerated from the corrected SVG with `sharp` (already a dependency) rather than hand exported, so they exactly match. This CLAUDE.md file's own Colors section is separately still stale (says copper orange as current), that section needs a rewrite the next time anyone touches the design system, not done here since it was out of scope for an icon fix.
 * **Automation audit: real 1000 row Supabase cap found and fixed, sitemap and matching were both silently truncated (2026-08-02).** Johannes asked whether the daily job ingestion and SEO automation were actually doing well, specifically whether stale listings really get cleaned up and whether "1200 active jobs" was real. Checked live against the database rather than trusting prior notes:

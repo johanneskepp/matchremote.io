@@ -70,23 +70,21 @@ export default function TermsPage() {
               already paid for, then billing stops.
             </p>
             <p style={pStyle}>
-              Our order process is run by <strong>Paddle.com Market Limited</strong>, our reseller and Merchant of
-              Record. That means Paddle, not matchremote, is the seller of record on your receipt, handles VAT and
-              sales tax, processes your payment, and handles billing support and refund requests under its own
-              terms, available at{' '}
-              <a href="https://www.paddle.com/legal/checkout-buyer-terms" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--teal)' }}>paddle.com/legal/checkout-buyer-terms</a>.
+              Payments are processed by <strong>Stripe</strong>. matchremote, not Stripe, is the seller on your
+              receipt. Applicable VAT or sales tax is calculated automatically at checkout based on your location.
+              Stripe's own terms, covering how your payment details are handled, are available at{' '}
+              <a href="https://stripe.com/legal/consumer" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--teal)' }}>stripe.com/legal/consumer</a>.
             </p>
           </section>
 
           <section style={sectionStyle}>
             <h2 className="font-display" style={h2Style}>Refund policy</h2>
             <p style={pStyle}>
-              Because Paddle is the Merchant of Record, refund requests are handled by Paddle directly under its own
-              buyer terms, available at{' '}
-              <a href="https://www.paddle.com/legal/checkout-buyer-terms" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--teal)' }}>paddle.com/legal/checkout-buyer-terms</a>.
-              You can also reach us first at{' '}
+              Charges are final once a billing period starts, cancelling stops future charges but does not refund
+              the period already paid for. If something went wrong on our end (a billing error, a duplicate charge),
+              email us at{' '}
               <a href="mailto:johanneskepp@gmail.com" style={{ color: 'var(--teal)' }}>johanneskepp@gmail.com</a>{' '}
-              and we will help route the request.
+              and we will make it right.
             </p>
           </section>
 

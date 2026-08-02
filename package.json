@@ -16,7 +16,6 @@
   },
   "dependencies": {
     "@atproto/api": "^0.20.34",
-    "@paddle/paddle-js": "^1.6.4",
     "@supabase/auth-helpers-nextjs": "^0.15.0",
     "@supabase/auth-helpers-react": "^0.15.0",
     "@supabase/supabase-js": "^2.110.8",
@@ -30,6 +29,7 @@
     "react-dom": "19.2.4",
     "react-hook-form": "^7.83.0",
     "resend": "^6.18.0",
+    "stripe": "^22.4.0",
     "zod": "^4.4.3"
   },
   "devDependencies": {

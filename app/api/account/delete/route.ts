@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { getSessionUser, endSession } from '@/lib/auth/session'
 import { getSubscription, deleteUser } from '@/lib/db/queries'
-import { cancelPaddleSubscription } from '@/lib/billing/paddle'
+import { cancelStripeSubscriptionImmediately } from '@/lib/billing/stripe'
 
 export const dynamic = 'force-dynamic'
 
@@ -10,11 +10,12 @@ export async function POST() {
   if (!user) return NextResponse.json({ message: 'Not signed in' }, { status: 401 })
 
   // An active recurring subscription must not keep billing an account that
-  // no longer exists, so cancel it first. Best effort: if Paddle is briefly
-  // unreachable, stop rather than delete the account with billing still live.
+  // no longer exists, so cancel it first, immediately rather than at period
+  // end since there is no account left to keep access on. Best effort: if
+  // Stripe is briefly unreachable, stop rather than delete with billing live.
   const subscription = await getSubscription(user.id)
-  if (subscription?.paddle_subscription_id && subscription.status !== 'canceled') {
-    const result = await cancelPaddleSubscription(subscription.paddle_subscription_id)
+  if (subscription?.stripe_subscription_id && subscription.status !== 'canceled') {
+    const result = await cancelStripeSubscriptionImmediately(subscription.stripe_subscription_id)
     if (!result.ok) {
       console.error('[account] delete: could not cancel subscription first', result.error)
       return NextResponse.json(

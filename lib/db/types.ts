@@ -295,8 +295,8 @@ export type Database = {
         Row: {
           id: string
           user_id: string
-          paddle_subscription_id: string | null
-          paddle_customer_id: string | null
+          stripe_subscription_id: string | null
+          stripe_customer_id: string | null
           status: 'active' | 'paused' | 'canceled' | 'past_due' | 'trialing'
           current_period_end: string | null
           cancel_at: string | null
@@ -306,15 +306,15 @@ export type Database = {
         Insert: {
           id?: string
           user_id: string
-          paddle_subscription_id?: string | null
-          paddle_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          stripe_customer_id?: string | null
           status?: 'active' | 'paused' | 'canceled' | 'past_due' | 'trialing'
           current_period_end?: string | null
           cancel_at?: string | null
         }
         Update: {
-          paddle_subscription_id?: string | null
-          paddle_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          stripe_customer_id?: string | null
           status?: 'active' | 'paused' | 'canceled' | 'past_due' | 'trialing'
           current_period_end?: string | null
           cancel_at?: string | null
