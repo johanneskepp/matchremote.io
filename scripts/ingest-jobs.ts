@@ -512,17 +512,32 @@ async function main() {
  * mistake can be undone and nothing is lost.
  */
 async function retireStaleJobs(seenUrls: Set<string>) {
-  const { data: active, error } = await jobsTable
-    .from('jobs')
-    .select('id, title, url, source, posted_date, expires_at')
-    .eq('is_active', true)
+  // Supabase's PostgREST caps any single request at 1000 rows server side
+  // regardless of whether `.limit()` is called, it silently truncates rather
+  // than erroring. The active count passed 1000 on 2026-08-02 (1371 at the
+  // time this was found), which meant everything past the first page was
+  // never even considered for retirement. Page through until nothing more
+  // comes back.
+  const rows: any[] = []
+  let from = 0
+  const pageSize = 1000
 
-  if (error) {
-    console.error('Freshness pass: could not read active jobs:', error.message)
-    return
+  while (true) {
+    const { data, error } = await jobsTable
+      .from('jobs')
+      .select('id, title, url, source, posted_date, expires_at')
+      .eq('is_active', true)
+      .range(from, from + pageSize - 1)
+
+    if (error) {
+      console.error('Freshness pass: could not read active jobs:', error.message)
+      return
+    }
+    if (!data || data.length === 0) break
+    rows.push(...data)
+    if (data.length < pageSize) break
+    from += pageSize
   }
-
-  const rows = active ?? []
 
   // The source's own expiry wins over our guess wherever we have one.
   const expiredBySource = rows.filter((job: any) => isExpiredBySource(job.expires_at))
