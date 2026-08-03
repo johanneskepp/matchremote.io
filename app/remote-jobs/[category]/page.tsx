@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
-import { getAllJobs } from '@/lib/db/queries'
+import { getAllActiveJobs } from '@/lib/db/queries'
 import { JOB_CATEGORIES, getCategoryBySlug, jobMatchesCategory } from '@/lib/utils/job-categories'
 import { buildJobSlug } from '@/lib/utils/job-slug'
 import { getQualifyingComboPages } from '@/lib/utils/combo-pages'
@@ -41,7 +41,7 @@ export default async function RemoteJobsCategoryPage({ params }: { params: Promi
   const category = getCategoryBySlug(slug)
   if (!category) notFound()
 
-  const allJobs: Job[] = await getAllJobs(300)
+  const allJobs: Job[] = await getAllActiveJobs()
   const jobs = sortJobsBySalaryFirst(allJobs.filter((job) => jobMatchesCategory(job, category)))
   const regionLinks = (await getQualifyingComboPages()).filter((c) => c.category.slug === slug)
 

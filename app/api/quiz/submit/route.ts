@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getOrCreateUser, updateUser, saveQuizResponse, getAllJobs, createMatch } from '@/lib/db/queries'
+import { getOrCreateUser, updateUser, saveQuizResponse, getAllActiveJobs, createMatch } from '@/lib/db/queries'
 import { mapQuizAnswersToResponse } from '@/lib/utils/quizMapping'
 import { rankJobs } from '@/lib/utils/matching'
 
@@ -26,11 +26,11 @@ export async function POST(request: NextRequest) {
     const quizResponse = mapQuizAnswersToResponse(answers)
     await saveQuizResponse(user.id, quizResponse)
 
-    // Every active job, not an arbitrary slice of them. The old limit of 200
-    // silently ignored a growing share of the database as ingestion added
-    // sources, so a European listing could lose to a worse American one purely
-    // by not being in the window.
-    const jobs = await getAllJobs(2000)
+    // Every active job, not an arbitrary slice of them. A hardcoded limit here
+    // silently ignores a growing share of the database as the catalogue grows,
+    // so a European listing could lose to a worse American one purely by not
+    // being in the window.
+    const jobs = await getAllActiveJobs()
     if (jobs.length > 0) {
       const ranked = rankJobs(jobs, quizResponse as any)
       await Promise.all(

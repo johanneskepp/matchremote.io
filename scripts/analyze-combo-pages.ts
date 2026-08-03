@@ -8,13 +8,13 @@
  *
  * Usage: npx tsx --env-file=.env.local scripts/analyze-combo-pages.ts
  */
-import { getAllJobs } from '../lib/db/queries'
+import { getAllActiveJobs } from '../lib/db/queries'
 import { JOB_CATEGORIES, jobMatchesCategory } from '../lib/utils/job-categories'
 import { deriveTimezoneRegion, TIMEZONE_REGION_LABELS, type TimezoneRegion } from '../lib/utils/timezone-region'
 import { MIN_COMBO_JOBS } from '../lib/utils/combo-pages'
 
 async function main() {
-  const jobs = await getAllJobs(500)
+  const jobs = await getAllActiveJobs()
   const regions = Object.keys(TIMEZONE_REGION_LABELS) as TimezoneRegion[]
 
   const rows: { category: string; region: string; count: number; status: string }[] = []

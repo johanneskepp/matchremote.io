@@ -1,4 +1,4 @@
-import { getAllJobs } from '@/lib/db/queries'
+import { getAllActiveJobs } from '@/lib/db/queries'
 import { buildJobSlug } from '@/lib/utils/job-slug'
 import { deriveApplicantCountries } from '@/lib/utils/job-country'
 import { formatSalary } from '@/lib/utils/helpers'
@@ -46,7 +46,7 @@ function jobEntry(job: Job): string {
 }
 
 export async function GET() {
-  const jobs: Job[] = await getAllJobs(500)
+  const jobs: Job[] = await getAllActiveJobs()
 
   const body = `<?xml version="1.0" encoding="UTF-8"?>
 <source>

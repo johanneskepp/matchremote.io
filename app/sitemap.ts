@@ -1,5 +1,5 @@
 import type { MetadataRoute } from 'next'
-import { getAllJobs } from '@/lib/db/queries'
+import { getAllActiveJobs } from '@/lib/db/queries'
 import { JOB_CATEGORIES } from '@/lib/utils/job-categories'
 import { buildJobSlug } from '@/lib/utils/job-slug'
 import { getQualifyingComboPages } from '@/lib/utils/combo-pages'
@@ -58,7 +58,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // No arbitrary cap: 300 used to silently leave most active jobs out of the
   // sitemap entirely once the catalogue grew past it, invisible to Google.
   // Well under Google's 50,000 URL per sitemap limit even with room to grow.
-  const jobs = await getAllJobs(5000)
+  const jobs = await getAllActiveJobs()
   const jobPages: MetadataRoute.Sitemap = jobs.map((job) => ({
     url: `${BASE_URL}/jobs/${buildJobSlug(job)}`,
     lastModified: job.scraped_at ? new Date(job.scraped_at) : now,

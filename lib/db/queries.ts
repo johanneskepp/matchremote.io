@@ -30,6 +30,15 @@ export async function getLatestQuizResponse(userId: string): Promise<any | null>
   return data || null
 }
 
+// For callers that need literally every active job (matching, sitemap,
+// category/combo pages), not just a curated "newest N". Passing a number
+// here instead of calling this is how the site previously grew silent gaps
+// every time the active job count passed whatever number someone guessed,
+// most recently at 300, 500, 1000 and 2000 rows. This has no such ceiling.
+export async function getAllActiveJobs(): Promise<any[]> {
+  return getAllJobs(Number.MAX_SAFE_INTEGER)
+}
+
 export async function getAllJobs(limit: number = 100): Promise<any[]> {
   // Supabase's PostgREST caps any single request at 1000 rows server side
   // (the project's Max Rows setting) regardless of what .limit() asks for,

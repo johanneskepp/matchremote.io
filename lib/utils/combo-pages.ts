@@ -1,4 +1,4 @@
-import { getAllJobs } from '@/lib/db/queries'
+import { getAllActiveJobs } from '@/lib/db/queries'
 import { JOB_CATEGORIES, jobMatchesCategory, type JobCategory } from '@/lib/utils/job-categories'
 import { deriveTimezoneRegion, TIMEZONE_REGION_LABELS, type TimezoneRegion } from '@/lib/utils/timezone-region'
 import { sortJobsBySalaryFirst } from '@/lib/utils/job-sort'
@@ -20,7 +20,7 @@ export interface ComboPage {
 }
 
 export async function getQualifyingComboPages(): Promise<ComboPage[]> {
-  const jobs: Job[] = await getAllJobs(500)
+  const jobs: Job[] = await getAllActiveJobs()
   const combos: ComboPage[] = []
 
   for (const category of JOB_CATEGORIES) {
