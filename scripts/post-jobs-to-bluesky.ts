@@ -10,8 +10,9 @@
  * a wall of posts in one run reads as spam the moment it does have some.
  *
  * Usage:
- *   npm run social:bluesky              post for real
- *   npm run social:bluesky -- --dry-run  print what would be posted, post nothing
+ *   npm run social:bluesky                 post for real, up to MAX_PER_RUN jobs
+ *   npm run social:bluesky -- --dry-run     print what would be posted, post nothing
+ *   npm run social:bluesky -- --limit=1     post at most 1 job this run (still capped at MAX_PER_RUN)
  */
 
 import { getJobsToPostToBluesky, markJobsPostedToBluesky } from '../lib/db/queries'
@@ -20,6 +21,8 @@ import { buildJobSlug } from '../lib/utils/job-slug'
 import { formatSalary } from '../lib/utils/helpers'
 import type { Job } from '../lib/db/types'
 
+// Absolute ceiling regardless of what --limit asks for, so a typo can never
+// turn into a spam run on an account with no followers yet.
 const MAX_PER_RUN = 5
 const SITE_URL = 'https://matchremote.io'
 // Bluesky's hard limit is 300 graphemes. Length in JS chars slightly
@@ -28,6 +31,10 @@ const SITE_URL = 'https://matchremote.io'
 const MAX_POST_LENGTH = 300
 
 const dryRun = process.argv.includes('--dry-run')
+
+const limitArg = process.argv.find((arg) => arg.startsWith('--limit='))
+const requestedLimit = limitArg ? parseInt(limitArg.split('=')[1], 10) : MAX_PER_RUN
+const runLimit = Number.isFinite(requestedLimit) && requestedLimit > 0 ? Math.min(requestedLimit, MAX_PER_RUN) : MAX_PER_RUN
 
 function truncate(text: string, max: number): string {
   if (text.length <= max) return text
@@ -57,7 +64,7 @@ async function main() {
 
   if (dryRun) console.log('DRY RUN, nothing will actually be posted or marked.\n')
 
-  const jobs: Job[] = await getJobsToPostToBluesky(MAX_PER_RUN)
+  const jobs: Job[] = await getJobsToPostToBluesky(runLimit)
 
   if (jobs.length === 0) {
     console.log('No new jobs to post.')
