@@ -201,8 +201,8 @@ export default async function JobDetailPage({ params }: { params: Promise<{ slug
               </div>
 
               <div style={{
-                background: 'var(--bg-warm)',
-                border: '1px solid var(--border-light)',
+                background: 'var(--surface-alt)',
+                border: '1px solid var(--border)',
                 borderRadius: '16px',
                 padding: '24px',
                 marginBottom: '20px',
