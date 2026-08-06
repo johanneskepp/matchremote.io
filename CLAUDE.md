@@ -243,10 +243,11 @@ lib/
   email/otp.ts             Sign in code email
   email/match-notification.ts  Daily new match email
   social/bluesky.ts        Bluesky post client, dynamic import of @atproto/api (see status below), returns null when the app password is missing
+  social/mastodon.ts       Mastodon post client (plain fetch, no SDK needed), returns null when the instance URL or access token is missing
   db/
     queries.ts       Supabase CRUD. All typed as `any` for build compatibility.
     schema.sql       Original schema. 7 tables, RLS policies.
-    migrations/      001_auth, 002_match_notifications, 003_subscriptions, 004_job_expiry, 005_bluesky_posts
+    migrations/      001_auth, 002_match_notifications, 003_subscriptions, 004_job_expiry, 005_bluesky_posts, 006_stripe_billing, 007_mastodon_posts
     supabase.ts      Client init
     types.ts         TypeScript types
   utils/
@@ -266,7 +267,8 @@ scripts/
   analyze-combo-pages.ts      Combo page coverage report, run with npm run seo:combo-pages
   check-web-vitals.ts         Lighthouse check against a local prod server, run with npm run check:vitals
   send-match-notifications.ts  Daily new match email, run with npm run notify:matches, --dry-run supported
-  post-jobs-to-bluesky.ts     Posts newest unannounced jobs to Bluesky, run with npm run social:bluesky, --dry-run supported (see status below, no account yet)
+  post-jobs-to-bluesky.ts     Posts newest unannounced jobs to Bluesky, run with npm run social:bluesky, --dry-run and --limit=N supported (see status below)
+  post-jobs-to-mastodon.ts    Posts newest unannounced jobs to Mastodon, run with npm run social:mastodon, --dry-run and --limit=N supported (see status below)
 secrets/
   <service-account>.json   Google service account key, gitignored, never committed
 ```
@@ -284,6 +286,8 @@ six Paddle Live variables were set 2026-08-02, then **removed the same day**
 when Paddle rejected the account, see Current Status for the full story.
 `BLUESKY_HANDLE` and `BLUESKY_APP_PASSWORD` are set (2026-08-02, in both
 `.env.local` and Vercel Production), see the Bluesky "Working" entry.
+`MASTODON_INSTANCE_URL` and `MASTODON_ACCESS_TOKEN` are set (2026-08-06, in
+both `.env.local` and Vercel Production), see the Mastodon "Working" entry.
 
 **Stripe Live (2026-08-02):** `STRIPE_SECRET_KEY`, `STRIPE_PRICE_ID`,
 `STRIPE_WEBHOOK_SECRET` are Live values, set in both `.env.local` and Vercel
@@ -309,6 +313,12 @@ What is still missing:
 
 ### Working
 
+* **Mastodon added as a second distribution channel alongside Bluesky, plus a job page CTA bug found and fixed the same day (2026-08-06).** Built in a separate Claude Code session that happened to be rooted in the Finnely project folder but pushed correctly to this repo via explicit `cd` (confirmed via `git log`, commit `73c5f05`, no working tree cross contamination). Picked up here and verified/documented since that session did not update this file.
+  * **What was built, mirroring the Bluesky setup exactly**: `lib/social/mastodon.ts` (plain `fetch` against the Mastodon REST API, no SDK dependency needed unlike Bluesky's `@atproto/api`, since Mastodon's API is simple enough not to need one), `scripts/post-jobs-to-mastodon.ts` (`npm run social:mastodon`, `--dry-run` and `--limit=N` supported, already shipped with the `--limit` flag the Bluesky script only gained later the same day), and migration `007_mastodon_posts.sql` (adds `jobs.posted_to_mastodon_at`, same "mark after success" pattern). Real account `@matchremote@mastodon.social`, three scheduled tasks (`daily-mastodon-posts` 08:14 local, `mastodon-posts-us` 14:17, `mastodon-posts-asia` 02:13) mirroring the Bluesky 3x/day spread, each posting 1 job.
+  * **Verified end to end, not just read for correctness**: confirmed migration `007` actually ran (`posted_to_mastodon_at` column present via a direct REST query), confirmed `getJobsToPostToMastodon`/`markJobsPostedToMastodon` exist in `lib/db/queries.ts`, ran `npm run social:mastodon -- --dry-run --limit=1` and got a correctly formed single post. Confirmed the access token is real and valid via Mastodon's own `verify_credentials` API (account id `117046901852935627`, `statuses_count: 2`), then confirmed those 2 real statuses via Mastodon's public API are genuine job announcements linking back to real `/jobs/[slug]` pages, not test or placeholder content.
+  * **One real gap found and closed**: `MASTODON_INSTANCE_URL`/`MASTODON_ACCESS_TOKEN` were only in `.env.local`, never added to Vercel Production (confirmed via `vercel env ls production`, Bluesky's equivalent vars were there, Mastodon's were not). Added both via `vercel env add`, matching the Bluesky pattern, even though the posting script only ever runs locally via the scheduled task, for the same consistency reasoning already applied to Bluesky.
+  * **Real bug found and fixed in the same commit's other change**: that session also reprioritized `/jobs/[slug]` to lead with a quiz CTA card instead of the outbound apply link (`app/jobs/[slug]/page.tsx`), a legitimate funnel improvement, but the new card used `background: var(--bg-warm)` and `border: 1px solid var(--border-light)`, neither of which exists anywhere in `globals.css` (the real variables are `--surface-alt` and `--border`). Confirmed live in the browser against the real production page: computed style showed `background: rgba(0,0,0,0)` (fully transparent) and `border: 0px none`, meaning the card meant to be the new primary call to action had been rendering completely invisible, no background, no border, blending straight into the page since the moment it shipped. Fixed to the real variables, re-verified against a local production build: background and border now resolve to the correct colors (`#DDE0E4` and `#D3D6DA`).
+  * **Distribution roadmap discussed with Johannes for what comes next, not yet built**: Telegram channel posting (same low risk pattern as Bluesky/Mastodon, needs only a bot token), GitHub "awesome-remote-work" style list PRs (real backlink value, needs human review before merge given it touches other people's repos), a biweekly Dev.to/Hashnode article with a backlink, and a weekly scan for job board directories accepting submissions. None of these are built yet, revisit when prioritized.
 * **Bluesky posting split from one daily batch of 5 into three separate 1-job runs at different times of day (2026-08-04), on Johannes's explicit request to spread posts across timezones instead of posting them all at once.** `scripts/post-jobs-to-bluesky.ts` gained a `--limit=N` flag (`npm run social:bluesky -- --limit=1`), still hard capped at the existing `MAX_PER_RUN` (5) regardless of what is requested, so a bad value can never turn into a spam run. Verified with `--dry-run --limit=1` against production data before touching the schedule: correctly queued exactly 1 job instead of the previous 5. The single `daily-bluesky-posts` scheduled task (08:02 local) now passes `--limit=1` and posts only for European morning hours; two new scheduled tasks, `bluesky-posts-us` (14:02 local, roughly US Eastern morning) and `bluesky-posts-asia` (02:02 local, roughly Asia-Pacific morning), each post their own single job at their own time. Net effect: still exactly 3 jobs posted per day total (matching Johannes's "3 per day, 1 at a time" instruction, down from the previous 5 in one batch), now spread across the day instead of bunched into one run.
 * **Every remaining "get all jobs" call site audited for the same class of silent cap bug, five more fixed (2026-08-02).** Johannes asked directly: "Kommer alla jobb att bli genomkörda varje gång även när vi har 4000 jobb uppe på sidan? Vi ska inte ha några luckor" (will every job get processed every time even at 4000 jobs, we should not have any gaps), right after the `retireStaleJobs` 1000 row cap fix below. Grepped every `getAllJobs(N)` call site in the codebase rather than assuming the two already-fixed spots (sitemap, matching) were the only ones. Found the same pattern already live in three more places, not just a future risk:
   * `app/remote-jobs/[category]/page.tsx` fetched only the 300 globally newest active jobs before filtering by category, already wrong today at 1468 active jobs, older jobs in less frequently posted categories were silently invisible on their own category page.
