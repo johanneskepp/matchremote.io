@@ -7,6 +7,7 @@
  * Usage: npx tsx --env-file=.env.local scripts/cleanup-non-job-listings.ts
  */
 import { supabaseAdmin } from '../lib/db/supabase'
+import { getAllActiveJobs } from '../lib/db/queries'
 import { isLikelyRealJob } from '../lib/utils/job-quality'
 
 const jobsTable = supabaseAdmin as any
@@ -14,8 +15,10 @@ const jobsTable = supabaseAdmin as any
 const KNOWN_NON_JOB_SOURCES = new Set(['world veterans', 'devtube', 'adconversion'])
 
 async function main() {
-  const { data: jobs, error } = await jobsTable.from('jobs').select('id, title, description, company').eq('is_active', true)
-  if (error) throw error
+  // getAllActiveJobs pages past Supabase's 1000 row PostgREST cap, unlike a
+  // plain select, which silently checked only the first 1000 of the active
+  // catalogue once it grew past that (already active jobs since 2026-08-06).
+  const jobs = await getAllActiveJobs()
 
   const toDeactivate = (jobs ?? []).filter((j: any) => {
     if (KNOWN_NON_JOB_SOURCES.has(j.company.trim().toLowerCase())) return true

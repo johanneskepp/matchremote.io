@@ -29,6 +29,8 @@ const BOILERPLATE_PHRASES = [
   'spontaneous application',
   'postuler chez nous',
   'candidature spontanee',
+  // A title stating there is nothing to apply to right now, not a role.
+  'no current opening',
 ]
 
 // Titles that are template placeholders rather than a real role name. Checked
@@ -38,7 +40,13 @@ const EXACT_PLACEHOLDER_TITLES = ['test', 'job details', 'jop posting title']
 // A real description is never Lorem Ipsum filler or a raw application form
 // field list, both seen from RemoteOK entries that are placeholder or
 // non-job content, not an actual posting.
-const DESCRIPTION_BOILERPLATE_PHRASES = ['lorem ipsum', 'formulaire de postulation']
+const DESCRIPTION_BOILERPLATE_PHRASES = [
+  'lorem ipsum',
+  'formulaire de postulation',
+  // The whole "description" is just a Google Forms sign in redirect, not
+  // any actual job content, seen from a RemoteOK entry linking to a form.
+  'continue to google forms',
+]
 
 const QUESTION_STARTERS = ['how ', 'why ', 'what ', 'when ']
 
