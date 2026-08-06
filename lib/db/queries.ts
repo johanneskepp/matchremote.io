@@ -103,6 +103,28 @@ export async function markJobsPostedToBluesky(jobIds: string[]): Promise<void> {
     .is('posted_to_bluesky_at', null)
 }
 
+// Active jobs never announced on the Mastodon distribution bot, newest first
+// so a capped run always leads with the freshest postings.
+export async function getJobsToPostToMastodon(limit: number = 5): Promise<any[]> {
+  const { data } = await sbAdmin
+    .from('jobs')
+    .select('*')
+    .eq('is_active', true)
+    .is('posted_to_mastodon_at', null)
+    .order('posted_date', { ascending: false })
+    .limit(limit)
+  return data || []
+}
+
+export async function markJobsPostedToMastodon(jobIds: string[]): Promise<void> {
+  if (jobIds.length === 0) return
+  await sbAdmin
+    .from('jobs')
+    .update({ posted_to_mastodon_at: new Date().toISOString() })
+    .in('id', jobIds)
+    .is('posted_to_mastodon_at', null)
+}
+
 export async function createMatch(userId: string, jobId: string, score: number, reasons: any): Promise<any> {
   const { data } = await sbAdmin.from('matches').upsert({ user_id: userId, job_id: jobId, match_score: score, match_reasons: reasons }).select().single()
   return data

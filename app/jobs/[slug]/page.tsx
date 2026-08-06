@@ -200,11 +200,29 @@ export default async function JobDetailPage({ params }: { params: Promise<{ slug
                 {formatSalary(job.salary_min ?? undefined, job.salary_max ?? undefined)}
               </div>
 
+              <div style={{
+                background: 'var(--bg-warm)',
+                border: '1px solid var(--border-light)',
+                borderRadius: '16px',
+                padding: '24px',
+                marginBottom: '20px',
+              }}>
+                <h2 className="font-display" style={{ fontSize: '22px', marginBottom: '8px' }}>
+                  See jobs picked for you, not just this one
+                </h2>
+                <p style={{ color: 'var(--ink-soft)', marginBottom: '16px' }}>
+                  Take the 3 minute quiz and get matched with remote roles based on your timezone, skills, and async needs.
+                </p>
+                <Link href="/quiz" className="btn-big" style={{ maxWidth: '320px' }}>
+                  Get matched →
+                </Link>
+              </div>
+
               <a
                 href={job.url}
                 target="_blank"
                 rel="noopener noreferrer nofollow"
-                className="btn-big"
+                className="btn-big btn-ghost"
                 style={{ maxWidth: '320px', marginBottom: '32px' }}
               >
                 Apply on {job.source} →
@@ -224,12 +242,6 @@ export default async function JobDetailPage({ params }: { params: Promise<{ slug
               <p style={{ whiteSpace: 'pre-wrap', color: 'var(--ink)', lineHeight: 1.7 }}>
                 {job.description}
               </p>
-            </div>
-
-            <div style={{ marginTop: '24px', textAlign: 'center' }}>
-              <Link href="/quiz" style={{ color: 'var(--accent)', fontWeight: 600, textDecoration: 'underline' }}>
-                Want jobs matched to your timezone and salary target? Take the 3 minute quiz →
-              </Link>
             </div>
 
             {category && (
