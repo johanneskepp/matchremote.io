@@ -30,6 +30,55 @@ const jobsTable = supabaseAdmin as any
 
 const USER_AGENT = 'matchremote.io job ingestion (contact: johanneskepp@gmail.com)'
 
+/**
+ * How hard we are willing to lean on each source during the link check pass.
+ *
+ * `workers` requests run at a time, each pausing `delayMs` between its own
+ * requests, and at most `budget` listings are checked per run.
+ *
+ * Measured against the live sources on 2026-08-11:
+ *
+ * - RemoteOK answered 60 of 60 at four at a time with no complaint, and the
+ *   others are small enough that the question never arises, so they take the
+ *   default.
+ * - Jobicy refuses with 429 after roughly a dozen requests at 2.5 a second, and
+ *   we had been reading that as "checked" for as long as the pass has existed.
+ *   At one request every two seconds it answered 30 of 30 with no throttling at
+ *   all, and 11 of those were a 410, real dead listings we had never managed to
+ *   see. So the fix is to go slower there rather than to give up: its whole
+ *   queue no longer fits in one run, so `dailySlice` spreads it across days.
+ */
+type SourcePacing = { workers: number; delayMs: number; budget: number }
+
+const DEFAULT_PACING: SourcePacing = { workers: 4, delayMs: 400, budget: Infinity }
+
+const PACING_BY_SOURCE: Record<string, SourcePacing> = {
+  jobicy: { workers: 1, delayMs: 2000, budget: 150 },
+}
+
+/**
+ * The slice of a source's queue to check on this particular day.
+ *
+ * A source we cannot check in full in one run still gets fully checked, just
+ * over several days instead of every day: each run takes the next window and
+ * wraps around at the end. The day number drives it rather than a stored
+ * cursor, so this needs no new column and no migration, and rerunning the same
+ * day rechecks the same listings, which is what an idempotent ingestion should
+ * do.
+ */
+function dailySlice<T>(queue: T[], budget: number, now: Date = new Date()): T[] {
+  if (queue.length <= budget) return queue
+
+  const dayNumber = Math.floor(now.getTime() / 86400000)
+  const start = (dayNumber * budget) % queue.length
+  const slice = queue.slice(start, start + budget)
+
+  // Wrap past the end so the last window of a cycle is still a full one.
+  if (slice.length < budget) slice.push(...queue.slice(0, budget - slice.length))
+
+  return slice
+}
+
 // Some upstream sources (seen on Arbeitnow's Brazilian/Portuguese listings)
 // occasionally emit UTF-8 bytes that were mis-decoded as Latin-1 upstream,
 // e.g. "Soluções" arrives as "SoluÃ§Ãµes". Detect the telltale "Ã" marker and
@@ -560,12 +609,15 @@ async function retireStaleJobs(seenUrls: Set<string>) {
   // of them stays low. That used to mean one request at a time globally, which
   // was fine at a few hundred active jobs and stopped being fine at 2670: on
   // 2026-08-11 this pass alone took roughly 18 minutes, and it grows every day
-  // the catalogue does. Checks are now grouped by source and run by a small
-  // fixed pool of workers per source, so each server sees a handful of requests
-  // a second no matter how large the catalogue gets, while separate servers are
-  // free to be checked at the same time as each other.
-  const CHECKS_PER_SOURCE = 4
-  const DELAY_BETWEEN_CHECKS_MS = 400
+  // the catalogue does. Checks are now grouped by source, because separate
+  // servers cost each other nothing by being asked at the same time, and each
+  // source is paced to what it has actually been measured to tolerate.
+  //
+  // A source that answers nothing but 429 has stopped telling us anything, so
+  // we stop asking rather than spend the rest of the run being refused. The
+  // pacing above is set so this should not trigger, it is here so a source
+  // tightening its limit costs us one wasted minute rather than a whole run.
+  const GIVE_UP_AFTER_THROTTLES = 15
 
   const queuesBySource = new Map<string, any[]>()
   for (const job of toCheck) {
@@ -575,12 +627,27 @@ async function retireStaleJobs(seenUrls: Set<string>) {
   }
 
   const gone: any[] = []
+  let checkedCount = 0
+  let throttledCount = 0
+  let deferredCount = 0
   const checkStartedAt = Date.now()
 
   await Promise.all(
-    [...queuesBySource.values()].map(async (queue) => {
+    [...queuesBySource.entries()].map(async ([source, queue]) => {
+      // Supabase returns rows in no guaranteed order, and the rotation below is
+      // only fair if the queue looks the same from one day to the next.
+      queue.sort((a: any, b: any) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0))
+
+      const pacing = PACING_BY_SOURCE[source] ?? DEFAULT_PACING
+      const slice = dailySlice(queue, pacing.budget)
+      deferredCount += queue.length - slice.length
+
       let next = 0
-      const takeNext = () => (next < queue.length ? queue[next++] : null)
+      let consecutiveThrottles = 0
+      const takeNext = () =>
+        consecutiveThrottles >= GIVE_UP_AFTER_THROTTLES || next >= slice.length
+          ? null
+          : slice[next++]
 
       const worker = async () => {
         for (let job = takeNext(); job; job = takeNext()) {
@@ -590,29 +657,51 @@ async function retireStaleJobs(seenUrls: Set<string>) {
               redirect: 'follow',
               signal: AbortSignal.timeout(15000),
             })
-            const body = res.status === 200 ? await res.text() : ''
-            if (looksGone(res.status, body)) gone.push(job)
+            if (res.status === 429) {
+              // Being refused is not evidence about the listing either way, so
+              // it stays put and comes around again on a later day.
+              consecutiveThrottles++
+              throttledCount++
+            } else {
+              consecutiveThrottles = 0
+              checkedCount++
+              const body = res.status === 200 ? await res.text() : ''
+              if (looksGone(res.status, body)) gone.push(job)
+            }
           } catch {
             // A timeout or network blip is not evidence the listing is gone, so
             // the job keeps its place and gets another chance tomorrow.
           }
-          await new Promise((resolve) => setTimeout(resolve, DELAY_BETWEEN_CHECKS_MS))
+          await new Promise((resolve) => setTimeout(resolve, pacing.delayMs))
         }
       }
 
       await Promise.all(
-        Array.from({ length: Math.min(CHECKS_PER_SOURCE, queue.length) }, worker)
+        Array.from({ length: Math.min(pacing.workers, slice.length) }, worker)
       )
+
+      // Whatever giving up left untouched is waiting its turn just like the
+      // jobs that never made it into today's slice, so it is counted the same
+      // way. Without this the summary silently loses track of them.
+      deferredCount += slice.length - next
     })
   )
 
   const checkSeconds = Math.round((Date.now() - checkStartedAt) / 1000)
 
+  // Reported separately on purpose: a listing that was refused or held back is
+  // not one we learned anything about, and counting it as checked would make
+  // the freshness pass look like it covers more than it does.
+  const checkSummary =
+    `${checkedCount} of ${toCheck.length} link checked in ${checkSeconds}s` +
+    (throttledCount > 0 ? `, ${throttledCount} refused as rate limited` : '') +
+    (deferredCount > 0 ? `, ${deferredCount} held for a later day` : '')
+
   const retire = [...new Set([...expired, ...gone])]
 
   if (retire.length === 0) {
     console.log(
-      `Freshness: nothing to retire. ${rows.length} active, ${toCheck.length} link checked in ${checkSeconds}s, ${rows.filter((j: any) => j.expires_at).length} carry a source expiry, max age ${MAX_JOB_AGE_DAYS} days for the rest.`
+      `Freshness: nothing to retire. ${rows.length} active, ${checkSummary}, ${rows.filter((j: any) => j.expires_at).length} carry a source expiry, max age ${MAX_JOB_AGE_DAYS} days for the rest.`
     )
     return
   }
@@ -628,7 +717,7 @@ async function retireStaleJobs(seenUrls: Set<string>) {
   }
 
   console.log(
-    `Freshness: retired ${retire.length} (${expiredBySource.length} past the source's own expiry, ${expiredByAge.length} older than ${MAX_JOB_AGE_DAYS} days, ${gone.length} confirmed gone by link check of ${toCheck.length} in ${checkSeconds}s). ${rows.length - retire.length} still active.`
+    `Freshness: retired ${retire.length} (${expiredBySource.length} past the source's own expiry, ${expiredByAge.length} older than ${MAX_JOB_AGE_DAYS} days, ${gone.length} confirmed gone by link check). ${rows.length - retire.length} still active. ${checkSummary}.`
   )
 }
 
