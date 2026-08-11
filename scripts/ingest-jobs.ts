@@ -556,29 +556,63 @@ async function retireStaleJobs(seenUrls: Set<string>) {
       LINK_CHECKABLE_SOURCES.has(job.source)
   )
 
-  const gone: any[] = []
+  // These are free APIs run by other people, so the rate against any single one
+  // of them stays low. That used to mean one request at a time globally, which
+  // was fine at a few hundred active jobs and stopped being fine at 2670: on
+  // 2026-08-11 this pass alone took roughly 18 minutes, and it grows every day
+  // the catalogue does. Checks are now grouped by source and run by a small
+  // fixed pool of workers per source, so each server sees a handful of requests
+  // a second no matter how large the catalogue gets, while separate servers are
+  // free to be checked at the same time as each other.
+  const CHECKS_PER_SOURCE = 4
+  const DELAY_BETWEEN_CHECKS_MS = 400
+
+  const queuesBySource = new Map<string, any[]>()
   for (const job of toCheck) {
-    try {
-      const res = await fetch(job.url, {
-        headers: { 'User-Agent': USER_AGENT },
-        redirect: 'follow',
-        signal: AbortSignal.timeout(15000),
-      })
-      const body = res.status === 200 ? await res.text() : ''
-      if (looksGone(res.status, body)) gone.push(job)
-    } catch {
-      // A timeout or network blip is not evidence the listing is gone, so the
-      // job keeps its place and gets another chance tomorrow.
-    }
-    // These are free APIs run by other people, so we go one at a time.
-    await new Promise((resolve) => setTimeout(resolve, 400))
+    const queue = queuesBySource.get(job.source)
+    if (queue) queue.push(job)
+    else queuesBySource.set(job.source, [job])
   }
+
+  const gone: any[] = []
+  const checkStartedAt = Date.now()
+
+  await Promise.all(
+    [...queuesBySource.values()].map(async (queue) => {
+      let next = 0
+      const takeNext = () => (next < queue.length ? queue[next++] : null)
+
+      const worker = async () => {
+        for (let job = takeNext(); job; job = takeNext()) {
+          try {
+            const res = await fetch(job.url, {
+              headers: { 'User-Agent': USER_AGENT },
+              redirect: 'follow',
+              signal: AbortSignal.timeout(15000),
+            })
+            const body = res.status === 200 ? await res.text() : ''
+            if (looksGone(res.status, body)) gone.push(job)
+          } catch {
+            // A timeout or network blip is not evidence the listing is gone, so
+            // the job keeps its place and gets another chance tomorrow.
+          }
+          await new Promise((resolve) => setTimeout(resolve, DELAY_BETWEEN_CHECKS_MS))
+        }
+      }
+
+      await Promise.all(
+        Array.from({ length: Math.min(CHECKS_PER_SOURCE, queue.length) }, worker)
+      )
+    })
+  )
+
+  const checkSeconds = Math.round((Date.now() - checkStartedAt) / 1000)
 
   const retire = [...new Set([...expired, ...gone])]
 
   if (retire.length === 0) {
     console.log(
-      `Freshness: nothing to retire. ${rows.length} active, ${toCheck.length} link checked, ${rows.filter((j: any) => j.expires_at).length} carry a source expiry, max age ${MAX_JOB_AGE_DAYS} days for the rest.`
+      `Freshness: nothing to retire. ${rows.length} active, ${toCheck.length} link checked in ${checkSeconds}s, ${rows.filter((j: any) => j.expires_at).length} carry a source expiry, max age ${MAX_JOB_AGE_DAYS} days for the rest.`
     )
     return
   }
@@ -594,7 +628,7 @@ async function retireStaleJobs(seenUrls: Set<string>) {
   }
 
   console.log(
-    `Freshness: retired ${retire.length} (${expiredBySource.length} past the source's own expiry, ${expiredByAge.length} older than ${MAX_JOB_AGE_DAYS} days, ${gone.length} confirmed gone by link check of ${toCheck.length}). ${rows.length - retire.length} still active.`
+    `Freshness: retired ${retire.length} (${expiredBySource.length} past the source's own expiry, ${expiredByAge.length} older than ${MAX_JOB_AGE_DAYS} days, ${gone.length} confirmed gone by link check of ${toCheck.length} in ${checkSeconds}s). ${rows.length - retire.length} still active.`
   )
 }
 
