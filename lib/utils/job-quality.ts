@@ -31,6 +31,14 @@ const BOILERPLATE_PHRASES = [
   'candidature spontanee',
   // A title stating there is nothing to apply to right now, not a role.
   'no current opening',
+  // A vague headcount announcement with no role named, seen from both a
+  // company ("MJV Group Multiple Positions") and a government listing
+  // ("Multiple Positions") whose descriptions were both generic company
+  // overviews with no specific duties, never a real title on its own.
+  'multiple positions',
+  // A generic open-application CTA with no role attached, description was
+  // just company nav/capabilities text with nothing job specific in it.
+  'could be a good fit',
 ]
 
 // Titles that are template placeholders rather than a real role name. Checked
@@ -62,7 +70,11 @@ function isAllCapsSlogan(title: string): boolean {
 
 function isQuestionOrBlogTitle(title: string): boolean {
   const lower = title.toLowerCase()
-  return title.includes('?') || QUESTION_STARTERS.some((q) => lower.startsWith(q))
+  // "¿" opens a Spanish/Portuguese question and, unlike "?", is never part of
+  // a real job title, so it's a safe signal even when a scraped title got
+  // truncated before the closing "?" (seen from a RemoteOK entry whose
+  // description turned out to be an unrelated blog post, not a job).
+  return title.includes('?') || title.startsWith('¿') || QUESTION_STARTERS.some((q) => lower.startsWith(q))
 }
 
 export function isLikelyRealJob(title: string, description: string, company: string): boolean {
