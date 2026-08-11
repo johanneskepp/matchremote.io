@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getAllUserMatches, getLatestQuizResponse, markMatchesSeen } from '@/lib/db/queries'
+import { getAllUserMatches, getLatestQuizResponse, markMatchesSeen, getUserById } from '@/lib/db/queries'
 import { getSessionUser } from '@/lib/auth/session'
 import { formatSalary } from '@/lib/utils/helpers'
 import { diversifyTop, getMatchExplanation, getMatchTeaser } from '@/lib/utils/matching'
@@ -12,7 +12,17 @@ export async function GET(request: NextRequest) {
 
   try {
     const sessionUser = await getSessionUser()
-    const userId = sessionUser?.id ?? paramUserId
+    let userId = sessionUser?.id
+
+    if (!userId && paramUserId) {
+      // No session, this is the pre-signup quiz flow reading its own guest
+      // id back from localStorage. Only ever trust a query-param id for a
+      // still-anonymous guest account, never for a real signed-up account,
+      // otherwise anyone who obtains someone else's user id (a shared link,
+      // browser history) could read their matches without ever signing in.
+      const target = await getUserById(paramUserId)
+      if (target?.is_guest) userId = target.id
+    }
 
     if (!userId) {
       return NextResponse.json({ matches: [], message: 'Missing userId' }, { status: 400 })

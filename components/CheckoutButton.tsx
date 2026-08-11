@@ -3,12 +3,10 @@
 import { useState } from 'react'
 
 type Props = {
-  userId: string
-  email: string
   label?: string
 }
 
-export default function CheckoutButton({ userId, email, label = 'Subscribe' }: Props) {
+export default function CheckoutButton({ label = 'Subscribe' }: Props) {
   const [opening, setOpening] = useState(false)
   const [error, setError] = useState('')
 
@@ -16,11 +14,9 @@ export default function CheckoutButton({ userId, email, label = 'Subscribe' }: P
     setOpening(true)
     setError('')
     try {
-      const res = await fetch('/api/checkout/create-session', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId, email }),
-      })
+      // No body: the server derives who is checking out from the session
+      // cookie, never from anything the client claims.
+      const res = await fetch('/api/checkout/create-session', { method: 'POST' })
       const data = await res.json()
       if (!res.ok || !data.url) throw new Error(data.message || 'Could not start checkout')
       window.location.href = data.url

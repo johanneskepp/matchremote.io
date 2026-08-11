@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getStripeClient } from '@/lib/billing/stripe'
+import { getSessionUser } from '@/lib/auth/session'
 
 export const dynamic = 'force-dynamic'
 
@@ -9,10 +10,15 @@ export const dynamic = 'force-dynamic'
 // browser back to.
 export async function POST(request: NextRequest) {
   try {
-    const { userId, email } = await request.json()
-    if (!userId || !email) {
-      return NextResponse.json({ message: 'Missing userId or email' }, { status: 400 })
-    }
+    // userId and email come only from the session, never from the request
+    // body. Trusting a client-supplied userId here would let anyone open a
+    // real Stripe Checkout Session for an account they don't own, and the
+    // webhook mirrors whatever userId rode along in the metadata straight
+    // into that account's subscription state.
+    const user = await getSessionUser()
+    if (!user) return NextResponse.json({ message: 'Not signed in' }, { status: 401 })
+    const userId = user.id
+    const email = user.email
 
     const priceId = process.env.STRIPE_PRICE_ID
     if (!priceId) {

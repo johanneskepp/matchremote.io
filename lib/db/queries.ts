@@ -231,6 +231,15 @@ export async function getActiveAlerts(frequency?: string): Promise<any[]> {
 }
 
 export async function deleteUser(userId: string): Promise<void> {
+  // otp_codes is keyed by email, not user_id (a code can exist before an
+  // account does), so it has no foreign key and cannot cascade, delete it
+  // explicitly or a deleted user's email and past sign-in codes linger
+  // forever, contradicting the privacy policy's deletion promise.
+  const { data: user } = await sbAdmin.from('users').select('email').eq('id', userId).maybeSingle()
+  if (user?.email) {
+    await sbAdmin.from('otp_codes').delete().eq('email', user.email)
+  }
+
   // Cascades to quiz_responses, matches, saved_jobs, email_logs, email_alerts,
   // subscriptions, and sessions, every one of those FKs is ON DELETE CASCADE.
   await sbAdmin.from('users').delete().eq('id', userId)

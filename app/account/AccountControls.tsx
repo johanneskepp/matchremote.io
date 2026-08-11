@@ -7,8 +7,6 @@ import { SCORE_THRESHOLDS } from '@/lib/plan'
 import CheckoutButton from '@/components/CheckoutButton'
 
 type Props = {
-  userId: string
-  email: string
   checkoutConfigured: boolean
   active: boolean
   status: string | null
@@ -24,7 +22,7 @@ function formatDay(value: string | null): string {
   return new Date(value).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })
 }
 
-export default function AccountControls({ userId, email, checkoutConfigured, active, status, renewsAt, cancelAt, threshold, alertsActive, pricePerWeek }: Props) {
+export default function AccountControls({ checkoutConfigured, active, status, renewsAt, cancelAt, threshold, alertsActive, pricePerWeek }: Props) {
   const router = useRouter()
   const [savedThreshold, setSavedThreshold] = useState(threshold)
   const [alertsOn, setAlertsOn] = useState(alertsActive)
@@ -148,7 +146,7 @@ export default function AccountControls({ userId, email, checkoutConfigured, act
             </p>
             {checkoutConfigured ? (
               <>
-                <CheckoutButton userId={userId} email={email} />
+                <CheckoutButton />
                 <p style={{ margin: '10px 0 0', fontSize: '13px', color: 'var(--ink-soft)' }}>
                   By subscribing you agree to our{' '}
                   <Link href="/terms" style={{ color: 'var(--teal)' }}>Terms</Link> and{' '}

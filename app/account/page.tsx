@@ -43,8 +43,6 @@ export default async function AccountPage() {
           <p style={{ color: 'var(--ink-soft)', marginTop: 0, marginBottom: '30px' }}>{user.email}</p>
 
           <AccountControls
-            userId={user.id}
-            email={user.email}
             checkoutConfigured={Boolean(process.env.STRIPE_SECRET_KEY && process.env.STRIPE_PRICE_ID)}
             active={access.active}
             status={access.status}
