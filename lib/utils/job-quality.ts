@@ -39,11 +39,41 @@ const BOILERPLATE_PHRASES = [
   // A generic open-application CTA with no role attached, description was
   // just company nav/capabilities text with nothing job specific in it.
   'could be a good fit',
+  // More open application and vacancy index CTAs naming no role at all, the
+  // same class as 'spontaneous application' above, seen across RemoteOK and
+  // Himalayas ("General Application (PDCflow)", "Open Vacancies", "Our
+  // vacancies", "Currently no vacancies", "Not Finding Your Fit Apply Here").
+  'general application',
+  'speculative application',
+  'not finding your fit',
+  'open position',
+  'open vacanc',
+  'our vacanc',
+  'no vacanc',
+  // A recruiting page section heading, never a role.
+  'hiring process',
 ]
 
 // Titles that are template placeholders rather than a real role name. Checked
 // as an exact match so a legitimate title like "Test Engineer" still passes.
-const EXACT_PLACEHOLDER_TITLES = ['test', 'job details', 'jop posting title']
+// The bare category nouns below are all scraped site navigation labels, a real
+// posting always qualifies them ("Budget Analyst", "Education Coordinator"),
+// so matching them exactly is safe.
+const EXACT_PLACEHOLDER_TITLES = [
+  'test',
+  'job details',
+  'jop posting title',
+  'vacancy',
+  'vacancies',
+  'jobs',
+  'news',
+  'budget',
+  'management',
+  'education',
+  'corporate',
+  'wholesale',
+  'professional',
+]
 
 // A real description is never Lorem Ipsum filler or a raw application form
 // field list, both seen from RemoteOK entries that are placeholder or
@@ -55,6 +85,25 @@ const DESCRIPTION_BOILERPLATE_PHRASES = [
   // any actual job content, seen from a RemoteOK entry linking to a form.
   'continue to google forms',
 ]
+
+// Phrases that mean the scraper captured page furniture instead of the posting
+// itself: a cookie banner, an access denied page, a 404, or a bot check
+// interstitial. These only disqualify a listing when the whole description is
+// short, because a long real posting can legitimately end with a cookie notice
+// scraped from the page footer, and that job is still real. Measured against
+// the live catalogue when this was added: 17 rows matched under the cap and
+// zero real postings sat above it.
+const PAGE_CHROME_PHRASES = [
+  'this website uses cookies',
+  'we use cookies',
+  'cookie preferences',
+  'access denied',
+  "you don't have permission to access",
+  'page not found',
+  'performing security verification',
+  'protect against malicious bots',
+]
+const PAGE_CHROME_MAX_LENGTH = 700
 
 const QUESTION_STARTERS = ['how ', 'why ', 'what ', 'when ']
 
@@ -92,6 +141,13 @@ export function isLikelyRealJob(title: string, description: string, company: str
 
   const lowerDescription = description.toLowerCase()
   if (DESCRIPTION_BOILERPLATE_PHRASES.some((p) => lowerDescription.includes(p))) return false
+
+  if (
+    lowerDescription.length <= PAGE_CHROME_MAX_LENGTH &&
+    PAGE_CHROME_PHRASES.some((p) => lowerDescription.includes(p))
+  ) {
+    return false
+  }
 
   // A real posting almost always has a real description. Both the title AND
   // the description being suspiciously thin is a stronger signal than either
