@@ -39,20 +39,58 @@ export async function generateStaticParams() {
   return jobs.map((job) => ({ slug: buildJobSlug(job) }))
 }
 
+// Google/Ahrefs both flag a <title> once it runs past ~60 characters, and
+// the root layout appends " | matchremote" (14 more) to whatever this
+// returns, so the budget here has to leave room for that suffix.
+const MAX_TITLE_LENGTH = 46
+// Ahrefs' healthy range is roughly 110 to 155 characters, short descriptions
+// waste the space Google would otherwise show, long ones get cut off anyway.
+const MIN_DESCRIPTION_LENGTH = 120
+const MAX_DESCRIPTION_LENGTH = 155
+
+function truncateAtWord(text: string, max: number): string {
+  if (text.length <= max) return text
+  const cut = text.slice(0, max)
+  const lastSpace = cut.lastIndexOf(' ')
+  return (lastSpace > max * 0.6 ? cut.slice(0, lastSpace) : cut).trim() + '…'
+}
+
+function buildJobTitle(job: Job): string {
+  return truncateAtWord(`${job.title} at ${job.company}`, MAX_TITLE_LENGTH)
+}
+
+function buildJobDescription(job: Job): string {
+  let description = `${job.title} at ${job.company}, a remote ${job.job_type} role${job.location ? ` open to ${job.location}` : ''}.`
+
+  if (job.salary_min || job.salary_max) {
+    description += ` Pays ${formatSalary(job.salary_min ?? undefined, job.salary_max ?? undefined)}.`
+  }
+
+  // A missing salary used to leave this as dead-weight "Salary not specified"
+  // text, which added length without adding value and still often left the
+  // whole description under Ahrefs' minimum. A real value-prop sentence pads
+  // it properly instead.
+  if (description.length < MIN_DESCRIPTION_LENGTH) {
+    description += ' Matched to your timezone, salary target, and work style with a free quiz on matchremote.'
+  }
+
+  return truncateAtWord(description, MAX_DESCRIPTION_LENGTH)
+}
+
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params
   const job = await loadJob(slug)
   if (!job) return {}
 
-  const title = `${job.title} at ${job.company} (Remote)`
-  const description = `${job.title} at ${job.company}, a remote ${job.job_type} role${job.location ? ` open to ${job.location}` : ''}. ${formatSalary(job.salary_min ?? undefined, job.salary_max ?? undefined)}.`
+  const title = buildJobTitle(job)
+  const description = buildJobDescription(job)
   const url = `${SITE_URL}/jobs/${slug}`
 
   return {
     title,
     description,
     alternates: { canonical: url },
-    openGraph: { title: `${title} | matchremote`, description, url },
+    openGraph: { title: `${title} | matchremote`, description, url, images: [`${SITE_URL}/opengraph-image`] },
     twitter: { title: `${title} | matchremote`, description },
   }
 }

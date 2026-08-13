@@ -45,7 +45,7 @@ export async function generateMetadata({
     title,
     description,
     alternates: { canonical: url },
-    openGraph: { title: `${title} | matchremote`, description, url },
+    openGraph: { title: `${title} | matchremote`, description, url, images: [`${SITE_URL}/opengraph-image`] },
     twitter: { title: `${title} | matchremote`, description },
   }
 }

@@ -20,6 +20,7 @@ export const metadata: Metadata = {
     title: `matchremote: ${TITLE}`,
     description: DESCRIPTION,
     url: 'https://matchremote.io',
+    images: ['https://matchremote.io/opengraph-image'],
   },
   twitter: {
     title: `matchremote: ${TITLE}`,

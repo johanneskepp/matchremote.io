@@ -11,7 +11,7 @@ export const metadata: Metadata = {
   title: TITLE,
   description: DESCRIPTION,
   alternates: { canonical: `${SITE_URL}/remote-jobs` },
-  openGraph: { title: `${TITLE} | matchremote`, description: DESCRIPTION, url: `${SITE_URL}/remote-jobs` },
+  openGraph: { title: `${TITLE} | matchremote`, description: DESCRIPTION, url: `${SITE_URL}/remote-jobs`, images: [`${SITE_URL}/opengraph-image`] },
   twitter: { title: `${TITLE} | matchremote`, description: DESCRIPTION },
 }
 
@@ -44,6 +44,12 @@ export default function RemoteJobsIndexPage() {
             <p style={{ fontSize: '17px', color: 'var(--ink-soft)', maxWidth: '520px', margin: '0 auto' }}>
               Pick a category to browse, or take the quiz for matches personalized to your timezone and salary target.
             </p>
+            <Link
+              href="/remote-jobs/all"
+              style={{ color: 'var(--teal)', fontWeight: 600, textDecoration: 'underline', fontSize: '15px', display: 'inline-block', marginTop: '12px' }}
+            >
+              Or browse every open role →
+            </Link>
           </div>
 
           <div className="container-wide" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: '20px' }}>
