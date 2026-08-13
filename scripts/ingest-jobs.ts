@@ -627,20 +627,25 @@ async function retireStaleJobs(seenUrls: Set<string>) {
   }
 
   const gone: any[] = []
-  let checkedCount = 0
-  let throttledCount = 0
-  let deferredCount = 0
+  // Kept per source rather than as three running totals: pacing is set per
+  // source, so "38 refused" across the whole pass says nothing about which
+  // source to slow down, which is the only decision these numbers inform.
+  type SourceCheckStats = { checked: number; throttled: number; deferred: number }
+  const statsBySource = new Map<string, SourceCheckStats>()
   const checkStartedAt = Date.now()
 
   await Promise.all(
     [...queuesBySource.entries()].map(async ([source, queue]) => {
+      const stats: SourceCheckStats = { checked: 0, throttled: 0, deferred: 0 }
+      statsBySource.set(source, stats)
+
       // Supabase returns rows in no guaranteed order, and the rotation below is
       // only fair if the queue looks the same from one day to the next.
       queue.sort((a: any, b: any) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0))
 
       const pacing = PACING_BY_SOURCE[source] ?? DEFAULT_PACING
       const slice = dailySlice(queue, pacing.budget)
-      deferredCount += queue.length - slice.length
+      stats.deferred += queue.length - slice.length
 
       let next = 0
       let consecutiveThrottles = 0
@@ -661,10 +666,10 @@ async function retireStaleJobs(seenUrls: Set<string>) {
               // Being refused is not evidence about the listing either way, so
               // it stays put and comes around again on a later day.
               consecutiveThrottles++
-              throttledCount++
+              stats.throttled++
             } else {
               consecutiveThrottles = 0
-              checkedCount++
+              stats.checked++
               const body = res.status === 200 ? await res.text() : ''
               if (looksGone(res.status, body)) gone.push(job)
             }
@@ -683,11 +688,28 @@ async function retireStaleJobs(seenUrls: Set<string>) {
       // Whatever giving up left untouched is waiting its turn just like the
       // jobs that never made it into today's slice, so it is counted the same
       // way. Without this the summary silently loses track of them.
-      deferredCount += slice.length - next
+      stats.deferred += slice.length - next
     })
   )
 
   const checkSeconds = Math.round((Date.now() - checkStartedAt) / 1000)
+
+  const sum = (pick: (stats: SourceCheckStats) => number) =>
+    [...statsBySource.values()].reduce((total, stats) => total + pick(stats), 0)
+
+  const checkedCount = sum((s) => s.checked)
+  const throttledCount = sum((s) => s.throttled)
+  const deferredCount = sum((s) => s.deferred)
+
+  // A source that answered everything needs no explaining, so only the ones
+  // that refused or ran out of budget are broken out. That is the whole point
+  // of the split: it names where pacing needs changing.
+  const strained = [...statsBySource.entries()]
+    .filter(([, s]) => s.throttled > 0 || s.deferred > 0)
+    .map(
+      ([source, s]) =>
+        `${source} ${s.checked} checked, ${s.throttled} refused, ${s.deferred} held`
+    )
 
   // Reported separately on purpose: a listing that was refused or held back is
   // not one we learned anything about, and counting it as checked would make
@@ -695,7 +717,8 @@ async function retireStaleJobs(seenUrls: Set<string>) {
   const checkSummary =
     `${checkedCount} of ${toCheck.length} link checked in ${checkSeconds}s` +
     (throttledCount > 0 ? `, ${throttledCount} refused as rate limited` : '') +
-    (deferredCount > 0 ? `, ${deferredCount} held for a later day` : '')
+    (deferredCount > 0 ? `, ${deferredCount} held for a later day` : '') +
+    (strained.length > 0 ? ` (${strained.join('; ')})` : '')
 
   const retire = [...new Set([...expired, ...gone])]
 
