@@ -107,6 +107,48 @@ const PAGE_CHROME_MAX_LENGTH = 700
 
 const QUESTION_STARTERS = ['how ', 'why ', 'what ', 'when ']
 
+// A handful of sources turned out, on manual inspection, to not be real job
+// listings at all: their "description" is scraped nav menu, glossary, or
+// product page content rather than a posting. Confirmed by reading the actual
+// content, not by a generic heuristic, so this stays a narrow explicit list
+// rather than something that risks catching real postings. Shared by the
+// ingestion script and the cleanup script so the two cannot drift apart.
+//
+// "World Veterans" lists brand names like "Walgreens"/"Starbucks" as job
+// titles with identical nav menu text as the description. "AI Supermarket"
+// (added 2026-08-14) is the same shape from RemoteOK: seven rows whose titles
+// are SaaS product names ("Jenni AI", "Typefully", "Apify", "Beehiiv") all
+// carrying one identical description of an unrelated forex trading simulator,
+// so it is a scraped product directory, not an employer with vacancies.
+export const KNOWN_NON_JOB_COMPANIES = new Set([
+  'world veterans',
+  'devtube',
+  'adconversion',
+  'ai supermarket',
+])
+
+// Himalayas' API intermittently returns the literal string "name" in its
+// companyName field while the companySlug on the same record stays correct.
+// A company genuinely called "name" does not exist, so treating it as a real
+// employer only publishes a wrong hiringOrganization to Google.
+const PLACEHOLDER_COMPANY_NAMES = new Set(['name', 'company name', 'companyname'])
+
+export function isPlaceholderCompany(company: string): boolean {
+  return PLACEHOLDER_COMPANY_NAMES.has(company.trim().toLowerCase())
+}
+
+// Turns a company slug into a readable employer name. Used only when a source
+// hands us a placeholder instead of the real name, so an imperfect
+// capitalisation ("Td Synnex" for "td-synnex") is still far better than the
+// alternative, which was publishing the literal word "name" as the employer.
+export function companyNameFromSlug(slug: string): string {
+  return slug
+    .split('-')
+    .filter(Boolean)
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ')
+}
+
 function isUrlLike(title: string): boolean {
   return /https?[:\s]|www\.|\.(com|community|net|org)\b/i.test(title)
 }
@@ -132,6 +174,11 @@ export function isLikelyRealJob(title: string, description: string, company: str
 
   const lower = t.toLowerCase()
   if (lower === company.trim().toLowerCase()) return false
+  // Insurance only. Ingestion recovers the real employer from the source's
+  // company slug before this ever runs, so a row reaching here with a
+  // placeholder employer means that recovery failed and the listing would
+  // publish a false hiringOrganization.
+  if (isPlaceholderCompany(company)) return false
   if (BOILERPLATE_PHRASES.some((p) => lower.includes(p))) return false
   if (EXACT_PLACEHOLDER_TITLES.includes(lower)) return false
   if (isUrlLike(t)) return false

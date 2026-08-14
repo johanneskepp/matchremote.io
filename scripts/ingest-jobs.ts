@@ -10,7 +10,12 @@ import type { Database } from '../lib/db/types'
 import { deriveTimezoneRegion } from '../lib/utils/timezone-region'
 import { inferAsyncScore } from '../lib/utils/async-score'
 import { inferIndustries } from '../lib/utils/job-industries'
-import { isLikelyRealJob } from '../lib/utils/job-quality'
+import {
+  companyNameFromSlug,
+  isLikelyRealJob,
+  isPlaceholderCompany,
+  KNOWN_NON_JOB_COMPANIES,
+} from '../lib/utils/job-quality'
 import {
   LINK_CHECKABLE_SOURCES,
   MAX_JOB_AGE_DAYS,
@@ -404,6 +409,7 @@ async function fetchJobicy(): Promise<JobInsert[]> {
 interface HimalayasJob {
   title: string
   companyName: string
+  companySlug?: string
   description?: string
   employmentType?: string
   minSalary?: number | null
@@ -416,6 +422,23 @@ interface HimalayasJob {
   expiryDate?: number
   applicationLink?: string
   guid?: string
+}
+
+// Himalayas' API intermittently returns the literal string "name" as
+// companyName while companySlug on the very same record stays correct.
+// Measured live on 2026-08-14: 60 of the 100 jobs in one window were affected,
+// and about 20 rows a day had been landing in the catalogue that way since
+// 2026-07-28. Recover the employer from the slug rather than trusting the
+// broken field, since every one of those pages otherwise renders "at name" and
+// publishes it as the JobPosting hiringOrganization.
+function himalayasCompany(job: HimalayasJob): string {
+  const given = fixMojibake(job.companyName || '').trim()
+  if (given && !isPlaceholderCompany(given)) return given
+
+  const slug = (job.companySlug || '').trim()
+  if (slug) return companyNameFromSlug(slug)
+
+  return 'Unknown'
 }
 
 async function fetchHimalayas(): Promise<JobInsert[]> {
@@ -447,7 +470,7 @@ async function fetchHimalayas(): Promise<JobInsert[]> {
       const description = truncateDescription(fixMojibake(stripHtml(job.description || '')))
       return {
         title,
-        company: fixMojibake(job.companyName || 'Unknown'),
+        company: himalayasCompany(job),
         description,
         salary_min: isAnnualUsd(job) ? sanitizeSalary(job.minSalary) : null,
         salary_max: isAnnualUsd(job) ? sanitizeSalary(job.maxSalary) : null,
@@ -496,18 +519,14 @@ async function main() {
     }
   }
 
-  // A handful of sources turned out, on manual inspection, to not be real job
-  // listings at all: their "description" is scraped nav menu or glossary
-  // page content, not a job posting (e.g. "World Veterans" lists brand names
-  // like "Walgreens"/"Starbucks" as job titles with identical nav menu text
-  // as the description). Confirmed by reading the actual content, not a
-  // generic heuristic, so it's a narrow, explicit blocklist rather than
-  // something that risks catching real postings.
-  const KNOWN_NON_JOB_SOURCES = new Set(['world veterans', 'devtube', 'adconversion'])
+  // Narrow, explicit blocklist of companies confirmed by reading their actual
+  // content to be scraped page furniture rather than an employer with real
+  // vacancies. Defined in lib/utils/job-quality.ts so this script and
+  // scripts/cleanup-non-job-listings.ts can never fall out of sync.
   const beforeBlocklist = allJobs.length
-  allJobs = allJobs.filter((job) => !KNOWN_NON_JOB_SOURCES.has(job.company.trim().toLowerCase()))
+  allJobs = allJobs.filter((job) => !KNOWN_NON_JOB_COMPANIES.has(job.company.trim().toLowerCase()))
   if (allJobs.length !== beforeBlocklist) {
-    console.log(`Dropped ${beforeBlocklist - allJobs.length} entries from known non-job sources (${[...KNOWN_NON_JOB_SOURCES].join(', ')}).`)
+    console.log(`Dropped ${beforeBlocklist - allJobs.length} entries from known non-job sources (${[...KNOWN_NON_JOB_COMPANIES].join(', ')}).`)
   }
 
   if (allJobs.length === 0) {

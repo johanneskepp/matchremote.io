@@ -8,11 +8,9 @@
  */
 import { supabaseAdmin } from '../lib/db/supabase'
 import { getAllActiveJobs } from '../lib/db/queries'
-import { isLikelyRealJob } from '../lib/utils/job-quality'
+import { isLikelyRealJob, KNOWN_NON_JOB_COMPANIES } from '../lib/utils/job-quality'
 
 const jobsTable = supabaseAdmin as any
-
-const KNOWN_NON_JOB_SOURCES = new Set(['world veterans', 'devtube', 'adconversion'])
 
 async function main() {
   // getAllActiveJobs pages past Supabase's 1000 row PostgREST cap, unlike a
@@ -21,7 +19,7 @@ async function main() {
   const jobs = await getAllActiveJobs()
 
   const toDeactivate = (jobs ?? []).filter((j: any) => {
-    if (KNOWN_NON_JOB_SOURCES.has(j.company.trim().toLowerCase())) return true
+    if (KNOWN_NON_JOB_COMPANIES.has(j.company.trim().toLowerCase())) return true
     return !isLikelyRealJob(j.title, j.description ?? '', j.company)
   })
 
