@@ -52,6 +52,18 @@ const USER_AGENT = 'matchremote.io job ingestion (contact: johanneskepp@gmail.co
  *   all, and 11 of those were a 410, real dead listings we had never managed to
  *   see. So the fix is to go slower there rather than to give up: its whole
  *   queue no longer fits in one run, so `dailySlice` spreads it across days.
+ *
+ * Arbeitnow joined that list on 2026-08-15. It had taken the default happily
+ * while it was small, then started refusing partway through the pass once its
+ * queue reached 138, and the circuit breaker gave up with 76 unchecked. It is
+ * a short window limit rather than a daily quota: immediately after being
+ * refused 15 times in a row it answered 8 of 8 at one request every two
+ * seconds, then 19 of 20 at one a second (the twentieth was a network blip,
+ * not a 429). One a second is ten times slower than the default that failed
+ * and clears its whole queue in a little over two minutes, so that is what it
+ * gets. The 20 request sample is smaller than the budget it justifies, so
+ * treat the number as measured rather than proven, the per source line in the
+ * freshness summary is what will say whether it holds.
  */
 type SourcePacing = { workers: number; delayMs: number; budget: number }
 
@@ -59,6 +71,7 @@ const DEFAULT_PACING: SourcePacing = { workers: 4, delayMs: 400, budget: Infinit
 
 const PACING_BY_SOURCE: Record<string, SourcePacing> = {
   jobicy: { workers: 1, delayMs: 2000, budget: 150 },
+  arbeitnow: { workers: 1, delayMs: 1000, budget: 150 },
 }
 
 /**
