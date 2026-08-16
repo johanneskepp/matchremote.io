@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { notFound } from 'next/navigation'
+import { notFound, permanentRedirect } from 'next/navigation'
 import type { Metadata } from 'next'
 import { getAllJobs, getJobById } from '@/lib/db/queries'
 import { buildJobSlug, extractJobIdFromSlug } from '@/lib/utils/job-slug'
@@ -84,7 +84,10 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 
   const title = buildJobTitle(job)
   const description = buildJobDescription(job)
-  const url = `${SITE_URL}/jobs/${slug}`
+  // Built from the job row, never from the requested slug. Only the trailing id
+  // decides which job renders, so echoing the request back would let every
+  // spelling of the same page declare itself canonical.
+  const url = `${SITE_URL}/jobs/${buildJobSlug(job)}`
 
   return {
     title,
@@ -100,7 +103,16 @@ export default async function JobDetailPage({ params }: { params: Promise<{ slug
   const job = await loadJob(slug)
   if (!job) notFound()
 
-  const url = `${SITE_URL}/jobs/${slug}`
+  // extractJobIdFromSlug only reads the trailing id, so any text in front of it
+  // used to render this same page with a 200 and its own canonical tag. That
+  // turned one job into unlimited indexable duplicates, and it stranded the 229
+  // listings whose company was repaired on 2026-08-14: their old URL stayed
+  // indexed while the sitemap moved to a URL Google had never seen. Sending the
+  // one canonical form a 308 hands those signals to the right page.
+  const canonicalSlug = buildJobSlug(job)
+  if (slug !== canonicalSlug) permanentRedirect(`/jobs/${canonicalSlug}`)
+
+  const url = `${SITE_URL}/jobs/${canonicalSlug}`
   const category = JOB_CATEGORIES.find((c) => jobMatchesCategory(job, c))
 
   const breadcrumbJsonLd = {
