@@ -16,6 +16,7 @@ import {
   isPlaceholderCompany,
   KNOWN_NON_JOB_COMPANIES,
 } from '../lib/utils/job-quality'
+import { decodeHtmlEntities, htmlToPlainText } from '../lib/utils/html-entities'
 import {
   LINK_CHECKABLE_SOURCES,
   MAX_JOB_AGE_DAYS,
@@ -108,27 +109,23 @@ function fixMojibake(text: string): string {
   return repaired.includes('�') ? text : repaired
 }
 
-// Converts source HTML into readable plain text with paragraph breaks kept
-// intact (job detail pages render this with white-space: pre-wrap), rather
-// than collapsing every tag to a single space, which used to turn every
-// description into one unreadable wall of text.
+// Title, company and location are plain text fields, but the sources hand them
+// to us HTML escaped anyway: RemoteOK sends "MARINE PAINTER &amp; BLASTER",
+// Jobicy sends "Johnson &#038; Johnson", Himalayas sends "&#x28;Contractor&#x29;".
+// Left as they arrive, that text renders literally in the h1 and the title tag,
+// goes to Google as the JobPosting title and hiringOrganization, and turns into
+// the words "amp" and "038" in the URL slug, since slugify drops "&" and ";"
+// but keeps the entity body. Descriptions get the same treatment inside
+// stripHtml, after the tags come out.
+function cleanText(text: string): string {
+  return fixMojibake(decodeHtmlEntities(text))
+}
+
+// htmlToPlainText is shared with scripts/repair-html-entities.ts, which
+// re-cleans the rows that landed before the sources' double escaping was
+// handled. See lib/utils/html-entities.ts for what that double escaping is.
 function stripHtml(html: string): string {
-  return html
-    .replace(/<(br|hr)\s*\/?>/gi, '\n')
-    .replace(/<\/(p|div|li|h[1-6])>/gi, '\n')
-    .replace(/<li[^>]*>/gi, '• ')
-    .replace(/<[^>]*>/g, '')
-    .replace(/&nbsp;/g, ' ')
-    .replace(/&amp;/g, '&')
-    .replace(/&lt;/g, '<')
-    .replace(/&gt;/g, '>')
-    .replace(/&#39;/g, "'")
-    .replace(/&quot;/g, '"')
-    .replace(/[ \t]+/g, ' ')
-    .replace(/ *\n */g, '\n')
-    .replace(/\n{3,}/g, '\n\n')
-    .trim()
-    .slice(0, 5000)
+  return htmlToPlainText(html).slice(0, 5000)
 }
 
 // Job descriptions from these sources routinely run several thousand
@@ -223,12 +220,12 @@ async function fetchRemoteOk(): Promise<JobInsert[]> {
     .map((job) => {
       const jobUrl = job.apply_url || job.url!
       const tags = (job.tags || []).map((t) => t.toLowerCase())
-      const location = fixMojibake(job.location || 'Worldwide')
-      const title = fixMojibake(job.position!)
+      const location = cleanText(job.location || 'Worldwide')
+      const title = cleanText(job.position!)
       const description = truncateDescription(fixMojibake(stripHtml(job.description || '')))
       return {
         title,
-        company: fixMojibake(job.company || 'Unknown'),
+        company: cleanText(job.company || 'Unknown'),
         description,
         salary_min: sanitizeSalary(job.salary_min),
         salary_max: sanitizeSalary(job.salary_max),
@@ -275,12 +272,12 @@ async function fetchRemotive(): Promise<JobInsert[]> {
     .filter((job) => job.url && job.title)
     .map((job) => {
       const { min, max } = parseSalaryRange(job.salary)
-      const location = fixMojibake(job.candidate_required_location || 'Worldwide')
-      const title = fixMojibake(job.title)
+      const location = cleanText(job.candidate_required_location || 'Worldwide')
+      const title = cleanText(job.title)
       const description = truncateDescription(fixMojibake(stripHtml(job.description || '')))
       return {
         title,
-        company: fixMojibake(job.company_name || 'Unknown'),
+        company: cleanText(job.company_name || 'Unknown'),
         description,
         salary_min: sanitizeSalary(min),
         salary_max: sanitizeSalary(max),
@@ -325,12 +322,12 @@ async function fetchArbeitnow(): Promise<JobInsert[]> {
   return data.data
     .filter((job) => job.remote && job.url && job.title)
     .map((job) => {
-      const location = fixMojibake(job.location || 'Worldwide')
-      const title = fixMojibake(job.title)
+      const location = cleanText(job.location || 'Worldwide')
+      const title = cleanText(job.title)
       const description = truncateDescription(fixMojibake(stripHtml(job.description || '')))
       return {
       title,
-      company: fixMojibake(job.company_name || 'Unknown'),
+      company: cleanText(job.company_name || 'Unknown'),
       description,
       salary_min: null,
       salary_max: null,
@@ -388,12 +385,12 @@ async function fetchJobicy(): Promise<JobInsert[]> {
   return data.jobs
     .filter((job) => job.id && job.jobTitle && job.url)
     .map((job) => {
-      const location = fixMojibake(job.jobGeo || 'Worldwide')
-      const title = fixMojibake(job.jobTitle)
+      const location = cleanText(job.jobGeo || 'Worldwide')
+      const title = cleanText(job.jobTitle)
       const description = truncateDescription(fixMojibake(stripHtml(job.jobDescription || '')))
       return {
         title,
-        company: fixMojibake(job.companyName || 'Unknown'),
+        company: cleanText(job.companyName || 'Unknown'),
         description,
         salary_min: isAnnualUsd(job) ? sanitizeSalary(job.salaryMin) : null,
         salary_max: isAnnualUsd(job) ? sanitizeSalary(job.salaryMax) : null,
@@ -445,7 +442,7 @@ interface HimalayasJob {
 // broken field, since every one of those pages otherwise renders "at name" and
 // publishes it as the JobPosting hiringOrganization.
 function himalayasCompany(job: HimalayasJob): string {
-  const given = fixMojibake(job.companyName || '').trim()
+  const given = cleanText(job.companyName || '').trim()
   if (given && !isPlaceholderCompany(given)) return given
 
   const slug = (job.companySlug || '').trim()
@@ -478,8 +475,8 @@ async function fetchHimalayas(): Promise<JobInsert[]> {
     .filter((job) => job.title && (job.applicationLink || job.guid) && (!job.expiryDate || job.expiryDate > now))
     .map((job) => {
       const url = job.applicationLink || job.guid!
-      const location = fixMojibake(job.locationRestrictions?.join(', ') || 'Worldwide')
-      const title = fixMojibake(job.title)
+      const location = cleanText(job.locationRestrictions?.join(', ') || 'Worldwide')
+      const title = cleanText(job.title)
       const description = truncateDescription(fixMojibake(stripHtml(job.description || '')))
       return {
         title,
