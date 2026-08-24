@@ -53,7 +53,7 @@ export default function PricingPage() {
         <div className="container" style={{ maxWidth: '560px' }}>
           <div style={{ textAlign: 'center', marginBottom: '32px' }}>
             <h1 className="font-display" style={{ fontSize: 'clamp(32px, 5vw, 46px)', marginBottom: '10px' }}>
-              One plan. Unlock for $7.
+              One plan. Unlock for ${PRICE_PER_WEEK_USD}.
             </h1>
             <p style={{ fontSize: '17px', color: 'var(--ink-soft)', margin: 0 }}>
               First {FREE_MATCH_LIMIT} matches free. Unlock the rest.
