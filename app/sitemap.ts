@@ -4,6 +4,7 @@ import { JOB_CATEGORIES } from '@/lib/utils/job-categories'
 import { buildJobSlug } from '@/lib/utils/job-slug'
 import { getQualifyingComboPages } from '@/lib/utils/combo-pages'
 import { ALL_JOBS_PAGE_SIZE } from '@/lib/utils/job-pagination'
+import { canonicalJobIds } from '@/lib/utils/job-duplicates'
 
 const BASE_URL = 'https://matchremote.io'
 
@@ -60,12 +61,20 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // sitemap entirely once the catalogue grew past it, invisible to Google.
   // Well under Google's 50,000 URL per sitemap limit even with room to grow.
   const jobs = await getAllActiveJobs()
-  const jobPages: MetadataRoute.Sitemap = jobs.map((job) => ({
-    url: `${BASE_URL}/jobs/${buildJobSlug(job)}`,
-    lastModified: job.scraped_at ? new Date(job.scraped_at) : now,
-    changeFrequency: 'weekly',
-    priority: 0.5,
-  }))
+  // One posting fanned out across countries by the source is still one job.
+  // Submitting every copy asked Google to index the same posting on a dozen
+  // URLs, which its job posting guidelines forbid and which it had already
+  // started doing. Only the canonical copy is submitted, the rest carry a
+  // canonical tag pointing at it, see lib/utils/job-duplicates.ts.
+  const canonicalIds = canonicalJobIds(jobs)
+  const jobPages: MetadataRoute.Sitemap = jobs
+    .filter((job) => canonicalIds.has(job.id))
+    .map((job) => ({
+      url: `${BASE_URL}/jobs/${buildJobSlug(job)}`,
+      lastModified: job.scraped_at ? new Date(job.scraped_at) : now,
+      changeFrequency: 'weekly',
+      priority: 0.5,
+    }))
 
   const combos = await getQualifyingComboPages()
   const comboPages: MetadataRoute.Sitemap = combos.map((combo) => ({

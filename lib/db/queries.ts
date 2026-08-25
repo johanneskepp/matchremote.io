@@ -71,6 +71,15 @@ export async function getJobById(id: string): Promise<any | null> {
   return data || null
 }
 
+// Sources fan one posting out into one row per eligible country, so a job page
+// needs its own duplicate group to work out which copy carries the canonical.
+// Matching the title exactly is what keeps this a superset of the group the
+// sitemap computes, see lib/utils/job-duplicates.ts for why that matters.
+export async function getActiveJobsByTitle(title: string): Promise<any[]> {
+  const { data } = await sb.from('jobs').select('*').eq('is_active', true).eq('title', title)
+  return data || []
+}
+
 export async function searchJobs(filters: any): Promise<any[]> {
   const { data } = await sb.from('jobs').select('*').eq('is_active', true)
   return data || []

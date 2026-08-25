@@ -1,12 +1,14 @@
 import Link from 'next/link'
 import { notFound, permanentRedirect } from 'next/navigation'
 import type { Metadata } from 'next'
-import { getAllJobs, getJobById } from '@/lib/db/queries'
+import { cache } from 'react'
+import { getActiveJobsByTitle, getAllJobs, getJobById } from '@/lib/db/queries'
 import { buildJobSlug, extractJobIdFromSlug } from '@/lib/utils/job-slug'
 import { formatSalary, formatDate } from '@/lib/utils/helpers'
 import { JOB_CATEGORIES, jobMatchesCategory } from '@/lib/utils/job-categories'
 import { deriveApplicantCountries } from '@/lib/utils/job-country'
 import { validThroughFor } from '@/lib/utils/job-freshness'
+import { resolveCanonicalJob } from '@/lib/utils/job-duplicates'
 import type { Job } from '@/lib/db/types'
 import Logo from '@/components/Logo'
 
@@ -22,7 +24,10 @@ const EMPLOYMENT_TYPE_MAP: Record<Job['job_type'], string> = {
   freelance: 'CONTRACTOR',
 }
 
-async function loadJob(slug: string): Promise<Job | null> {
+// Cached so the metadata pass and the render share one lookup, and so both
+// receive the same job object, which is what lets loadCanonicalJob below
+// dedupe its own query too.
+const loadJob = cache(async (slug: string): Promise<Job | null> => {
   const id = extractJobIdFromSlug(slug)
   if (!id) return null
   const job = await getJobById(id)
@@ -32,7 +37,18 @@ async function loadJob(slug: string): Promise<Job | null> {
   // callers need the raw row, so the check belongs here.
   if (!job || !job.is_active) return null
   return job
-}
+})
+
+// Sources publish one posting once per eligible country, so the same role can
+// arrive as a dozen rows that differ only in the location chip. Each of those
+// used to be its own self-canonical indexable page carrying its own JobPosting
+// markup, which Google's job posting guidelines forbid. The pages stay, only
+// the search signals collapse onto one row per group. Wrapped in cache so the
+// metadata pass and the render share a single lookup.
+const loadCanonicalJob = cache(async (job: Job): Promise<Job> => {
+  const sameTitle = await getActiveJobsByTitle(job.title)
+  return resolveCanonicalJob(job, sameTitle as Job[])
+})
 
 export async function generateStaticParams() {
   const jobs: Job[] = await getAllJobs(200)
@@ -88,11 +104,15 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   // decides which job renders, so echoing the request back would let every
   // spelling of the same page declare itself canonical.
   const url = `${SITE_URL}/jobs/${buildJobSlug(job)}`
+  // When the source fanned this posting out per country, every copy points at
+  // the one canonical row instead of at itself.
+  const canonicalJob = await loadCanonicalJob(job)
+  const canonicalUrl = `${SITE_URL}/jobs/${buildJobSlug(canonicalJob)}`
 
   return {
     title,
     description,
-    alternates: { canonical: url },
+    alternates: { canonical: canonicalUrl },
     openGraph: { title: `${title} | matchremote`, description, url, images: [`${SITE_URL}/opengraph-image`] },
     twitter: { title: `${title} | matchremote`, description },
   }
@@ -114,6 +134,14 @@ export default async function JobDetailPage({ params }: { params: Promise<{ slug
 
   const url = `${SITE_URL}/jobs/${canonicalSlug}`
   const category = JOB_CATEGORIES.find((c) => jobMatchesCategory(job, c))
+
+  // A copy of a posting the source already published for another country must
+  // not publish a second JobPosting for the same role, so only the canonical
+  // row carries the markup. The duplicates keep the page, the breadcrumb and
+  // the apply link, they just hand their search signals over via the canonical
+  // tag set in generateMetadata.
+  const canonicalJob = await loadCanonicalJob(job)
+  const isCanonicalCopy = canonicalJob.id === job.id
 
   const breadcrumbJsonLd = {
     '@context': 'https://schema.org',
@@ -190,10 +218,12 @@ export default async function JobDetailPage({ params }: { params: Promise<{ slug
 
   return (
     <div style={{ minHeight: '100vh', background: 'var(--bg)' }}>
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jobPostingJsonLd) }}
-      />
+      {isCanonicalCopy && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jobPostingJsonLd) }}
+        />
+      )}
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}

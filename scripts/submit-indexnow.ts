@@ -12,8 +12,9 @@
  *   npm run seo:indexnow -- --limit=50         submit fewer/more job pages
  *   npm run seo:indexnow -- --include-static   also submit the static marketing pages
  */
-import { getAllJobs } from '../lib/db/queries'
+import { getAllActiveJobs } from '../lib/db/queries'
 import { buildJobSlug } from '../lib/utils/job-slug'
+import { canonicalJobIds } from '../lib/utils/job-duplicates'
 import { submitUrlsToIndexNow } from '../lib/seo/indexnow'
 
 const SITE_URL = 'https://matchremote.io'
@@ -26,7 +27,15 @@ const limit = limitArg ? parseInt(limitArg.split('=')[1], 10) : 200
 const STATIC_PAGES = ['/', '/quiz', '/pricing', '/about', '/faq', '/remote-jobs', '/remote-jobs/all']
 
 async function main() {
-  const jobs = await getAllJobs(Number.isFinite(limit) && limit > 0 ? limit : 200)
+  // Sources fan one posting out per country, and every copy used to be pushed
+  // as its own URL, spending quota on pages that now hand their signals to a
+  // canonical anyway. Canonicality can only be decided against the whole
+  // catalogue, so the newest N are taken after the duplicates are dropped.
+  const allJobs = await getAllActiveJobs()
+  const canonicalIds = canonicalJobIds(allJobs)
+  const jobs = allJobs
+    .filter((job) => canonicalIds.has(job.id))
+    .slice(0, Number.isFinite(limit) && limit > 0 ? limit : 200)
   const jobUrls = jobs.map((job) => `${SITE_URL}/jobs/${buildJobSlug(job)}`)
   const urls = includeStatic ? [...STATIC_PAGES.map((p) => `${SITE_URL}${p}`), ...jobUrls] : jobUrls
 
