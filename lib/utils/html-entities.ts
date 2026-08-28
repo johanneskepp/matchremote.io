@@ -11,6 +11,8 @@
 // would over decode, turning a source's escaped "&amp;lt;" into a real "<" and
 // letting markup back into a field that should be plain text.
 
+import { repairMojibake } from '@/lib/utils/mojibake'
+
 const NAMED_ENTITIES: Record<string, string> = {
   amp: '&',
   lt: '<',
@@ -103,7 +105,11 @@ export function htmlToPlainText(html: string): string {
     text = decodeHtmlEntities(htmlToText(text))
   }
 
-  return text
+  // Repaired before the non breaking space below is flattened, because a
+  // source that mis-decoded its own UTF-8 sends that space as two characters,
+  // and flattening the second one first would strand the first with nothing
+  // left to pair it with.
+  return repairMojibake(text)
     .replace(/\u00a0/g, ' ')
     .replace(/[ \t]+/g, ' ')
     .replace(/ *\n */g, '\n')

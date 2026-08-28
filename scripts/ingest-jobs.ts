@@ -17,6 +17,7 @@ import {
   KNOWN_NON_JOB_COMPANIES,
 } from '../lib/utils/job-quality'
 import { decodeHtmlEntities, htmlToPlainText } from '../lib/utils/html-entities'
+import { repairMojibake } from '../lib/utils/mojibake'
 import {
   LINK_CHECKABLE_SOURCES,
   MAX_JOB_AGE_DAYS,
@@ -98,32 +99,24 @@ function dailySlice<T>(queue: T[], budget: number, now: Date = new Date()): T[] 
   return slice
 }
 
-// Some upstream sources (seen on Arbeitnow's Brazilian/Portuguese listings)
-// occasionally emit UTF-8 bytes that were mis-decoded as Latin-1 upstream,
-// e.g. "Soluções" arrives as "SoluÃ§Ãµes". Detect the telltale "Ã" marker and
-// attempt a round-trip fix, but bail out if it produces replacement chars
-// (U+FFFD), which means the text wasn't actually mojibake.
-function fixMojibake(text: string): string {
-  if (!text.includes('Ã') && !text.includes('Â')) return text
-  const repaired = Buffer.from(text, 'latin1').toString('utf8')
-  return repaired.includes('�') ? text : repaired
-}
-
 // Title, company and location are plain text fields, but the sources hand them
 // to us HTML escaped anyway: RemoteOK sends "MARINE PAINTER &amp; BLASTER",
 // Jobicy sends "Johnson &#038; Johnson", Himalayas sends "&#x28;Contractor&#x29;".
 // Left as they arrive, that text renders literally in the h1 and the title tag,
 // goes to Google as the JobPosting title and hiringOrganization, and turns into
 // the words "amp" and "038" in the URL slug, since slugify drops "&" and ";"
-// but keeps the entity body. Descriptions get the same treatment inside
-// stripHtml, after the tags come out.
+// but keeps the entity body. The same fields also arrive mis-decoded, so a
+// Chinese city name lands as a run of Latin-1 letters, which repairMojibake
+// puts back. Descriptions get both treatments inside stripHtml, after the tags
+// come out.
 function cleanText(text: string): string {
-  return fixMojibake(decodeHtmlEntities(text))
+  return repairMojibake(decodeHtmlEntities(text))
 }
 
-// htmlToPlainText is shared with scripts/repair-html-entities.ts, which
-// re-cleans the rows that landed before the sources' double escaping was
-// handled. See lib/utils/html-entities.ts for what that double escaping is.
+// htmlToPlainText is shared with scripts/repair-html-entities.ts and
+// scripts/repair-mojibake.ts, which re-clean the rows that landed before the
+// sources' double escaping and mis-decoding were handled. It decodes entities
+// and repairs mojibake itself, so neither needs doing again out here.
 function stripHtml(html: string): string {
   return htmlToPlainText(html).slice(0, 5000)
 }
@@ -222,7 +215,7 @@ async function fetchRemoteOk(): Promise<JobInsert[]> {
       const tags = (job.tags || []).map((t) => t.toLowerCase())
       const location = cleanText(job.location || 'Worldwide')
       const title = cleanText(job.position!)
-      const description = truncateDescription(fixMojibake(stripHtml(job.description || '')))
+      const description = truncateDescription(stripHtml(job.description || ''))
       return {
         title,
         company: cleanText(job.company || 'Unknown'),
@@ -274,7 +267,7 @@ async function fetchRemotive(): Promise<JobInsert[]> {
       const { min, max } = parseSalaryRange(job.salary)
       const location = cleanText(job.candidate_required_location || 'Worldwide')
       const title = cleanText(job.title)
-      const description = truncateDescription(fixMojibake(stripHtml(job.description || '')))
+      const description = truncateDescription(stripHtml(job.description || ''))
       return {
         title,
         company: cleanText(job.company_name || 'Unknown'),
@@ -324,7 +317,7 @@ async function fetchArbeitnow(): Promise<JobInsert[]> {
     .map((job) => {
       const location = cleanText(job.location || 'Worldwide')
       const title = cleanText(job.title)
-      const description = truncateDescription(fixMojibake(stripHtml(job.description || '')))
+      const description = truncateDescription(stripHtml(job.description || ''))
       return {
       title,
       company: cleanText(job.company_name || 'Unknown'),
@@ -387,7 +380,7 @@ async function fetchJobicy(): Promise<JobInsert[]> {
     .map((job) => {
       const location = cleanText(job.jobGeo || 'Worldwide')
       const title = cleanText(job.jobTitle)
-      const description = truncateDescription(fixMojibake(stripHtml(job.jobDescription || '')))
+      const description = truncateDescription(stripHtml(job.jobDescription || ''))
       return {
         title,
         company: cleanText(job.companyName || 'Unknown'),
@@ -477,7 +470,7 @@ async function fetchHimalayas(): Promise<JobInsert[]> {
       const url = job.applicationLink || job.guid!
       const location = cleanText(job.locationRestrictions?.join(', ') || 'Worldwide')
       const title = cleanText(job.title)
-      const description = truncateDescription(fixMojibake(stripHtml(job.description || '')))
+      const description = truncateDescription(stripHtml(job.description || ''))
       return {
         title,
         company: himalayasCompany(job),
