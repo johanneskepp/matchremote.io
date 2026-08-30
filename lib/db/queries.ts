@@ -30,13 +30,100 @@ export async function getLatestQuizResponse(userId: string): Promise<any | null>
   return data || null
 }
 
+// One production build asked for the whole catalogue 82 separate times across
+// its render workers, 48 of them from a single process, each one paging 5557
+// rows of select('*'). That self inflicted congestion is what made individual
+// page responses come back truncated. Callers within one process now share a
+// single read for a short window instead of racing each other for the same
+// rows. The window is far shorter than the hourly revalidate on every page
+// that consumes this, so no page can serve staler data than it already would.
+const ACTIVE_JOBS_CACHE_MS = 60_000
+let activeJobsCache: { at: number; promise: Promise<any[]> } | null = null
+
 // For callers that need literally every active job (matching, sitemap,
 // category/combo pages), not just a curated "newest N". Passing a number
 // here instead of calling this is how the site previously grew silent gaps
 // every time the active job count passed whatever number someone guessed,
 // most recently at 300, 500, 1000 and 2000 rows. This has no such ceiling.
 export async function getAllActiveJobs(): Promise<any[]> {
-  return getAllJobs(Number.MAX_SAFE_INTEGER)
+  const now = Date.now()
+  if (activeJobsCache && now - activeJobsCache.at < ACTIVE_JOBS_CACHE_MS) {
+    return activeJobsCache.promise
+  }
+
+  const promise = getAllJobs(Number.MAX_SAFE_INTEGER)
+  activeJobsCache = { at: now, promise }
+  // A failed read must never be the answer every later caller gets for the
+  // rest of the window, so the entry is dropped again the moment it rejects.
+  promise.catch(() => {
+    if (activeJobsCache?.promise === promise) activeJobsCache = null
+  })
+  return promise
+}
+
+const PAGE_ATTEMPTS = 3
+// Below this a slice is small enough that its response size is no longer a
+// plausible cause, so splitting further would just multiply requests.
+const MIN_PAGE_SPAN = 100
+
+function pageRetryDelayMs(attempt: number): number {
+  // Backing off matters more than retrying. The failures are congestion from
+  // our own parallel render workers, so immediate retries land in the same
+  // congested moment and fail together, which is what an earlier attempt at
+  // this fix did before it was reverted on 2026-08-28.
+  return 400 * 2 ** attempt
+}
+
+/**
+ * One slice of active jobs, or a thrown error. Never a short read presented
+ * as a complete one.
+ *
+ * The observed failure is a response body that arrives truncated, which the
+ * Supabase client surfaces as an error whose message is the partial body. So
+ * when a slice keeps failing, the response being asked for is the thing that
+ * is too big, and asking again for exactly the same slice is the one retry
+ * least likely to work. Halving it and fetching the halves attacks the actual
+ * cause, and it converges: by the floor a slice is a fraction of the original
+ * payload.
+ */
+async function fetchActiveJobPage(from: number, to: number): Promise<any[]> {
+  let lastError: any = null
+
+  for (let attempt = 0; attempt < PAGE_ATTEMPTS; attempt++) {
+    const { data, error } = await sb
+      .from('jobs')
+      .select('*')
+      .eq('is_active', true)
+      .order('posted_date', { ascending: false })
+      .range(from, to)
+
+    if (!error) return data ?? []
+    lastError = error
+    if (attempt < PAGE_ATTEMPTS - 1) {
+      await new Promise((resolve) => setTimeout(resolve, pageRetryDelayMs(attempt)))
+    }
+  }
+
+  const span = to - from + 1
+  if (span > MIN_PAGE_SPAN) {
+    const mid = from + Math.floor(span / 2)
+    const firstHalf = await fetchActiveJobPage(from, mid - 1)
+    // A short first half means the table ran out inside it, so there is no
+    // second half left to ask for.
+    if (firstHalf.length < mid - from) return firstHalf
+    const secondHalf = await fetchActiveJobPage(mid, to)
+    return [...firstHalf, ...secondHalf]
+  }
+
+  // Throwing is the whole point. Reading a failed page as "no more rows" is
+  // what let a build ship a sitemap missing thousands of job pages with
+  // nothing logged, and every caller treats this result as the complete
+  // catalogue. A loud failure is recoverable, a quietly truncated one is not.
+  throw new Error(
+    `getAllJobs: rows ${from} to ${to} failed after ${PAGE_ATTEMPTS} attempts at ` +
+      `the smallest slice, refusing to return a truncated catalogue: ` +
+      String(lastError?.message).slice(0, 200)
+  )
 }
 
 export async function getAllJobs(limit: number = 100): Promise<any[]> {
@@ -50,14 +137,9 @@ export async function getAllJobs(limit: number = 100): Promise<any[]> {
 
   while (rows.length < limit) {
     const to = Math.min(from + pageSize, limit) - 1
-    const { data } = await sb
-      .from('jobs')
-      .select('*')
-      .eq('is_active', true)
-      .order('posted_date', { ascending: false })
-      .range(from, to)
+    const data = await fetchActiveJobPage(from, to)
 
-    if (!data || data.length === 0) break
+    if (data.length === 0) break
     rows.push(...data)
     if (data.length < to - from + 1) break
     from += pageSize
