@@ -95,6 +95,13 @@ async function fetchActiveJobPage(from: number, to: number): Promise<any[]> {
       .select('*')
       .eq('is_active', true)
       .order('posted_date', { ascending: false })
+      // posted_date is a date, so ties are common and Postgres is free to
+      // order them differently per request. Without a unique tiebreak the
+      // .range() boundaries below are not stable, so one row can land in two
+      // slices while another lands in none, and the same instability then
+      // shifts which job sits on which paginated listing page. id is the
+      // primary key, so this makes the ordering a deterministic total order.
+      .order('id', { ascending: true })
       .range(from, to)
 
     if (!error) return data ?? []
