@@ -89,6 +89,42 @@ export const JOB_CATEGORIES: JobCategory[] = [
       'counselor', 'patient care', 'healthcare', 'health coach', 'radiolog',
     ],
   },
+  {
+    slug: 'data',
+    label: 'Data & Analytics',
+    emoji: '📈',
+    description: 'Remote data analysis, data science, and business intelligence roles.',
+    keywords: [
+      // 212 live jobs, 95 of which had no category at all before this. Every
+      // keyword here is an exact role phrase. A bare 'data' was measured and
+      // rejected: it matched 250 jobs including "Technical Program Manager,
+      // Data Centers" and "Data Center Services", which are not data roles. A
+      // bare 'analyst' was rejected the same way, 187 matches pulling in
+      // "Claims Analyst", "Deal Desk Analyst" and "HRIS Analyst". Both are the
+      // substring trap that once made every "Ukraine" job claim it was in the UK.
+      'data analyst', 'data analytics', 'data scientist', 'data science', 'analytics',
+      'business analyst', 'business intelligence', 'machine learning', 'ml engineer',
+      'data engineer', 'analytics engineer', 'reporting analyst', 'statistician',
+    ],
+  },
+  {
+    slug: 'project-management',
+    label: 'Project & Program Management',
+    emoji: '🗂️',
+    description: 'Remote project management, program management, and delivery roles.',
+    keywords: [
+      // 110 live jobs, 88 previously uncategorized. Kept to exact role phrases
+      // for the same reason as the data category above. A bare 'program' was
+      // measured and rejected outright: 61 matches, badly contaminated by
+      // "Gameplay Programmer", "Systems Programmer", "Programmatic Media" and
+      // "Programmiertutor", since every one of those contains "program". A bare
+      // 'project' was rejected too, pulling in "Project Lyra Swedish Culture
+      // Expert". 'technical program' was dropped as fully redundant, all 14 of
+      // its matches are already caught by 'program manager'.
+      'project manager', 'project management', 'program manager', 'program management',
+      'scrum master', 'delivery manager', 'project coordinator', 'project lead',
+    ],
+  },
 ]
 
 export function getCategoryBySlug(slug: string): JobCategory | undefined {
