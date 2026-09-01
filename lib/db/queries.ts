@@ -155,6 +155,24 @@ export async function getAllJobs(limit: number = 100): Promise<any[]> {
   return rows
 }
 
+// The homepage ticker shows 6 salaried listings, one per company. It used to
+// reach that through getAllJobs, which selects every column, so rendering 6
+// lines pulled 385 KB of rows and 39% of that was job descriptions the ticker
+// never reads. Naming the five columns it does read brings the same 300 row
+// window down to 42 KB. The window stays at 300 because the ticker dedupes by
+// company and needs a pool to dedupe from, not because it needs the rows.
+export async function getRecentSalariedJobs(limit: number = 300): Promise<any[]> {
+  const { data } = await sb
+    .from('jobs')
+    .select('title, company, salary_min, salary_max, posted_date')
+    .eq('is_active', true)
+    .not('salary_min', 'is', null)
+    .order('posted_date', { ascending: false })
+    .order('id', { ascending: true })
+    .range(0, limit - 1)
+  return data || []
+}
+
 export async function getJobById(id: string): Promise<any | null> {
   const { data } = await sb.from('jobs').select('*').eq('id', id).single()
   return data || null

@@ -84,6 +84,23 @@ async function main() {
 
     chrome = await chromeLauncher.launch({ chromeFlags: ['--headless', '--no-sandbox'] })
 
+    // One full Lighthouse pass, thrown away, before anything is recorded.
+    // Whichever page runs first in a freshly launched Chrome pays a penalty
+    // that has nothing to do with the page: measured on one unchanged build,
+    // the homepage read 91 then 97, 97, 97, 97, 97 on six consecutive runs,
+    // and the same effect appeared again on a repeat. Because PAGES is walked
+    // in order, that penalty always landed on the homepage, which is why it
+    // has read 80 to 87 while every page measured after it read 96 to 97.
+    // Two sessions were spent investigating that as a homepage regression
+    // before it turned out to be measurement order, so this pass is worth the
+    // few seconds it costs. A plain fetch is not enough, the cost is in
+    // Lighthouse and the browser rather than in the server.
+    try {
+      await runLighthouse(`http://localhost:${PORT}${PAGES[0]}`, chrome.port)
+    } catch {
+      // A genuinely broken page will surface in the recorded run below.
+    }
+
     let anyFailed = false
     for (const page of PAGES) {
       const url = `http://localhost:${PORT}${page}`

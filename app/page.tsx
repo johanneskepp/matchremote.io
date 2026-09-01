@@ -1,10 +1,18 @@
 import Link from 'next/link'
 import type { Metadata } from 'next'
-import { getAllJobs } from '@/lib/db/queries'
+import { getRecentSalariedJobs } from '@/lib/db/queries'
 import { formatSalary } from '@/lib/utils/helpers'
-import type { Job } from '@/lib/db/types'
 import HeroSearch from './HeroSearch'
 import Logo from '@/components/Logo'
+
+// Without this the homepage prerenders once at build time and never
+// regenerates, so its ticker keeps advertising whatever was newest at the last
+// deploy. Measured on 2026-09-01: production was labelling six jobs from the
+// previous day's build "NEW" while that morning's ingestion sat unseen, and a
+// listing retired by the daily freshness pass would have kept showing here
+// until someone happened to push code. Every other content page on the site
+// already revalidates hourly, this one was the only one that did not.
+export const revalidate = 3600
 
 const TITLE = 'Personalized Remote Job Matches by Timezone, Salary & Work Style'
 const DESCRIPTION =
@@ -40,11 +48,10 @@ const FALLBACK_RECENT_JOBS = [
 ]
 
 async function getRecentTickerJobs() {
-  const jobs: Job[] = await getAllJobs(300)
+  const jobs = await getRecentSalariedJobs(300)
   const seenCompanies = new Set<string>()
 
   const recent = jobs
-    .filter((job) => job.salary_min)
     .sort((a, b) => new Date(b.posted_date).getTime() - new Date(a.posted_date).getTime())
     .filter((job) => {
       // One listing per company keeps the ticker varied instead of repeating

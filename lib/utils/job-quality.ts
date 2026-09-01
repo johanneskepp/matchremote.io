@@ -54,6 +54,35 @@ const BOILERPLATE_PHRASES = [
   'hiring process',
 ]
 
+// Open application and talent pool CTAs that name no role at all, the same
+// class as 'spontaneous application' and 'general application' above. These
+// are matched as a PREFIX, deliberately, not as a substring: whatever follows
+// the phrase in these titles is a company or a location ("Expression of
+// Interest with First Quantum", "Expression of Interest (United States)"),
+// never an occupation. A substring match would also catch "AUS Dr Martens
+// Sales Assistant Expression of Interest", which leads with a real role and
+// is a real posting, and deleting those is the same trap that once made every
+// job located in "Ukraine" claim it was in the UK. Titles that merely tag a
+// named role as a talent pool ("Virtual Assistant (Talent Pool)", "Data
+// Scientist Talent Pool") are real postings and stay, they name the job.
+const OPEN_INTEREST_TITLE_PREFIXES = [
+  'expression of interest',
+  'general interest',
+  'register your interest',
+]
+
+// "Join Praemium Expression of Interest" is the same CTA with the employer
+// spliced into the middle, so the prefixes above are also tried against the
+// title with a leading "join <company> " removed. A real posting like "Join
+// Our Growing Team as Account Executive" survives, stripping its first two
+// words still leaves no matching prefix.
+function isOpenInterestTitle(lowerTitle: string): boolean {
+  const withoutJoin = lowerTitle.replace(/^join\s+\S+\s+/, '')
+  return OPEN_INTEREST_TITLE_PREFIXES.some(
+    (p) => lowerTitle.startsWith(p) || withoutJoin.startsWith(p)
+  )
+}
+
 // Titles that are template placeholders rather than a real role name. Checked
 // as an exact match so a legitimate title like "Test Engineer" still passes.
 // The bare category nouns below are all scraped site navigation labels, a real
@@ -73,6 +102,9 @@ const EXACT_PLACEHOLDER_TITLES = [
   'corporate',
   'wholesale',
   'professional',
+  // Vacancy index and open interest headings naming no role.
+  'talent pipeline',
+  'open roles and general interest',
 ]
 
 // A real description is never Lorem Ipsum filler or a raw application form
@@ -181,6 +213,7 @@ export function isLikelyRealJob(title: string, description: string, company: str
   if (isPlaceholderCompany(company)) return false
   if (BOILERPLATE_PHRASES.some((p) => lower.includes(p))) return false
   if (EXACT_PLACEHOLDER_TITLES.includes(lower)) return false
+  if (isOpenInterestTitle(lower)) return false
   if (isUrlLike(t)) return false
   if (isAllCapsSlogan(t)) return false
   if (isQuestionOrBlogTitle(t)) return false
