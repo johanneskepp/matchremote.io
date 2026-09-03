@@ -159,6 +159,15 @@ export default async function CategoryJobsListing({
                     key={combo.region}
                     href={`/remote-jobs/${category.slug}/${combo.region}`}
                     className="chip chip-sm"
+                    // These three chips sit above the fold, so Next prefetches
+                    // every combo page as soon as this page renders. Combo
+                    // pages are not paginated, so engineering/americas alone is
+                    // a 1.34 MB document, and measured on production that made
+                    // /remote-jobs/engineering pull 108 KB of combo payload
+                    // inside a 401 KB load, 27% of everything the page fetches,
+                    // for links most visitors never click. The chips still work
+                    // exactly as before, they just fetch when clicked.
+                    prefetch={false}
                     style={{ textDecoration: 'none' }}
                   >
                     In {combo.regionLabel} ({combo.jobs.length})

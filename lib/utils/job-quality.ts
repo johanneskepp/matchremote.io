@@ -52,6 +52,12 @@ const BOILERPLATE_PHRASES = [
   'no vacanc',
   // A recruiting page section heading, never a role.
   'hiring process',
+  // Two more open application CTAs carrying no occupation. Both are safe as a
+  // substring because neither phrase can sit inside a real job title: seen as
+  // "Don’t see your role Apply here" and as a recruiter instruction,
+  // "APPLY NOW Send Veritas your Resume DON'T CLOSE WEBSITE".
+  'see your role',
+  'close website',
 ]
 
 // Open application and talent pool CTAs that name no role at all, the same
@@ -69,6 +75,16 @@ const OPEN_INTEREST_TITLE_PREFIXES = [
   'expression of interest',
   'general interest',
   'register your interest',
+  // A vacancy index heading, seen as "Vacancies Australia". The plural plus
+  // the trailing space is what makes this safe: the singular "Vacancy Control
+  // Officer" is a real occupation and does not match it, and a real posting is
+  // never titled "Vacancies <place>", that shape is always an index heading.
+  'vacancies ',
+  // Numbered test rows ("Test Job 3") that the exact list below cannot catch.
+  // Safe as a prefix because "test job" is not an occupational phrase in any
+  // title: the real roles here lead with "Test Engineer", "Test Automation
+  // Engineer" or "Test Automation Architect", never with "Test Job".
+  'test job',
 ]
 
 // "Join Praemium Expression of Interest" is the same CTA with the employer
@@ -105,6 +121,35 @@ const EXACT_PLACEHOLDER_TITLES = [
   // Vacancy index and open interest headings naming no role.
   'talent pipeline',
   'open roles and general interest',
+  // Literal test and template rows, confirmed by reading their descriptions
+  // ("Testing testing Testing testing", "Test job description Test job
+  // description", "This a testing job for the integration", and "We are
+  // seeking a passionate and dedicated Job Role to join our team", which is
+  // the unfilled template variable left in place). Exact only, deliberately:
+  // "Test Engineer", "Test Automation Engineer" and "Demo Engineer" are real
+  // occupations and a substring match on "test" would delete every one.
+  'test job',
+  'test job title',
+  'test req',
+  'test copy',
+  'testing',
+  'job role',
+  'title tbd',
+  // A headcount announcement naming no role. Exact only, since a real posting
+  // titled "Now Hiring: Truck Drivers" has to survive.
+  'now hiring',
+  'hiring now',
+  // More scraped navigation labels, the same class as the bare category nouns
+  // above. Their descriptions were a studio blurb, an empty application form
+  // field list, and a distance filter menu ("Other areas / 0 km / 2 km").
+  'other',
+  'other areas',
+  'menu',
+  // Bare acronyms naming no occupation, each with a description consisting of
+  // nothing but the source's own apply instruction. Exact only, so a real
+  // "MES Engineer" or "CDP Analyst" is untouched.
+  'cdp',
+  'mes',
 ]
 
 // A real description is never Lorem Ipsum filler or a raw application form
@@ -134,6 +179,15 @@ const PAGE_CHROME_PHRASES = [
   'page not found',
   'performing security verification',
   'protect against malicious bots',
+  // More of the same class, found 2026-09-03: two other 404 wordings, a
+  // failed asset load, an Akamai error page, and another cookie banner. The
+  // apostrophe is deliberately left off "page doesn" so both the straight and
+  // the curly variant match, sources send either one.
+  'page doesn',
+  'it looks like there',
+  'download failed',
+  'errors.edgesuite.net',
+  'anonymized cookies',
 ]
 const PAGE_CHROME_MAX_LENGTH = 700
 
@@ -181,6 +235,24 @@ export function companyNameFromSlug(slug: string): string {
     .join(' ')
 }
 
+// "4 vacatures" is a Dutch vacancy index heading, not a posting. A title that
+// is nothing but a count and a vacancy noun never names an occupation, so
+// matching the whole string is safe in any of these languages.
+function isVacancyCountTitle(lowerTitle: string): boolean {
+  return /^\d+\s+(vacatures?|vacancies|vacancy|jobs?|openings?|positions?|roles?)$/.test(lowerTitle)
+}
+
+// Sources send the same boilerplate both with and without diacritics, so the
+// phrase list already carried 'candidature spontanee' while the live row read
+// "Candidature spontanée" and slipped straight through. Every phrase, exact
+// title and prefix rule is therefore matched against an accent stripped copy.
+// Measured against the live catalogue before shipping: of the 92 active titles
+// carrying an accent, exactly one changes classification, that French open
+// application form, so no real accented posting is newly rejected.
+function deaccent(text: string): string {
+  return text.normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+}
+
 function isUrlLike(title: string): boolean {
   return /https?[:\s]|www\.|\.(com|community|net|org)\b/i.test(title)
 }
@@ -204,8 +276,8 @@ export function isLikelyRealJob(title: string, description: string, company: str
   const t = title.trim()
   if (t.length < 3) return false
 
-  const lower = t.toLowerCase()
-  if (lower === company.trim().toLowerCase()) return false
+  const lower = deaccent(t.toLowerCase())
+  if (lower === deaccent(company.trim().toLowerCase())) return false
   // Insurance only. Ingestion recovers the real employer from the source's
   // company slug before this ever runs, so a row reaching here with a
   // placeholder employer means that recovery failed and the listing would
@@ -214,12 +286,13 @@ export function isLikelyRealJob(title: string, description: string, company: str
   if (BOILERPLATE_PHRASES.some((p) => lower.includes(p))) return false
   if (EXACT_PLACEHOLDER_TITLES.includes(lower)) return false
   if (isOpenInterestTitle(lower)) return false
+  if (isVacancyCountTitle(lower)) return false
   if (isUrlLike(t)) return false
   if (isAllCapsSlogan(t)) return false
   if (isQuestionOrBlogTitle(t)) return false
   if (!/[a-zA-Z]{3,}/.test(t)) return false
 
-  const lowerDescription = description.toLowerCase()
+  const lowerDescription = deaccent(description.toLowerCase())
   if (DESCRIPTION_BOILERPLATE_PHRASES.some((p) => lowerDescription.includes(p))) return false
 
   if (
