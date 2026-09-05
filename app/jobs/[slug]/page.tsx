@@ -156,13 +156,19 @@ export default async function JobDetailPage({ params }: { params: Promise<{ slug
     ],
   }
 
-  // Google requires applicantLocationRequirements whenever jobLocationType is
-  // TELECOMMUTE, otherwise it flags a Search Console warning. None of our
-  // ingest sources give a clean country field, only free text location, so
-  // jobLocationType is only set when deriveApplicantCountries can honestly
-  // name a country from that text (see lib/utils/job-country.ts), jobs with
-  // vague or worldwide locations omit jobLocationType entirely rather than
-  // claim TELECOMMUTE without backing it up.
+  // jobLocationType is always TELECOMMUTE. Google treats jobLocation as
+  // required unless a posting declares itself fully remote, so leaving the
+  // type off asks for a physical address we do not have and never will, and
+  // the URL Inspection API reported exactly that as an ERROR ("Missing field
+  // jobLocation") on every page that omitted it. Every listing here comes from
+  // a remote job board, so the claim is honest on all of them.
+  //
+  // applicantLocationRequirements stays conditional, which is the part that
+  // genuinely cannot be guessed. No source gives a clean country field, only
+  // free text location, so a country is named only when
+  // deriveApplicantCountries can read one out of that text (see
+  // lib/utils/job-country.ts). A job whose location is "Worldwide" or "EMEA"
+  // is left unrestricted rather than pinned to a country we invented.
   const applicantCountries = deriveApplicantCountries(job.location)
   // Himalayas listings carry the source's own expiry, so those publish a real
   // date rather than our posting date plus MAX_JOB_AGE_DAYS estimate.
@@ -191,9 +197,9 @@ export default async function JobDetailPage({ params }: { params: Promise<{ slug
     },
     url,
     directApply: false,
+    jobLocationType: 'TELECOMMUTE',
     ...(applicantCountries
       ? {
-          jobLocationType: 'TELECOMMUTE',
           applicantLocationRequirements: applicantCountries.map((name) => ({
             '@type': 'Country',
             name,

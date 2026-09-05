@@ -1,11 +1,15 @@
-// Google requires `applicantLocationRequirements` whenever a JobPosting sets
-// jobLocationType: TELECOMMUTE, otherwise it flags a Search Console warning
-// (the site previously set TELECOMMUTE on every job with no location
-// requirement at all). None of our ingest sources give a clean country
-// field, only free text location strings, so this only returns a country
-// when the text names one unambiguously, region words like "Europe",
-// "LATAM", or "Worldwide" are not valid schema.org Country values and are
-// deliberately left unmatched rather than guessed at.
+// `applicantLocationRequirements` narrows who a remote posting can hire, so it
+// is only worth publishing when we can name a country honestly. None of our
+// ingest sources give a clean country field, only free text location strings,
+// so this returns a country only when the text names one unambiguously. Region
+// words like "Europe", "LATAM" or "Worldwide" are not valid schema.org Country
+// values and are deliberately left unmatched rather than guessed at.
+//
+// Returning null does NOT mean the JobPosting drops jobLocationType. That was
+// the old behaviour and it published an invalid posting: Google then treats
+// jobLocation as required and reports "Missing field jobLocation" as an ERROR.
+// Every listing here is remote, so the page always declares TELECOMMUTE and
+// simply leaves the requirement off when there is nothing truthful to say.
 const COUNTRY_KEYWORDS: Record<string, string[]> = {
   'United States': [
     'usa', 'u.s.', 'united states', 'new york', 'san francisco', 'los angeles', 'chicago',
