@@ -31,20 +31,8 @@ export type MatchView = {
 export function ScoreRing({ score }: { score: number }) {
   return (
     <div style={{ textAlign: 'center', flexShrink: 0 }}>
-      <div style={{
-        width: '68px',
-        height: '68px',
-        borderRadius: '50%',
-        background: 'var(--teal)',
-        color: 'white',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        fontFamily: 'var(--font-display), sans-serif',
-        fontSize: '21px',
-        fontWeight: 700,
-      }}>{score}%</div>
-      <div style={{ fontSize: '11px', color: 'var(--ink-soft)', marginTop: '6px', fontWeight: 700, letterSpacing: '0.06em' }}>MATCH</div>
+      <div className="score-ring">{score}%</div>
+      <div className="score-ring-label">MATCH</div>
     </div>
   )
 }
@@ -67,28 +55,16 @@ export function OpenMatchCard({ job }: { job: MatchView }) {
   const badges = [job.timezoneBadge, job.salaryInsight].filter(Boolean) as string[]
 
   return (
-    <div className="card" style={{ padding: '28px' }}>
-      <div style={{ display: 'flex', gap: '18px', marginBottom: '18px', alignItems: 'flex-start' }}>
-        <div style={{
-          width: '58px',
-          height: '58px',
-          borderRadius: '14px',
-          background: 'var(--surface-alt)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          fontSize: '22px',
-          fontWeight: 700,
-          color: 'var(--accent)',
-          flexShrink: 0,
-        }}>{job.company?.charAt(0).toUpperCase()}</div>
+    <div className="card match-card">
+      <div className="match-card-head">
+        <div className="match-avatar">{job.company?.charAt(0).toUpperCase()}</div>
 
         <div style={{ flex: 1, minWidth: 0 }}>
-          <h2 className="font-display" style={{ fontSize: '22px', marginBottom: '4px' }}>{job.title}</h2>
-          <div style={{ fontSize: '16px', color: 'var(--ink-soft)', marginBottom: '6px' }}>
+          <h2 className="font-display match-card-title">{job.title}</h2>
+          <div className="match-card-meta">
             {job.company} · {job.location}
           </div>
-          <div style={{ fontSize: '17px', fontWeight: 700, color: 'var(--accent)' }}>{job.salary}</div>
+          <div className="match-card-salary">{job.salary}</div>
         </div>
 
         <ScoreRing score={job.matchScore} />

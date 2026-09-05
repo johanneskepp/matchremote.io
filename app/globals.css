@@ -844,3 +844,110 @@ button {
     opacity: 0;
   }
 }
+
+/* Match card (results/dashboard). The avatar square and score ring sit fixed
+   width on either side of the title, on a narrow phone that middle column
+   shrinks to roughly 150px, cramping a real job title into 4 to 6 lines and
+   making every card unnecessarily tall. Shrinking the fixed-width elements
+   and type scale below gives the title room to breathe without changing
+   anything on desktop. */
+.match-card {
+  padding: 28px;
+}
+
+.match-card-head {
+  display: flex;
+  gap: 18px;
+  margin-bottom: 18px;
+  align-items: flex-start;
+}
+
+.match-avatar {
+  width: 58px;
+  height: 58px;
+  border-radius: 14px;
+  background: var(--surface-alt);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--accent);
+  flex-shrink: 0;
+}
+
+.match-card-title {
+  font-size: 22px;
+  margin-bottom: 4px;
+}
+
+.match-card-meta {
+  font-size: 16px;
+  color: var(--ink-soft);
+  margin-bottom: 6px;
+}
+
+.match-card-salary {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--accent);
+}
+
+.score-ring {
+  width: 68px;
+  height: 68px;
+  border-radius: 50%;
+  background: var(--teal);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-display), sans-serif;
+  font-size: 21px;
+  font-weight: 700;
+}
+
+.score-ring-label {
+  font-size: 11px;
+  color: var(--ink-soft);
+  margin-top: 6px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+}
+
+@media (max-width: 480px) {
+  .match-card {
+    padding: 18px;
+  }
+  .match-card-head {
+    gap: 12px;
+    margin-bottom: 14px;
+  }
+  .match-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 11px;
+    font-size: 16px;
+  }
+  .match-card-title {
+    font-size: 17px;
+    margin-bottom: 3px;
+    line-height: 1.25;
+  }
+  .match-card-meta {
+    font-size: 14px;
+    margin-bottom: 4px;
+  }
+  .match-card-salary {
+    font-size: 15px;
+  }
+  .score-ring {
+    width: 46px;
+    height: 46px;
+    font-size: 14px;
+  }
+  .score-ring-label {
+    font-size: 9px;
+    margin-top: 4px;
+  }
+}
