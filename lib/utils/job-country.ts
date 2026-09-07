@@ -167,6 +167,29 @@ export function deriveApplicantCountries(location: string | null | undefined): s
   return matches
 }
 
+/**
+ * The country list to publish for a job, preferring a source's own structured
+ * list over our free text guess.
+ *
+ * Himalayas hands us `locationRestrictions` already as clean country names
+ * (stored in `jobs.applicant_countries` at ingest), not a blob to parse. That
+ * is real, source confirmed eligibility, not the "picker paste" MAX_APPLICANT_COUNTRIES
+ * guards against (a giant list our OWN keyword matching over-triggered on
+ * inside a free text blob), so the cap does not apply here: a genuine 34
+ * country restriction is exactly as meaningful as a genuine 2 country one.
+ * Falls back to the free text guess only when the source gave us nothing
+ * structured to work with.
+ */
+export function applicantCountriesFor(job: {
+  location?: string | null
+  applicant_countries?: string[] | null
+}): string[] | null {
+  if (job.applicant_countries && job.applicant_countries.length > 0) {
+    return job.applicant_countries
+  }
+  return deriveApplicantCountries(job.location)
+}
+
 // Which of the quiz's three broad regions each country sits in. Only the
 // countries above appear here, anything we could not name stays unknown rather
 // than being guessed into a region.
@@ -308,4 +331,24 @@ export function deriveJobRegions(
   }
 
   return null
+}
+
+/**
+ * Same as deriveJobRegions, but tries a source's own structured country list
+ * first (see applicantCountriesFor). A country the source names that our
+ * region table does not cover (most of the world map to one of the three
+ * buckets, but not all of it) is silently skipped here rather than falling
+ * back entirely, since the other countries in the same list still say
+ * something real about which regions the job is open to.
+ */
+export function jobRegionsFor(job: {
+  location?: string | null
+  timezone?: string | null
+  applicant_countries?: string[] | null
+}): ('americas' | 'europe' | 'asia')[] | null {
+  if (job.applicant_countries && job.applicant_countries.length > 0) {
+    const regions = [...new Set(job.applicant_countries.map((c) => COUNTRY_REGIONS[c]).filter(Boolean))]
+    if (regions.length > 0) return regions
+  }
+  return deriveJobRegions(job.location, job.timezone)
 }

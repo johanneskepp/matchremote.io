@@ -1,6 +1,6 @@
 import type { Job, QuizResponse } from '@/lib/db/types'
 import { JOB_CATEGORIES, jobMatchesCategory } from './job-categories'
-import { deriveApplicantCountries, deriveJobRegions } from './job-country'
+import { applicantCountriesFor, jobRegionsFor } from './job-country'
 import { TIMEZONE_REGION_LABELS, type TimezoneRegion } from './timezone-region'
 import { formatSalary } from './helpers'
 
@@ -150,7 +150,7 @@ export function calculateMatchScore(
   // whether the clocks happen to overlap, so a job open only to a region the
   // user is not in is scored far below one that is genuinely open to them.
   if (userPreferences.timezone) {
-    const jobRegions = deriveJobRegions(job.location, job.timezone)
+    const jobRegions = jobRegionsFor(job)
 
     if (!jobRegions) {
       // No stated restriction. Open to the user as far as we know, but we
@@ -314,14 +314,17 @@ export function isCompatibleTimezone(region1: string, region2: string): boolean 
 export function getTimezoneBadge(
   jobTimezone: string | null | undefined,
   userTimezone: string | null | undefined,
-  jobLocation?: string | null
+  jobLocation?: string | null,
+  jobApplicantCountries?: string[] | null
 ): string | null {
   if (!userTimezone) return null
 
   // Prefer the countries named in the listing over the coarse ingested region,
   // for the same reason locationFit does: a stated country is an eligibility
-  // fact, the region is an inference on top of it.
-  const regions = deriveJobRegions(jobLocation, jobTimezone)
+  // fact, the region is an inference on top of it. jobRegionsFor tries a
+  // source's own structured country list before falling back to the free
+  // text guess.
+  const regions = jobRegionsFor({ location: jobLocation, timezone: jobTimezone, applicant_countries: jobApplicantCountries })
   if (!regions) return null
 
   if (regions.includes(userTimezone as any)) return 'Open where you are'
@@ -497,6 +500,7 @@ export type ExplanationContext = {
     title?: string
     location?: string | null
     timezone?: string | null
+    applicant_countries?: string[] | null
     salary_min?: number | null
     salary_max?: number | null
     industries?: string[] | null
@@ -519,13 +523,13 @@ function specificLines(context: ExplanationContext): Record<string, string | nul
     if (category) out.skillsMatch = `✓ ${category.label} role, by job title`
   }
 
-  const countries = deriveApplicantCountries(job.location)
+  const countries = applicantCountriesFor(job)
   if (countries && countries.length > 0) {
     out.locationFit = countries.length === 1
       ? `✓ Hiring in ${countries[0]}`
       : `✓ Hiring in ${countries.slice(0, 2).join(' and ')}`
   } else if (user?.timezone) {
-    const regions = deriveJobRegions(job.location, job.timezone)
+    const regions = jobRegionsFor(job)
     if (regions && regions.includes(user.timezone as any)) {
       out.locationFit = `✓ Open across ${TIMEZONE_REGION_LABELS[user.timezone as TimezoneRegion] ?? user.timezone}`
     }

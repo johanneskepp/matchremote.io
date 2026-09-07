@@ -75,7 +75,7 @@ export default async function DashboardPage() {
       }),
       description: job.description,
       url: job.url,
-      timezoneBadge: getTimezoneBadge(job.timezone, userTimezone, job.location),
+      timezoneBadge: getTimezoneBadge(job.timezone, userTimezone, job.location, job.applicant_countries),
       salaryInsight: insights[job.id]?.label ?? null,
     }
   })

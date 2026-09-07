@@ -468,7 +468,12 @@ async function fetchHimalayas(): Promise<JobInsert[]> {
     .filter((job) => job.title && (job.applicationLink || job.guid) && (!job.expiryDate || job.expiryDate > now))
     .map((job) => {
       const url = job.applicationLink || job.guid!
-      const location = cleanText(job.locationRestrictions?.join(', ') || 'Worldwide')
+      // Himalayas is the only source that gives a structured country list
+      // rather than free text, kept as its own array (see applicant_countries
+      // below) instead of only being flattened into the display string, so it
+      // does not have to be re-derived by lossy keyword matching later.
+      const restrictions = (job.locationRestrictions || []).map((c) => cleanText(c)).filter(Boolean)
+      const location = cleanText(restrictions.join(', ') || 'Worldwide')
       const title = cleanText(job.title)
       const description = truncateDescription(stripHtml(job.description || ''))
       return {
@@ -481,6 +486,7 @@ async function fetchHimalayas(): Promise<JobInsert[]> {
         async_score: inferAsyncScore(description),
         job_type: normalizeJobType(job.employmentType),
         location,
+        applicant_countries: restrictions.length > 0 ? restrictions : null,
         source: 'himalayas',
         url,
         posted_date: job.pubDate ? new Date(job.pubDate * 1000).toISOString() : new Date().toISOString(),

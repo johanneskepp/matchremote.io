@@ -6,7 +6,7 @@ import { getActiveJobsByTitle, getAllJobs, getJobById } from '@/lib/db/queries'
 import { buildJobSlug, extractJobIdFromSlug } from '@/lib/utils/job-slug'
 import { formatSalary, formatDate } from '@/lib/utils/helpers'
 import { JOB_CATEGORIES, jobMatchesCategory } from '@/lib/utils/job-categories'
-import { deriveApplicantCountries } from '@/lib/utils/job-country'
+import { applicantCountriesFor } from '@/lib/utils/job-country'
 import { validThroughFor } from '@/lib/utils/job-freshness'
 import { resolveCanonicalJob } from '@/lib/utils/job-duplicates'
 import type { Job } from '@/lib/db/types'
@@ -164,12 +164,13 @@ export default async function JobDetailPage({ params }: { params: Promise<{ slug
   // a remote job board, so the claim is honest on all of them.
   //
   // applicantLocationRequirements stays conditional, which is the part that
-  // genuinely cannot be guessed. No source gives a clean country field, only
-  // free text location, so a country is named only when
-  // deriveApplicantCountries can read one out of that text (see
+  // genuinely cannot be guessed. Himalayas gives a clean structured country
+  // list (stored in job.applicant_countries at ingest), every other source
+  // only free text, so applicantCountriesFor prefers that structured list and
+  // falls back to reading one out of the free text (see
   // lib/utils/job-country.ts). A job whose location is "Worldwide" or "EMEA"
   // is left unrestricted rather than pinned to a country we invented.
-  const applicantCountries = deriveApplicantCountries(job.location)
+  const applicantCountries = applicantCountriesFor(job)
   // Himalayas listings carry the source's own expiry, so those publish a real
   // date rather than our posting date plus MAX_JOB_AGE_DAYS estimate.
   const validThrough = validThroughFor(job.posted_date, job.expires_at)

@@ -1,6 +1,6 @@
 import { getAllActiveJobs } from '@/lib/db/queries'
 import { buildJobSlug } from '@/lib/utils/job-slug'
-import { deriveApplicantCountries } from '@/lib/utils/job-country'
+import { applicantCountriesFor } from '@/lib/utils/job-country'
 import { formatSalary } from '@/lib/utils/helpers'
 import type { Job } from '@/lib/db/types'
 
@@ -28,7 +28,7 @@ function cdata(value: string): string {
 
 function jobEntry(job: Job): string {
   const url = `${SITE_URL}/jobs/${buildJobSlug(job)}`
-  const countries = deriveApplicantCountries(job.location)
+  const countries = applicantCountriesFor(job)
   const salary = formatSalary(job.salary_min ?? undefined, job.salary_max ?? undefined)
 
   return `  <job>

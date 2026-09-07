@@ -116,6 +116,7 @@ export type Database = {
           company_size: string | null
           industries: string[]
           posted_to_bluesky_at: string | null
+          applicant_countries: string[] | null
         }
         Insert: {
           id?: string
@@ -140,6 +141,7 @@ export type Database = {
           company_size?: string | null
           industries?: string[]
           posted_to_bluesky_at?: string | null
+          applicant_countries?: string[] | null
         }
         Update: {
           id?: string
@@ -164,6 +166,7 @@ export type Database = {
           company_size?: string | null
           industries?: string[]
           posted_to_bluesky_at?: string | null
+          applicant_countries?: string[] | null
         }
       }
       matches: {
