@@ -4,13 +4,16 @@
  * small confirmed list of non-job sources. Soft delete via is_active=false,
  * fully reversible, nothing is dropped from the table.
  *
- * Usage: npx tsx --env-file=.env.local scripts/cleanup-non-job-listings.ts
+ * Usage: npx tsx --env-file=.env.local scripts/cleanup-non-job-listings.ts [--dry-run]
  */
 import { supabaseAdmin } from '../lib/db/supabase'
 import { getAllActiveJobs } from '../lib/db/queries'
-import { isLikelyRealJob, KNOWN_NON_JOB_COMPANIES } from '../lib/utils/job-quality'
+import { isKnownNonJobCompany, isLikelyRealJob } from '../lib/utils/job-quality'
 
 const jobsTable = supabaseAdmin as any
+
+// Pass --dry-run to list what would be deactivated without touching the table.
+const DRY_RUN = process.argv.includes('--dry-run')
 
 async function main() {
   // getAllActiveJobs pages past Supabase's 1000 row PostgREST cap, unlike a
@@ -19,7 +22,7 @@ async function main() {
   const jobs = await getAllActiveJobs()
 
   const toDeactivate = (jobs ?? []).filter((j: any) => {
-    if (KNOWN_NON_JOB_COMPANIES.has(j.company.trim().toLowerCase())) return true
+    if (isKnownNonJobCompany(j.company)) return true
     return !isLikelyRealJob(j.title, j.description ?? '', j.company)
   })
 
@@ -27,6 +30,10 @@ async function main() {
   toDeactivate.forEach((j: any) => console.log(`- ${j.title} (${j.company})`))
 
   if (toDeactivate.length === 0) return
+  if (DRY_RUN) {
+    console.log('Dry run, nothing deactivated.')
+    return
+  }
 
   const { error: updateError } = await jobsTable
     .from('jobs')

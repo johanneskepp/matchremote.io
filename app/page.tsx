@@ -23,6 +23,12 @@ export const metadata: Metadata = {
   description: DESCRIPTION,
   alternates: {
     canonical: 'https://matchremote.io',
+    // Repeated from the root layout on purpose: Next replaces alternates
+    // wholesale, so declaring a canonical here silently dropped the feed
+    // autodiscovery link from the one page a feed reader actually probes.
+    types: {
+      'application/rss+xml': 'https://matchremote.io/feed.xml',
+    },
   },
   openGraph: {
     title: `matchremote: ${TITLE}`,

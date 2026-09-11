@@ -40,8 +40,13 @@ export const metadata: Metadata = {
     "find remote work",
     "remote job board",
   ],
+  // Deliberately no canonical here. Next replaces a page's alternates object
+  // wholesale rather than merging it, so a root level canonical only ever
+  // reached pages that declared none of their own, and every one of those
+  // (/results, /dashboard, /account, /auth/login, the 404 page) then claimed
+  // the homepage as its canonical while also being noindex, a mixed signal
+  // Google's own guidance says to avoid. Every indexable page sets its own.
   alternates: {
-    canonical: SITE_URL,
     types: {
       "application/rss+xml": `${SITE_URL}/feed.xml`,
     },

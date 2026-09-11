@@ -58,6 +58,10 @@ const BOILERPLATE_PHRASES = [
   // "APPLY NOW Send Veritas your Resume DON'T CLOSE WEBSITE".
   'see your role',
   'close website',
+  // An all caps recruiting slogan too long for isAllCapsSlogan's four word
+  // cap ("JOIN US AND MAKE AN IMPACT ON THE FUTURE"), whose description was a
+  // company mission statement naming no role.
+  'join us and make an impact',
 ]
 
 // Open application and talent pool CTAs that name no role at all, the same
@@ -85,7 +89,22 @@ const OPEN_INTEREST_TITLE_PREFIXES = [
   // title: the real roles here lead with "Test Engineer", "Test Automation
   // Engineer" or "Test Automation Architect", never with "Test Job".
   'test job',
+  // A spam post written as a sentence ("If you are looking for a employment
+  // job"), never the opening of a real title.
+  'if you are looking for',
 ]
+
+// Talent pipeline titles of the shape "Future <role> Positions" or "Future
+// <company> Career Opportunities". Every live row of this shape said in its
+// own description that nothing was open ("we currently do not have any
+// positions open; however, if you would like to be considered for future
+// opportunities"). The colon check keeps "Future Opportunity: Enterprise
+// Sales Representative", which is a pipeline for one named role and stays,
+// the same rule that keeps "Data Scientist Talent Pool".
+function isFuturePipelineTitle(lowerTitle: string): boolean {
+  if (lowerTitle.includes(':')) return false
+  return /^future\b.*\b(positions|opportunities)\b/.test(lowerTitle)
+}
 
 // "Join Praemium Expression of Interest" is the same CTA with the employer
 // spliced into the middle, so the prefixes above are also tried against the
@@ -150,6 +169,19 @@ const EXACT_PLACEHOLDER_TITLES = [
   // "MES Engineer" or "CDP Analyst" is untouched.
   'cdp',
   'mes',
+  // Found 2026-09-11. "Various" and "Information" headed real recruiting
+  // text that named no occupation at all ("Join Australia's Only Plumber
+  // Owned Supply Team", a job ref and postcode list). "Open roles" is a
+  // careers page heading ("We hire slowly"). "Future Job Test" is a literal
+  // test row ("This is a future job.") and "Future Shaprs" a talent pool
+  // ("even if our current postings haven't piqued your interest"). Exact
+  // only, so "Information Security Analyst" and "Various Positions Nurse"
+  // would both survive.
+  'various',
+  'information',
+  'open roles',
+  'future job test',
+  'future shaprs',
 ]
 
 // A real description is never Lorem Ipsum filler or a raw application form
@@ -161,6 +193,20 @@ const DESCRIPTION_BOILERPLATE_PHRASES = [
   // The whole "description" is just a Google Forms sign in redirect, not
   // any actual job content, seen from a RemoteOK entry linking to a form.
   'continue to google forms',
+  // Found 2026-09-11. Video game skin marketplace listings scraped as jobs:
+  // "Exterior: Battle-Scarred" opened a description of gloves and an AK-47.
+  // These five are the exact wear grades that marketplace uses and no job
+  // description opens with one, so they are safe as a substring where a bare
+  // "exterior:" would not be (a painting job can list exterior work).
+  'exterior: battle-scarred',
+  'exterior: well-worn',
+  'exterior: field-tested',
+  'exterior: minimal wear',
+  'exterior: factory new',
+  // A crypto token call ("$MERV JUST HIT CTO RADAR ... ATH MC: $79.5K")
+  // scraped as a posting. "ATH MC" is market cap slang that never appears in
+  // a job description.
+  'ath mc:',
 ]
 
 // Phrases that mean the scraper captured page furniture instead of the posting
@@ -188,6 +234,10 @@ const PAGE_CHROME_PHRASES = [
   'download failed',
   'errors.edgesuite.net',
   'anonymized cookies',
+  // A scraped document editor toolbar ("Undo·Ctrl+Z Redo·Ctrl+Shift+Z
+  // open_with Translate"), found 2026-09-11 as the whole description of a
+  // "Routesetters" row.
+  'redo·ctrl+shift+z',
 ]
 const PAGE_CHROME_MAX_LENGTH = 700
 
@@ -206,12 +256,72 @@ const QUESTION_STARTERS = ['how ', 'why ', 'what ', 'when ']
 // are SaaS product names ("Jenni AI", "Typefully", "Apify", "Beehiiv") all
 // carrying one identical description of an unrelated forex trading simulator,
 // so it is a scraped product directory, not an employer with vacancies.
+//
+// The block added 2026-09-11 is the same shape again, one RemoteOK burst (ids
+// 1135xxx to 1137xxx) of product pages, app store blurbs, company profiles
+// and outright spam scraped as postings. Every active row of every company
+// listed was read individually before it went on this list, none had a
+// single real vacancy: video game skin listings ("Exterior: Battle-Scarred"),
+// a Bible chapter in Croatian, two crypto token calls, a Jacques Tati film
+// listing, gym membership tiers ("Elite", "Basic"), an excavator, UK
+// employment statistics, and a long tail of SaaS products whose titles are
+// the product name. Their titles are single brand words, and a title shape
+// rule cannot separate "Slingshot" from "Caretaker", "Porter" or "Butcher",
+// all real single word occupations live in the catalogue, so the employer
+// is the only honest signal. Matched after stripping accents, since one
+// source spells its own name "Quicksite sàrl".
 export const KNOWN_NON_JOB_COMPANIES = new Set([
   'world veterans',
   'devtube',
   'adconversion',
   'ai supermarket',
+  'skinventory',
+  'new atlantis',
+  'covaltech',
+  'simpletech.ai',
+  'nexlane',
+  'westtech home automation, llc',
+  'build fast with ai',
+  'meme calls',
+  'yemma',
+  'cllimber',
+  'powerplay',
+  'social value, inc.',
+  'best in britain',
+  'playtomax',
+  'wesaas',
+  'metriq srl',
+  'hdgforge',
+  'twitan.com',
+  'mp software',
+  'qorsi',
+  'svetoviz',
+  'curcle',
+  'program delta performance group',
+  'yt corporation',
+  'quicksite sarl',
+  'hot9ja',
+  'koodup',
+  'xsbrt',
+  'tridant',
+  'setrsoft',
+  'eterniseed',
+  'myaarohan',
+  'flurix.ai',
+  'fasek d.o.o.',
+  'bujak maszyny',
+  'filmtheater cinecenter',
+  'nexerada',
+  'looknet',
+  'odf',
 ])
+
+// The one place the blocklist is consulted, shared by ingestion and the
+// cleanup script so the two cannot disagree on how a company name is
+// normalised before lookup.
+export function isKnownNonJobCompany(company: string): boolean {
+  return KNOWN_NON_JOB_COMPANIES.has(deaccent(company.trim().toLowerCase()))
+}
 
 // Himalayas' API intermittently returns the literal string "name" in its
 // companyName field while the companySlug on the same record stays correct.
@@ -286,6 +396,7 @@ export function isLikelyRealJob(title: string, description: string, company: str
   if (BOILERPLATE_PHRASES.some((p) => lower.includes(p))) return false
   if (EXACT_PLACEHOLDER_TITLES.includes(lower)) return false
   if (isOpenInterestTitle(lower)) return false
+  if (isFuturePipelineTitle(lower)) return false
   if (isVacancyCountTitle(lower)) return false
   if (isUrlLike(t)) return false
   if (isAllCapsSlogan(t)) return false

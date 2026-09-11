@@ -14,6 +14,7 @@ import {
   companyNameFromSlug,
   isLikelyRealJob,
   isPlaceholderCompany,
+  isKnownNonJobCompany,
   KNOWN_NON_JOB_COMPANIES,
 } from '../lib/utils/job-quality'
 import { decodeHtmlEntities, htmlToPlainText } from '../lib/utils/html-entities'
@@ -533,7 +534,7 @@ async function main() {
   // vacancies. Defined in lib/utils/job-quality.ts so this script and
   // scripts/cleanup-non-job-listings.ts can never fall out of sync.
   const beforeBlocklist = allJobs.length
-  allJobs = allJobs.filter((job) => !KNOWN_NON_JOB_COMPANIES.has(job.company.trim().toLowerCase()))
+  allJobs = allJobs.filter((job) => !isKnownNonJobCompany(job.company))
   if (allJobs.length !== beforeBlocklist) {
     console.log(`Dropped ${beforeBlocklist - allJobs.length} entries from known non-job sources (${[...KNOWN_NON_JOB_COMPANIES].join(', ')}).`)
   }
