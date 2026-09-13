@@ -78,7 +78,7 @@ export default function DashboardMatches({
               : 'Lower the filter to see the rest, or leave it here and we will email you when something clears this bar.'}
           </p>
           <div style={{ maxWidth: '280px', margin: '0 auto' }}>
-            <Link href="/remote-jobs" className="btn-big">Browse all jobs</Link>
+            <Link prefetch={false} href="/remote-jobs" className="btn-big">Browse all jobs</Link>
           </div>
         </div>
       ) : (

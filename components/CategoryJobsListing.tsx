@@ -125,7 +125,7 @@ export default async function CategoryJobsListing({
         <section style={{ padding: '48px 0 24px' }}>
           <div className="container-wide">
             <nav aria-label="Breadcrumb" style={{ marginBottom: '16px', fontSize: '14px', color: 'var(--ink-soft)', textAlign: 'center' }}>
-              <Link href="/remote-jobs" style={{ color: 'var(--ink-soft)', textDecoration: 'underline' }}>
+              <Link prefetch={false} href="/remote-jobs" style={{ color: 'var(--ink-soft)', textDecoration: 'underline' }}>
                 Remote Jobs
               </Link>
               {' / '}
@@ -133,7 +133,7 @@ export default async function CategoryJobsListing({
                 category.label
               ) : (
                 <>
-                  <Link href={`/remote-jobs/${category.slug}`} style={{ color: 'var(--ink-soft)', textDecoration: 'underline' }}>
+                  <Link prefetch={false} href={`/remote-jobs/${category.slug}`} style={{ color: 'var(--ink-soft)', textDecoration: 'underline' }}>
                     {category.label}
                   </Link>
                   {' / '}
@@ -190,6 +190,7 @@ export default async function CategoryJobsListing({
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '20px' }}>
                 {pageJobs.map((job) => (
                   <Link
+                    prefetch={false}
                     key={job.id}
                     href={`/jobs/${buildJobSlug(job)}`}
                     className="card"

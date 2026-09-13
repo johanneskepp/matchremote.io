@@ -45,6 +45,7 @@ export default function RemoteJobsIndexPage() {
               Pick a category to browse, or take the quiz for matches personalized to your timezone and salary target.
             </p>
             <Link
+              prefetch={false}
               href="/remote-jobs/all"
               style={{ color: 'var(--teal)', fontWeight: 600, textDecoration: 'underline', fontSize: '15px', display: 'inline-block', marginTop: '12px' }}
             >
@@ -55,6 +56,7 @@ export default function RemoteJobsIndexPage() {
           <div className="container-wide" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: '20px' }}>
             {JOB_CATEGORIES.map((category) => (
               <Link
+                prefetch={false}
                 key={category.slug}
                 href={`/remote-jobs/${category.slug}`}
                 className="card"

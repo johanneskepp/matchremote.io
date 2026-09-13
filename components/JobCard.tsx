@@ -54,7 +54,7 @@ export function JobCard({
   const scoreColor = matchScore ? getColorForScore(matchScore) : '#666'
 
   return (
-    <Link href={`/jobs/${id}`} className="no-underline">
+    <Link prefetch={false} href={`/jobs/${id}`} className="no-underline">
       <div className="card-hover group">
         {/* Header with Match Score */}
         <div className="flex items-start justify-between mb-4">

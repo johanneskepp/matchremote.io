@@ -97,7 +97,7 @@ export default function ResultsPage() {
                 Nothing in the database fits your answers right now. Your answers are saved, and we keep adding jobs as they get published.
               </p>
               <div style={{ maxWidth: '280px', margin: '0 auto' }}>
-                <Link href="/remote-jobs" className="btn-big">Browse all jobs</Link>
+                <Link prefetch={false} href="/remote-jobs" className="btn-big">Browse all jobs</Link>
               </div>
             </div>
           ) : (

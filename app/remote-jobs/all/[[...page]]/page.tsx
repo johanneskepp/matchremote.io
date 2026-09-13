@@ -122,7 +122,7 @@ export default async function AllJobsPage({ params }: { params: Promise<{ page?:
         <section style={{ padding: '48px 0 24px' }}>
           <div className="container-wide">
             <nav aria-label="Breadcrumb" style={{ marginBottom: '16px', fontSize: '14px', color: 'var(--ink-soft)', textAlign: 'center' }}>
-              <Link href="/remote-jobs" style={{ color: 'var(--ink-soft)', textDecoration: 'underline' }}>
+              <Link prefetch={false} href="/remote-jobs" style={{ color: 'var(--ink-soft)', textDecoration: 'underline' }}>
                 Remote Jobs
               </Link>
               {' / '}All Jobs
@@ -143,6 +143,7 @@ export default async function AllJobsPage({ params }: { params: Promise<{ page?:
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '20px' }}>
               {pageJobs.map((job) => (
                 <Link
+                  prefetch={false}
                   key={job.id}
                   href={`/jobs/${buildJobSlug(job)}`}
                   className="card"

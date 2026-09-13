@@ -257,13 +257,13 @@ export default async function JobDetailPage({ params }: { params: Promise<{ slug
         <section style={{ padding: '48px 0' }}>
           <div className="container">
             <nav aria-label="Breadcrumb" style={{ marginBottom: '16px', fontSize: '14px', color: 'var(--ink-soft)' }}>
-              <Link href="/remote-jobs" style={{ color: 'var(--ink-soft)', textDecoration: 'underline' }}>
+              <Link prefetch={false} href="/remote-jobs" style={{ color: 'var(--ink-soft)', textDecoration: 'underline' }}>
                 Remote Jobs
               </Link>
               {category && (
                 <>
                   {' / '}
-                  <Link href={`/remote-jobs/${category.slug}`} style={{ color: 'var(--ink-soft)', textDecoration: 'underline' }}>
+                  <Link prefetch={false} href={`/remote-jobs/${category.slug}`} style={{ color: 'var(--ink-soft)', textDecoration: 'underline' }}>
                     {category.label}
                   </Link>
                 </>
@@ -333,7 +333,7 @@ export default async function JobDetailPage({ params }: { params: Promise<{ slug
 
             {category && (
               <div style={{ marginTop: '12px', textAlign: 'center' }}>
-                <Link href={`/remote-jobs/${category.slug}`} style={{ color: 'var(--ink-soft)', fontWeight: 600, textDecoration: 'underline' }}>
+                <Link prefetch={false} href={`/remote-jobs/${category.slug}`} style={{ color: 'var(--ink-soft)', fontWeight: 600, textDecoration: 'underline' }}>
                   Browse more remote {category.label.toLowerCase()} jobs →
                 </Link>
               </div>
