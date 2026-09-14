@@ -86,13 +86,21 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     }))
   })
 
+  // Combo listings paginate at CATEGORY_PAGE_SIZE too, via the same "/p/n"
+  // segment, so page 2 and up need their own entries for the same reason.
   const combos = await getQualifyingComboPages()
-  const comboPages: MetadataRoute.Sitemap = combos.map((combo) => ({
-    url: `${BASE_URL}/remote-jobs/${combo.category.slug}/${combo.region}`,
-    lastModified: now,
-    changeFrequency: 'weekly',
-    priority: 0.65,
-  }))
+  const comboPages: MetadataRoute.Sitemap = combos.flatMap((combo) => {
+    const totalPages = Math.max(1, Math.ceil(combo.jobs.length / CATEGORY_PAGE_SIZE))
+    return Array.from({ length: totalPages }, (_, i) => ({
+      url:
+        i === 0
+          ? `${BASE_URL}/remote-jobs/${combo.category.slug}/${combo.region}`
+          : `${BASE_URL}/remote-jobs/${combo.category.slug}/${combo.region}/p/${i + 1}`,
+      lastModified: now,
+      changeFrequency: 'weekly' as const,
+      priority: i === 0 ? 0.65 : 0.5,
+    }))
+  })
 
   // /remote-jobs/all, paginated, gives every job at least one real internal
   // link regardless of whether its title matches a category, closing the

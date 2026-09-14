@@ -2,9 +2,10 @@
 // two can never disagree on how many pages the "all jobs" listing has.
 export const ALL_JOBS_PAGE_SIZE = 60
 
-// Same job, for category pages: shared between components/CategoryJobsListing,
-// app/remote-jobs/[category], app/remote-jobs/[category]/p/[n] and
-// app/sitemap.ts. Category pages used to render every matching job in one
+// Same job, for category and combo pages: shared between
+// components/CategoryJobsListing, components/ComboJobsListing, their routes
+// under app/remote-jobs/[category] and app/sitemap.ts.
+// Category pages used to render every matching job in one
 // document, which reached 1156 jobs and 2.2 MB on /remote-jobs/engineering
 // and showed up as a real LCP regression in npm run check:vitals.
 export const CATEGORY_PAGE_SIZE = 60
