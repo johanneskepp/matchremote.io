@@ -13,7 +13,7 @@ import { ALL_JOBS_PAGE_SIZE as PAGE_SIZE } from '@/lib/utils/job-pagination'
 // keyword heuristics, so any job that matches none of them had no real
 // internal link pointing to it at all, only the sitemap. This page gives
 // every job at least one, regardless of how well it categorizes.
-export const revalidate = 3600
+export const revalidate = 21600
 export const dynamicParams = true
 
 const SITE_URL = 'https://matchremote.io'
@@ -173,7 +173,7 @@ export default async function AllJobsPage({ params }: { params: Promise<{ page?:
               style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}
             >
               {page > 1 && (
-                <Link href={pageHref(page - 1)} className="chip" style={{ textDecoration: 'none' }}>
+                <Link prefetch={false} href={pageHref(page - 1)} className="chip" style={{ textDecoration: 'none' }}>
                   ← Previous
                 </Link>
               )}
@@ -181,7 +181,7 @@ export default async function AllJobsPage({ params }: { params: Promise<{ page?:
                 Page {page} of {totalPages}
               </span>
               {page < totalPages && (
-                <Link href={pageHref(page + 1)} className="chip" style={{ textDecoration: 'none' }}>
+                <Link prefetch={false} href={pageHref(page + 1)} className="chip" style={{ textDecoration: 'none' }}>
                   Next →
                 </Link>
               )}

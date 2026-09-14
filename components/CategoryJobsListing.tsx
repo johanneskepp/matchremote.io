@@ -223,7 +223,7 @@ export default async function CategoryJobsListing({
               style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}
             >
               {page > 1 && (
-                <Link href={categoryPageHref(category.slug, page - 1)} className="chip" style={{ textDecoration: 'none' }}>
+                <Link prefetch={false} href={categoryPageHref(category.slug, page - 1)} className="chip" style={{ textDecoration: 'none' }}>
                   ← Previous
                 </Link>
               )}
@@ -231,7 +231,7 @@ export default async function CategoryJobsListing({
                 Page {page} of {totalPages}, {jobs.length} open roles
               </span>
               {page < totalPages && (
-                <Link href={categoryPageHref(category.slug, page + 1)} className="chip" style={{ textDecoration: 'none' }}>
+                <Link prefetch={false} href={categoryPageHref(category.slug, page + 1)} className="chip" style={{ textDecoration: 'none' }}>
                   Next →
                 </Link>
               )}

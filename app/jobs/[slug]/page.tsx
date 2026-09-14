@@ -12,7 +12,12 @@ import { resolveCanonicalJob } from '@/lib/utils/job-duplicates'
 import type { Job } from '@/lib/db/types'
 import Logo from '@/components/Logo'
 
-export const revalidate = 3600
+// A job page never changes after ingestion, it only disappears when the
+// daily freshness pass retires the row. Revalidating hourly therefore bought
+// nothing except moving the page out of the free edge cache and back into
+// counted origin transfer 24 times a day. A day is plenty, a retired job
+// 404s within 24 hours instead of one.
+export const revalidate = 86400
 export const dynamicParams = true
 
 const SITE_URL = 'https://matchremote.io'

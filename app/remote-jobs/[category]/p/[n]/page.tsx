@@ -7,7 +7,7 @@ import CategoryJobsListing, {
   getCategoryJobs,
 } from '@/components/CategoryJobsListing'
 
-export const revalidate = 3600
+export const revalidate = 21600
 // A page number past the end of a category should 404 rather than render an
 // empty listing, and an unbuilt page still has to render as job volume grows
 // between builds, so this stays true and the range check below does the work.

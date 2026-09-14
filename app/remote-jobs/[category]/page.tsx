@@ -6,7 +6,7 @@ import CategoryJobsListing, {
   getCategoryJobs,
 } from '@/components/CategoryJobsListing'
 
-export const revalidate = 3600
+export const revalidate = 21600
 
 export function generateStaticParams() {
   return JOB_CATEGORIES.map((c) => ({ category: c.slug }))
