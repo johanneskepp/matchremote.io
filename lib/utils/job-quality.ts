@@ -62,6 +62,26 @@ const BOILERPLATE_PHRASES = [
   // cap ("JOIN US AND MAKE AN IMPACT ON THE FUTURE"), whose description was a
   // company mission statement naming no role.
   'join us and make an impact',
+  // Found 2026-09-14 in a RemoteOK burst of scraped careers pages. Every one
+  // is an open application CTA naming no role ("Express your interest",
+  // "Send us your CV", "Build with us", "Talk us here if you can't find the
+  // job that you're looking for", "The right person can still introduce
+  // themselves", "If you think you've got what it takes..", "All Other
+  // Roles", "All Other Future Considerations", "Across all departments",
+  // "Don't see a role for you", and the French "Candidature libre"). None of
+  // these phrases can sit inside a real job title, so substring is safe, and
+  // each was measured against the live catalogue before shipping.
+  'express your interest',
+  'send us your cv',
+  'build with us',
+  'find the job that',
+  'introduce themselves',
+  'got what it takes',
+  'candidature libre',
+  'all other roles',
+  'all other future',
+  'across all departments',
+  'see a role for you',
 ]
 
 // Open application and talent pool CTAs that name no role at all, the same
@@ -92,6 +112,16 @@ const OPEN_INTEREST_TITLE_PREFIXES = [
   // A spam post written as a sentence ("If you are looking for a employment
   // job"), never the opening of a real title.
   'if you are looking for',
+  // Job seekers posting themselves as listings ("Seeking a job", "Looking for
+  // Job", "Find a job 3rd comi", each with a description reading "Hi, I'm
+  // looking for work"). A real posting never opens with the applicant's own
+  // search, so these are safe as prefixes.
+  'seeking a job',
+  'looking for job',
+  'looking for a job',
+  'find a job',
+  'i am looking for',
+  "i'm looking for",
 ]
 
 // Talent pipeline titles of the shape "Future <role> Positions" or "Future
@@ -182,6 +212,41 @@ const EXACT_PLACEHOLDER_TITLES = [
   'open roles',
   'future job test',
   'future shaprs',
+  // Found 2026-09-14, the same RemoteOK burst as the phrases above, on
+  // employers that are otherwise real so the company cannot be blocked.
+  // Careers page headings and open application CTAs ("Your Next Role" read
+  // "We're Hiring... Eventually!", "Current Openings" read "At present, we do
+  // not have any open positions", "Custom Role", "General Staff Position",
+  // "Various roles", "Various Positions" on a newspaper's nav bar, "Earn
+  // more" on a furniture retailer's careers intro, "Rest of World" and
+  // "Distribution Centers" as site navigation, "Holly Can Fix It" as a hotel
+  // group's campaign name, "A People's Place" as a careers page slogan),
+  // template placeholders ("Company Name", "Job Summary"), a scraped 404
+  // ("Page Not Found"), a talent pool waitlist ("A glimpse of the pool") and
+  // a venture studio's careers slogan ("Build from the frontier").
+  // Exact only, so "Various Positions Registered Nurse", "Current Openings:
+  // Nurses" or "Custom Role Designer" would all survive.
+  'your next role',
+  'current openings',
+  'custom role',
+  'general staff position',
+  'various roles',
+  'various positions',
+  'earn more',
+  'rest of world',
+  'distribution centers',
+  'holly can fix it',
+  "a people's place",
+  'company name',
+  'job summary',
+  'page not found',
+  'a glimpse of the pool',
+  'build from the frontier',
+  // Personal profiles scraped as postings ("Resume Writer He/Him", a
+  // dyslexia startup founder's bio) whose employers are names a real company
+  // also uses, so the title is the only safe key.
+  'joel q',
+  'krish gupta',
 ]
 
 // A real description is never Lorem Ipsum filler or a raw application form
@@ -207,6 +272,14 @@ const DESCRIPTION_BOILERPLATE_PHRASES = [
   // scraped as a posting. "ATH MC" is market cap slang that never appears in
   // a job description.
   'ath mc:',
+  // Found 2026-09-14. A literal test row ("Company Description Test Job
+  // Description Test Qualifications Test", matched on that whole run so a
+  // real posting that merely mentions a test job description survives) and
+  // a career guide page scraped as a posting, whose description opens with
+  // the guide index's own back link ("← All career guides Product and design
+  // Product Manager").
+  'test job description test qualifications',
+  'all career guides',
 ]
 
 // Phrases that mean the scraper captured page furniture instead of the posting
@@ -238,6 +311,12 @@ const PAGE_CHROME_PHRASES = [
   // open_with Translate"), found 2026-09-11 as the whole description of a
   // "Routesetters" row.
   'redo·ctrl+shift+z',
+  // A browser support notice ("Unsupported Browser This browser is no longer
+  // supported. Please install one of these supported browsers") and a bot
+  // check ("403 / Security check Before you continue, please verify your
+  // request"), both found 2026-09-14 as the entire description.
+  'unsupported browser',
+  '403 / security check',
 ]
 const PAGE_CHROME_MAX_LENGTH = 700
 
@@ -314,6 +393,67 @@ export const KNOWN_NON_JOB_COMPANIES = new Set([
   'nexerada',
   'looknet',
   'odf',
+  // Found 2026-09-14, one more RemoteOK burst (ids 1136xxx) of blog posts,
+  // product pages, personal profiles and fiction scraped as postings. Every
+  // active row of every one of these was read before it went on the list:
+  // cold outreach blog articles ("Attachments skip the first message"), a
+  // China policy newsletter, an Amiga nostalgia essay published under three
+  // titles, Russian and werewolf fiction, data science challenge briefs,
+  // personal finance course listings, a habit tracker, a flight operations
+  // app, a Crossy Road fan page, a resume writer's portfolio, a car rental
+  // rating badge, a payment template, a mortgage explainer, an alumni
+  // profile, and a real estate landing page duplicated under two employers.
+  'ouba',
+  'world data league',
+  'macsweeney llc',
+  'nibrasec',
+  'quizzly.ai',
+  'inbrief.ai',
+  'terranovita bv',
+  'openskills',
+  'zyke',
+  'bat pros',
+  'the site office',
+  'spore n sprouts',
+  'apex local',
+  'jalandhar local',
+  'coldoutreach.blog',
+  'fylos',
+  'order from chaos, today!',
+  'as unexpected',
+  'my baristyle',
+  'remora technologies limited',
+  'uxgeek.tech',
+  'radical reversibility',
+  'fochis',
+  'omesync',
+  'ark intelligence',
+  'memento ai',
+  'chris greer press',
+  'managing ai',
+  'apply.coop',
+  'mukti switzerland',
+  'eventthone network',
+  'reboot with ai',
+  'iopener.today',
+  'durbean',
+  'carrentalrating.com',
+  'haus.com',
+  'cross seat',
+  'giant leap consulting',
+  'productionbeast',
+  'chinadebate',
+  'tclara',
+  'american academy of achievement',
+  'brite enterprises',
+  'aleh writing services (aws)',
+  'myriadloop',
+  'sc ai impact alliance',
+  'quintessence films limited',
+  'vistara group',
+  'saasuji',
+  'wb melback corporation',
+  'workajobs',
 ])
 
 // The one place the blocklist is consulted, shared by ingestion and the
@@ -382,8 +522,23 @@ function isQuestionOrBlogTitle(title: string): boolean {
   return title.includes('?') || title.startsWith('¿') || QUESTION_STARTERS.some((q) => lower.startsWith(q))
 }
 
+// A scraped title can arrive with a line break in the middle ("Hiring\nProcess"
+// slipped straight past the 'hiring process' phrase) or with a curly
+// apostrophe where the list carries a straight one, so whitespace and
+// apostrophes are normalised before any rule looks at the title.
+function normaliseTitle(title: string): string {
+  return title.replace(/\s+/g, ' ').replace(/[\u2018\u2019]/g, "'").trim()
+}
+
+// "$15.15 $17 HR depending on location" is a pay rate, not a role. A real
+// title never opens with an amount of money, measured against the live
+// catalogue before shipping: zero real postings start this way.
+function isPayRateTitle(title: string): boolean {
+  return /^[$€£]\s?\d/.test(title)
+}
+
 export function isLikelyRealJob(title: string, description: string, company: string): boolean {
-  const t = title.trim()
+  const t = normaliseTitle(title)
   if (t.length < 3) return false
 
   const lower = deaccent(t.toLowerCase())
@@ -398,12 +553,16 @@ export function isLikelyRealJob(title: string, description: string, company: str
   if (isOpenInterestTitle(lower)) return false
   if (isFuturePipelineTitle(lower)) return false
   if (isVacancyCountTitle(lower)) return false
+  if (isPayRateTitle(t)) return false
   if (isUrlLike(t)) return false
   if (isAllCapsSlogan(t)) return false
   if (isQuestionOrBlogTitle(t)) return false
   if (!/[a-zA-Z]{3,}/.test(t)) return false
 
-  const lowerDescription = deaccent(description.toLowerCase())
+  // Whitespace is collapsed for the same reason as in the title: the test row
+  // above arrives as "Test\n\nJob Description\n\nTest\n\nQualifications", one
+  // word per paragraph, and no phrase can match across paragraph breaks.
+  const lowerDescription = deaccent(description.toLowerCase()).replace(/\s+/g, ' ')
   if (DESCRIPTION_BOILERPLATE_PHRASES.some((p) => lowerDescription.includes(p))) return false
 
   if (
