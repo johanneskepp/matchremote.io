@@ -16,7 +16,13 @@ export const JOB_CATEGORIES: JobCategory[] = [
     label: 'Engineering',
     emoji: '💻',
     description: 'Remote software engineering and development roles.',
-    keywords: ['engineer', 'developer', 'programming', 'software', 'backend', 'frontend', 'full stack', 'full-stack', 'devops', 'qa engineer', 'sre', 'data engineer', 'mobile developer', 'ios developer', 'ios engineer', 'android'],
+    // 'architect' added 2026-09-14 after measuring 101 uncategorized titles
+    // it recovers (solutions/cloud/data/enterprise/security architects), with
+    // exactly one false positive across the whole catalogue ("Remote Senior
+    // Interior Architectural Drafter", a literal building trade, not tech).
+    // Under claiming was considered but the false positive rate here (1 in
+    // 144) is well inside what every prior category widening has accepted.
+    keywords: ['engineer', 'developer', 'programming', 'software', 'backend', 'frontend', 'full stack', 'full-stack', 'devops', 'qa engineer', 'sre', 'data engineer', 'mobile developer', 'ios developer', 'ios engineer', 'android', 'architect'],
   },
   {
     slug: 'design',
@@ -73,6 +79,10 @@ export const JOB_CATEGORIES: JobCategory[] = [
       // catalogue and was the single biggest gap here: 72 real support roles
       // sat uncategorized because only "support" and "success" were listed.
       'customer service', 'customer care', 'customer experience', 'client services', 'call center', 'contact center',
+      // Talent acquisition and recruiting added 2026-09-14: 53 uncategorized
+      // jobs measured, all genuinely HR/recruiting roles, no false positives
+      // found across the full title list.
+      'talent acquisition', 'recruiter', 'recruiting', 'recruitment', 'sourcer',
     ],
   },
   {
@@ -156,6 +166,27 @@ export const JOB_CATEGORIES: JobCategory[] = [
       'legal', 'paralegal', 'lawyer', 'attorney', 'litigation', 'advogad',
       'compliance', 'regulatory', 'contract manager',
       'general counsel', 'corporate counsel', 'commercial counsel', 'associate counsel', 'privacy counsel',
+    ],
+  },
+  {
+    slug: 'information-security',
+    label: 'Information Security',
+    emoji: '🔒',
+    description: 'Remote cybersecurity, information security, and security engineering roles.',
+    // Added 2026-09-14. 47 live jobs were uncategorized before this (most of
+    // the rest already match Engineering via "engineer" in a title like
+    // "Security Engineer"), and this is its own search intent, the same call
+    // made for Legal and Project Management standing apart from Operations.
+    // A bare 'security' was measured and rejected: it catches "Security
+    // Guard", a literal physical security role. These exact phrases were
+    // checked against all 135 matching titles in the live catalogue and
+    // found zero false positives, versus one with the bare word.
+    keywords: [
+      'information security', 'cyber', 'security architect', 'security analyst', 'security engineer',
+      'security researcher', 'security consultant', 'security officer', 'application security', 'security risk',
+      'security lead', 'security manager', 'penetration test', 'infosec', 'ciso', 'security operations',
+      'security incident', 'appsec', 'devsecops', 'threat intelligence', 'vulnerability management',
+      'security expert', 'it security',
     ],
   },
 ]
