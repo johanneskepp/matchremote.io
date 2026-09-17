@@ -34,6 +34,21 @@ function repairOnce(text: string): string {
   })
 }
 
+// A source can also cut a title off mid multibyte character (confirmed live
+// against RemoteOK's own API: "Sales Development Representative Attribute"
+// arrives missing the last byte of what was likely a trailing "™"). The
+// orphaned lead byte then decodes to a stray accented letter followed by a
+// C1 control character (U+0080-U+009F), which repairOnce correctly leaves
+// alone since the run cannot be decoded into anything real. But those bytes
+// are gone for good, not text, and a C1 control never appears in genuine
+// content, so its presence at the tail is unambiguous proof of the cut,
+// unlike an ordinary trailing accented letter, which this leaves untouched.
+const TRUNCATED_TAIL = /[-ÿ]*[-]+$/
+
+function dropTruncatedTail(text: string): string {
+  return text.replace(TRUNCATED_TAIL, '')
+}
+
 export function repairMojibake(text: string): string {
   if (!text) return text
 
@@ -44,7 +59,7 @@ export function repairMojibake(text: string): string {
     current = next
   }
 
-  return current
+  return dropTruncatedTail(current)
 }
 
 // True when a repair would change the text, used by the repair script to skip
