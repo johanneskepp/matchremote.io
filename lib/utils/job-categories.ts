@@ -189,6 +189,35 @@ export const JOB_CATEGORIES: JobCategory[] = [
       'security expert', 'it security',
     ],
   },
+  {
+    slug: 'ai-training-language',
+    label: 'AI Training & Language Services',
+    emoji: '🌐',
+    description: 'Remote AI data annotation, AI training, translation, interpretation, and localization roles.',
+    // Added 2026-09-21. 81 live jobs across the catalogue, 71 of them
+    // uncategorized, driven by a handful of companies (Welo Global, mercor,
+    // Toloka AI, Invisible Technologies, Language Services Associates) that
+    // specialize in exactly this gig work: RLHF/AI training data annotation,
+    // content and ads quality rating, transcription, interpretation and
+    // localization. Every keyword here was checked against the full active
+    // catalogue, not just the uncategorized set, before shipping.
+    // Bare 'translation' was tested and rejected: it also matches
+    // "Translational Medicine" (a clinical research role, nothing to do with
+    // language translation) since the keyword only has to match a word start.
+    // 'translator' is used instead, the same trade the Legal category makes
+    // with 'counsel' over a bare 'counsel'.
+    // 'rater' was checked too: it does not match "Berater" (German for
+    // consultant) because the keyword boundary requires no letter
+    // immediately before the match, and "Berater" has "e" there. Its 19 full
+    // catalogue matches are 16 "Ads Quality Rater" roles plus 3 clinical
+    // trial raters that already belong to Healthcare via 'clinical', an
+    // intentional overlap, the same as an ML engineer sitting under both
+    // Engineering and Data.
+    keywords: [
+      'ai trainer', 'annotat', 'transcription', 'linguist', 'interpreter', 'translator',
+      'localization', 'proofreader', 'subtitl', 'voice recording', 'rater', 'assessor',
+    ],
+  },
 ]
 
 export function getCategoryBySlug(slug: string): JobCategory | undefined {
