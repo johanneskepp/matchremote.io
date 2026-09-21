@@ -136,6 +136,16 @@ function isFuturePipelineTitle(lowerTitle: string): boolean {
   return /^future\b.*\b(positions|opportunities)\b/.test(lowerTitle)
 }
 
+// "Work at Xfive" is a Himalayas careers page scraped as a listing, naming no
+// role at all ("Do you want to become Xfive team member? ... coding wizard,
+// project management guru, design virtuoso"). Deliberately checked as "work
+// at" plus the exact company name, not a bare "work at" prefix: "Work at
+// Home Customer Service Representative" is a common real title in this exact
+// remote call center industry, and a plain prefix would delete it.
+function isWorkAtCompanyTitle(lowerTitle: string, lowerCompany: string): boolean {
+  return lowerTitle === `work at ${lowerCompany}`
+}
+
 // "Join Praemium Expression of Interest" is the same CTA with the employer
 // spliced into the middle, so the prefixes above are also tried against the
 // title with a leading "join <company> " removed. A real posting like "Join
@@ -552,6 +562,7 @@ export function isLikelyRealJob(title: string, description: string, company: str
   if (EXACT_PLACEHOLDER_TITLES.includes(lower)) return false
   if (isOpenInterestTitle(lower)) return false
   if (isFuturePipelineTitle(lower)) return false
+  if (isWorkAtCompanyTitle(lower, deaccent(company.trim().toLowerCase()))) return false
   if (isVacancyCountTitle(lower)) return false
   if (isPayRateTitle(t)) return false
   if (isUrlLike(t)) return false
